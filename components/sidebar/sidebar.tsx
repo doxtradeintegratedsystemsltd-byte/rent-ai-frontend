@@ -8,7 +8,7 @@ import { Icon } from "@iconify/react/dist/iconify.js";
 
 export function Sidebar() {
   return (
-    <aside className="border-border flex h-screen w-64 flex-col justify-between border-r px-6 py-4">
+    <aside className="border-border sticky top-0 flex h-screen w-64 flex-col justify-between border-r px-6 py-4">
       <div className="flex flex-col gap-4">
         <div className="pb-3">
           <Logo dark />

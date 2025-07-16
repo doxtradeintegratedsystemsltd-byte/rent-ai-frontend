@@ -5,6 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { Button } from "../ui/button";
+import { Avatar } from "../ui/avatar";
 
 export function Header() {
   const pathname = usePathname();
@@ -48,7 +49,7 @@ export function Header() {
   const breadcrumbs = getBreadcrumbs(pathname);
 
   return (
-    <header className="border-border bg-background border-b px-8 py-4">
+    <header className="border-border bg-background sticky top-0 z-10 border-b px-8 py-4">
       <div className="flex items-center justify-between">
         <nav className="flex items-center space-x-2 text-sm">
           {breadcrumbs.map((breadcrumb, index) => (
@@ -74,15 +75,7 @@ export function Header() {
 
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
-            <div className="h-10 w-10 overflow-hidden rounded-full bg-gray-300">
-              <Image
-                src="/images/avatar.png"
-                alt="Admin Avatar"
-                className="h-full w-full object-cover"
-                width={40}
-                height={40}
-              />
-            </div>
+            <Avatar src="/images/avatar.png" alt="Admin Avatar" size="md" />
             <div className="flex flex-col">
               <span className="text-foreground text-xs font-bold">
                 Bala Joseph

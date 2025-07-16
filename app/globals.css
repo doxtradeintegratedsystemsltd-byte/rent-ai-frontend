@@ -43,6 +43,18 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --color-paid-text: var(--status-green-text);
+  --color-paid-bg: var(--status-green-bg);
+  --color-paid-border: var(--status-green-text);
+  --color-due-text: var(--status-red-text);
+  --color-due-bg: var(--status-red-bg);
+  --color-due-border: var(--status-red-text);
+  --color-neardue-text: var(--status-yellow-text);
+  --color-neardue-bg: var(--status-yellow-bg);
+  --color-neardue-border: var(--status-yellow-text);
+  --color-overdue-text: var(--status-grey-text);
+  --color-overdue-bg: var(--status-grey-bg);
+  --color-overdue-border: var(--status-grey-text);
 }
 
 :root {
@@ -59,9 +71,9 @@
   --secondary-foreground: #343434;
   --muted: #f6f6f6;
   --muted-foreground: #717171;
-  --accent: #f8f8f8;
-  --accent-foreground: #343434;
-  --destructive: #dc2626;
+  --accent: #d7d7d7;
+  --accent-foreground: #9b9b9b;
+  --destructive: #fd0202;
   --border: #e7e7e7;
   --input: #e7e7e7;
   --ring: #b5b5b5;
@@ -78,6 +90,14 @@
   --sidebar-accent-foreground: #343434;
   --sidebar-border: #ebebeb;
   --sidebar-ring: #b5b5b5;
+  --status-green-text: #00bf1d;
+  --status-green-bg: #e6f9e8;
+  --status-grey-text: #444444;
+  --status-grey-bg: #ececec;
+  --status-yellow-text: #e9c600;
+  --status-yellow-bg: #fdf9e6;
+  --status-red-text: #fd0202;
+  --status-red-bg: #ffe6e6;
 }
 
 .dark {
