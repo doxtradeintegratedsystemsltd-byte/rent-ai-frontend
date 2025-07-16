@@ -1,5 +1,5 @@
 import React from "react";
-import { Icon } from "@iconify/react/dist/iconify.js";
+import { Icon } from "@/components/ui/icon";
 import { Button } from "./button";
 import { cn } from "@/lib/utils";
 
@@ -83,7 +83,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           disabled={currentPage === 1}
           className="flex items-center gap-1"
         >
-          <Icon icon="material-symbols:chevron-left" className="h-8 w-8" />
+          <Icon icon="material-symbols:keyboard-arrow-left" />
         </Button>
         <span>Showing</span>
         <span className="text-foreground font-medium">
@@ -98,7 +98,7 @@ export const Pagination: React.FC<PaginationProps> = ({
           disabled={currentPage === totalPages}
           className="flex items-center gap-1"
         >
-          <Icon icon="material-symbols:chevron-right" className="h-8 w-8" />
+          <Icon icon="material-symbols:keyboard-arrow-right" />
         </Button>
       </div>
     </div>

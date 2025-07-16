@@ -2,8 +2,7 @@
 
 import { usePathname } from "next/navigation";
 import Link from "next/link";
-import Image from "next/image";
-import { Icon } from "@iconify/react/dist/iconify.js";
+import { Icon } from "@/components/ui/icon";
 import { Button } from "../ui/button";
 import { Avatar } from "../ui/avatar";
 

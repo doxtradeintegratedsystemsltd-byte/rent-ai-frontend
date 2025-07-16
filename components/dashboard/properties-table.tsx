@@ -16,7 +16,7 @@ import Avatar from "../ui/avatar";
 import Pagination from "../ui/pagination";
 import { useState, useMemo } from "react";
 import { Button } from "../ui/button";
-import { Icon } from "@iconify/react/dist/iconify.js";
+import { Icon } from "@/components/ui/icon";
 
 const filterItems = [
   { type: "label" as const, label: "Show" },

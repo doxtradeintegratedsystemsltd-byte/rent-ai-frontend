@@ -14,7 +14,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Icon } from "@iconify/react";
+import { Icon } from "@/components/ui/icon";
 
 const FormSchema = z
   .object({
@@ -91,7 +91,11 @@ export function UpdatePasswordForm() {
 
         <Button type="submit" className="w-full">
           Next
-          <Icon icon="material-symbols:east-rounded" className="ml-2 size-6" />
+          <Icon
+            icon="material-symbols:east-rounded"
+            className="ml-2"
+            size="lg"
+          />
         </Button>
       </form>
     </Form>

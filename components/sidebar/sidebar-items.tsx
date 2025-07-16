@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { Icon } from "@iconify/react";
+import { Icon } from "@/components/ui/icon";
 
 type SidebarItemProps = {
   title: string;
@@ -23,7 +23,7 @@ export function SidebarItem({ title, href, icon, onClick }: SidebarItemProps) {
       : "hover:bg-foreground/10",
   );
 
-  const IconComp = <Icon icon={icon} className="h-5 w-5" />;
+  const IconComp = <Icon icon={icon} />;
 
   if (href) {
     return (

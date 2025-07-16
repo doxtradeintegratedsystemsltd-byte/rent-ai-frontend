@@ -7,14 +7,13 @@ import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Icon } from "@iconify/react";
+import { Icon } from "@/components/ui/icon";
 import { Link } from "@/components/ui/link";
 import { useRouter } from "next/navigation";
 
@@ -79,7 +78,11 @@ export function LoginForm() {
         />
         <Button type="submit" className="w-full">
           Sign In
-          <Icon icon="material-symbols:east-rounded" className="ml-2 size-6" />
+          <Icon
+            icon="material-symbols:east-rounded"
+            className="ml-2"
+            size="lg"
+          />
         </Button>
         <Link href="/forgot-password">Forgot Password?</Link>
         <footer className="absolute bottom-0 hidden pb-4 md:block">

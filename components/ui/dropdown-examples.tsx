@@ -1,7 +1,7 @@
-import { ReusableDropdown } from "@/components/ui/dropdown";
-import { Icon } from "@iconify/react/dist/iconify.js";
+import { Dropdown } from "@/components/ui/dropdown";
+import { Icon } from "@/components/ui/icon";
 
-// Example usage of the ReusableDropdown component
+// Example usage of the Dropdown component
 
 export const DropdownExamples = () => {
   // Basic dropdown with simple items
@@ -60,7 +60,7 @@ export const DropdownExamples = () => {
 
       <div className="flex flex-wrap gap-4">
         {/* Basic dropdown */}
-        <ReusableDropdown
+        <Dropdown
           trigger={{
             label: "User Menu",
             icon: "material-symbols:person",
@@ -71,7 +71,7 @@ export const DropdownExamples = () => {
         />
 
         {/* Filter dropdown */}
-        <ReusableDropdown
+        <Dropdown
           trigger={{
             label: "Filter",
             icon: "material-symbols:filter-list",
@@ -86,7 +86,7 @@ export const DropdownExamples = () => {
         />
 
         {/* Status dropdown */}
-        <ReusableDropdown
+        <Dropdown
           trigger={{
             label: "Status",
             icon: "material-symbols:radio-button-checked",
@@ -99,7 +99,7 @@ export const DropdownExamples = () => {
 
       <div className="flex flex-wrap gap-4">
         {/* Advanced dropdown with separators and labels */}
-        <ReusableDropdown
+        <Dropdown
           trigger={{
             label: "Advanced Menu",
             icon: "material-symbols:more-vert",
@@ -110,25 +110,16 @@ export const DropdownExamples = () => {
         />
 
         {/* Custom trigger content */}
-        <ReusableDropdown
+        <Dropdown
           trigger={{
             label: "", // Empty label since we're using custom content
             customContent: (
               <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-500">
-                  <Icon
-                    icon="material-symbols:person"
-                    width="20"
-                    height="20"
-                    className="text-white"
-                  />
+                  <Icon icon="material-symbols:person" className="text-white" />
                 </div>
                 <span>John Doe</span>
-                <Icon
-                  icon="material-symbols:keyboard-arrow-down"
-                  width="20"
-                  height="20"
-                />
+                <Icon icon="material-symbols:keyboard-arrow-down" />
               </div>
             ),
           }}
@@ -144,7 +135,7 @@ export const DropdownExamples = () => {
 // Usage in your components:
 //
 // 1. Basic usage:
-// <ReusableDropdown
+// <Dropdown
 //   trigger={{
 //     label: "Options",
 //     icon: "material-symbols:settings",
@@ -158,7 +149,7 @@ export const DropdownExamples = () => {
 // />
 //
 // 2. Advanced usage with separators:
-// <ReusableDropdown
+// <Dropdown
 //   trigger={{ label: "Menu" }}
 //   items={[
 //     { type: "label", label: "Actions" },
@@ -169,7 +160,7 @@ export const DropdownExamples = () => {
 // />
 //
 // 3. Custom trigger:
-// <ReusableDropdown
+// <Dropdown
 //   trigger={{
 //     label: "",
 //     customContent: <YourCustomTriggerComponent />

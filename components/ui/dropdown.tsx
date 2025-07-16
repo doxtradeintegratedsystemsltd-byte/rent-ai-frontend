@@ -10,7 +10,7 @@ import {
   DropdownMenuRadioGroup,
   DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
-import { Icon } from "@iconify/react/dist/iconify.js";
+import { Icon } from "@/components/ui/icon";
 import { ReactNode } from "react";
 
 export interface DropdownItem {

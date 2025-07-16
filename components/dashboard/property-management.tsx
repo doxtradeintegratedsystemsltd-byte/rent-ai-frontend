@@ -1,4 +1,4 @@
-import { Icon } from "@iconify/react/dist/iconify.js";
+import { Icon } from "@/components/ui/icon";
 import Image from "next/image";
 import React from "react";
 import { Button } from "../ui/button";
@@ -16,7 +16,8 @@ const PropertyManagement = () => {
           <div className="flex items-center gap-2">
             <Icon
               icon="material-symbols:circle"
-              className="text-destructive h-2 w-2"
+              className="text-destructive"
+              size="xs"
             />
             <p className="text-background text-lg font-bold">0</p>
             <Link
@@ -31,7 +32,8 @@ const PropertyManagement = () => {
           <Button className="uppercase" variant="secondary">
             <Icon
               icon="material-symbols:add-home-outline-rounded"
-              className="mr-2 size-6"
+              className="mr-2"
+              size="lg"
             />
             Add Property
           </Button>

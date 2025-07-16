@@ -1,7 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Icon } from "@iconify/react/dist/iconify.js";
+import { Icon } from "@/components/ui/icon";
 import { useNavigation } from "@/lib/navigation";
 import { cn } from "@/lib/utils";
 

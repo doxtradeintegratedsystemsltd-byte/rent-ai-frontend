@@ -4,7 +4,7 @@ import { mainLinks } from "./sidebar-links";
 import { SidebarItem } from "./sidebar-items";
 import Logo from "../ui/logo";
 import Link from "next/link";
-import { Icon } from "@iconify/react/dist/iconify.js";
+import { Icon } from "@/components/ui/icon";
 
 export function Sidebar() {
   return (
@@ -23,14 +23,11 @@ export function Sidebar() {
           href="/"
           className="border-border bg-muted hover:bg-muted/50 flex items-center gap-3 rounded-md border px-4 py-3 text-sm font-medium"
         >
-          <Icon
-            icon="material-symbols:account-circle-outline"
-            className="h-5 w-5"
-          />
+          <Icon icon="material-symbols:account-circle-outline" />
           User Profile
           <Icon
             icon="material-symbols:keyboard-arrow-right"
-            className="ml-auto h-5 w-5"
+            className="ml-auto"
           />
         </Link>
         <div className="border-border bg-muted flex flex-col gap-4 rounded-md border px-4 py-2">
@@ -42,10 +39,7 @@ export function Sidebar() {
             href="/"
             className="border-border bg-background hover:bg-foreground/5 flex items-center gap-3 rounded-md border px-4 py-3 text-sm font-medium"
           >
-            <Icon
-              icon="material-symbols:logout"
-              className="h-5 w-5 text-[#9B9B9B]"
-            />
+            <Icon icon="material-symbols:logout" className="text-[#9B9B9B]" />
             Logout
           </Link>
         </div>

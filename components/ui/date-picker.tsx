@@ -3,7 +3,7 @@
 import * as React from "react";
 import { format } from "date-fns";
 import { ChevronDown } from "lucide-react";
-import { Icon } from "@iconify/react";
+import { Icon } from "@/components/ui/icon";
 
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -56,11 +56,7 @@ export function YearPicker({
             className,
           )}
         >
-          <Icon
-            icon="material-symbols:calendar-month-outline"
-            width="16"
-            height="16"
-          />
+          <Icon icon="material-symbols:calendar-month-outline" size="sm" />
           {date ? format(date, "yyyy") : <span>{placeholder}</span>}
           <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
         </Button>
@@ -127,11 +123,7 @@ export function MonthPicker({
             className,
           )}
         >
-          <Icon
-            icon="material-symbols:calendar-month-outline"
-            width="24"
-            height="24"
-          />
+          <Icon icon="material-symbols:calendar-month-outline" size="lg" />
           {date ? format(date, "MMMM yyyy") : <span>{placeholder}</span>}
           <ChevronDown className="ml-auto h-4 w-4 opacity-50" />
         </Button>
@@ -178,11 +170,7 @@ export function DatePicker({
             className,
           )}
         >
-          <Icon
-            icon="material-symbols:calendar-month-outline"
-            width="24"
-            height="24"
-          />
+          <Icon icon="material-symbols:calendar-month-outline" size="lg" />
           {date ? format(date, "PPP") : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
@@ -225,11 +213,7 @@ export function DateRangePicker({
             className,
           )}
         >
-          <Icon
-            icon="material-symbols:calendar-month-outline"
-            width="24"
-            height="24"
-          />
+          <Icon icon="material-symbols:calendar-month-outline" size="lg" />
           {dateRange?.from ? (
             dateRange.to ? (
               <>
@@ -278,11 +262,7 @@ export function CompactDatePicker({
             className,
           )}
         >
-          <Icon
-            icon="material-symbols:calendar-month-outline"
-            width="24"
-            height="24"
-          />
+          <Icon icon="material-symbols:calendar-month-outline" size="lg" />
           {date ? format(date, "MM/dd/yyyy") : <span>{placeholder}</span>}
         </Button>
       </PopoverTrigger>
