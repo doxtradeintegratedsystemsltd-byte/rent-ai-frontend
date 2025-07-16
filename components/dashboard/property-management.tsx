@@ -19,7 +19,10 @@ const PropertyManagement = () => {
               className="text-destructive h-2 w-2"
             />
             <p className="text-background text-lg font-bold">0</p>
-            <Link href="/" className="text-accent hover:underline">
+            <Link
+              href="/dashboard/due-rents"
+              className="text-accent hover:underline"
+            >
               View
             </Link>
           </div>

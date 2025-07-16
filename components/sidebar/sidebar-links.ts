@@ -10,11 +10,3 @@ export const mainLinks = [
     icon: "material-symbols:contract",
   },
 ];
-
-export const bottomLinks = [
-  {
-    title: "Logout",
-    action: "logout",
-    icon: "tabler:logout",
-  },
-];

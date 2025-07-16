@@ -18,24 +18,6 @@ import { useState, useMemo } from "react";
 import { Button } from "../ui/button";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
-const filterItems = [
-  { type: "label" as const, label: "Show" },
-  {
-    label: "All",
-    value: "all",
-  },
-  { label: "Occupied", value: "occupied" },
-  { label: "Unoccupied", value: "unoccupied" },
-  {
-    label: "Rent Paid",
-    value: "rentPaid",
-  },
-  {
-    label: "Rent Unpaid",
-    value: "rentUnpaid",
-  },
-];
-
 const locationItems = [
   { type: "label" as const, label: "Arrange By" },
   {
@@ -66,13 +48,13 @@ const tableData = [
     property: "Axel Home",
     location: "Gwarimpa, Abuja",
     tenant: "John Doe",
-    rentStatus: "paid" as const,
+    rentStatus: "due" as const,
   },
   {
     property: "Dominoes House",
     location: "Wuse, Abuja",
     tenant: "Jane Smith",
-    rentStatus: "nearDue" as const,
+    rentStatus: "due" as const,
   },
   {
     property: "Green Acres",
@@ -84,31 +66,31 @@ const tableData = [
     property: "Sunny Villa",
     location: "Victoria Island, Lagos",
     tenant: "Alice Brown",
-    rentStatus: "overdue" as const,
+    rentStatus: "due" as const,
   },
   {
     property: "Ocean View",
     location: "Ikoyi, Lagos",
     tenant: "Charlie Davis",
-    rentStatus: "paid" as const,
+    rentStatus: "due" as const,
   },
   {
     property: "Castle Castle",
     location: "Ikeja, Lagos",
     tenant: "David Wilson",
-    rentStatus: "nearDue" as const,
+    rentStatus: "due" as const,
   },
   {
     property: "Bull House",
     location: "Asokoro, Abuja",
     tenant: "Eva Martinez",
-    rentStatus: "paid" as const,
+    rentStatus: "due" as const,
   },
   {
     property: "Sky Tower",
     location: "Maitama, Abuja",
     tenant: "Frank Miller",
-    rentStatus: "overdue" as const,
+    rentStatus: "due" as const,
   },
   {
     property: "Garden Heights",
@@ -120,23 +102,23 @@ const tableData = [
     property: "Royal Residence",
     location: "Banana Island, Lagos",
     tenant: "Henry Anderson",
-    rentStatus: "paid" as const,
+    rentStatus: "due" as const,
   },
   {
     property: "Modern Apartment",
     location: "Garki, Abuja",
     tenant: "Ivy Thompson",
-    rentStatus: "nearDue" as const,
+    rentStatus: "due" as const,
   },
   {
     property: "Luxury Penthouse",
     location: "Oniru, Lagos",
     tenant: "Jack Robinson",
-    rentStatus: "overdue" as const,
+    rentStatus: "due" as const,
   },
 ];
 
-const PropertiesTable = () => {
+const DueRentsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
@@ -176,13 +158,6 @@ const PropertiesTable = () => {
     setCurrentPage(1);
   };
 
-  const getFilterLabel = (): string => {
-    const filterItem = filterItems.find(
-      (item) => "value" in item && item.value === selectedFilter,
-    ) as { label: string; value: string } | undefined;
-    return filterItem ? filterItem.label : "ALL";
-  };
-
   const getLocationLabel = (): string => {
     const locationItem = locationItems.find(
       (item) => "value" in item && item.value === selectedLocation,
@@ -194,18 +169,7 @@ const PropertiesTable = () => {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <p className="text-muted-foreground uppercase">Properties</p>
-          <Dropdown
-            trigger={{
-              label: getFilterLabel(),
-              icon: "material-symbols:filter-list-rounded",
-              arrowIcon: "material-symbols:keyboard-arrow-down-rounded",
-            }}
-            items={filterItems}
-            selectedValue={selectedFilter}
-            onItemSelect={handleFilterChange}
-            useRadioGroup={true}
-          />
+          <h1 className="text-lg font-bold">Due Rents</h1>
         </div>
         <div className="flex gap-2">
           <SearchInput
@@ -311,4 +275,4 @@ const PropertiesTable = () => {
   );
 };
 
-export default PropertiesTable;
+export default DueRentsTable;

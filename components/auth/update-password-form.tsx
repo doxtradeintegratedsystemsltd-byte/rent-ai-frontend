@@ -15,7 +15,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@iconify/react";
-import { Link } from "@/components/ui/link";
 
 const FormSchema = z
   .object({
@@ -94,12 +93,6 @@ export function UpdatePasswordForm() {
           Next
           <Icon icon="material-symbols:east-rounded" className="ml-2 size-6" />
         </Button>
-        {/* 
-        <div className="text-center">
-          <Link href="/" className="text-sm">
-            Back to Login
-          </Link>
-        </div> */}
       </form>
     </Form>
   );

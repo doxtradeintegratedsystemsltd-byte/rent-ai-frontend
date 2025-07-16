@@ -1,5 +1,4 @@
 import { LoginForm } from "@/components/auth/login-form";
-import { Button } from "@/components/ui/button";
 import Logo from "@/components/ui/logo";
 import Image from "next/image";
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { mainLinks, bottomLinks } from "./sidebar-links";
+import { mainLinks } from "./sidebar-links";
 import { SidebarItem } from "./sidebar-items";
 import Logo from "../ui/logo";
 import Link from "next/link";
@@ -19,11 +19,6 @@ export function Sidebar() {
       </div>
 
       <div className="space-y-2 pt-6">
-        {/* {bottomLinks.map((item) =>
-          item.action === "logout" ? (
-            <SidebarItem key={item.title} title={item.title} icon={item.icon} />
-          ) : null,
-        )} */}
         <Link
           href="/"
           className="border-border bg-muted hover:bg-muted/50 flex items-center gap-3 rounded-md border px-4 py-3 text-sm font-medium"

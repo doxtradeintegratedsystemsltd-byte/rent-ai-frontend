@@ -1,4 +1,3 @@
-import React from "react";
 import { YearPicker } from "../ui/date-picker";
 import StatCard from "./stat-card";
 
