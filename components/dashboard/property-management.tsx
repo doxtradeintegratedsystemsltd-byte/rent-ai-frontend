@@ -28,7 +28,7 @@ const PropertyManagement = () => {
           <Button className="uppercase" variant="secondary">
             <Icon
               icon="material-symbols:add-home-outline-rounded"
-              className="mr-2 h-5 w-5"
+              className="mr-2 size-6"
             />
             Add Property
           </Button>

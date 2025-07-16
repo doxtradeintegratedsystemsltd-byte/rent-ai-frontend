@@ -7,6 +7,8 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
   DropdownMenuLabel,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@iconify/react/dist/iconify.js";
 import { ReactNode } from "react";
@@ -50,9 +52,11 @@ interface ReusableDropdownProps {
   side?: "top" | "right" | "bottom" | "left";
   sideOffset?: number;
   itemIconClassName?: string; // Default icon class for all items
+  selectedValue?: string; // For radio group selection
+  useRadioGroup?: boolean; // Whether to use radio group or regular items
 }
 
-export const ReusableDropdown = ({
+export const Dropdown = ({
   trigger,
   items,
   onItemSelect,
@@ -62,6 +66,8 @@ export const ReusableDropdown = ({
   side = "bottom",
   sideOffset = 4,
   itemIconClassName = "w-4 h-4",
+  selectedValue,
+  useRadioGroup = false,
 }: ReusableDropdownProps) => {
   const handleItemClick = (item: DropdownItem) => {
     if (item.disabled) return;
@@ -89,6 +95,26 @@ export const ReusableDropdown = ({
     }
 
     const dropdownItem = item as DropdownItem;
+
+    if (useRadioGroup) {
+      return (
+        <DropdownMenuRadioItem
+          key={dropdownItem.value}
+          value={dropdownItem.value}
+          disabled={dropdownItem.disabled}
+          className={dropdownItem.className}
+        >
+          {dropdownItem.icon && (
+            <Icon
+              icon={dropdownItem.icon}
+              className={`mr-2 flex-shrink-0 ${dropdownItem.iconClassName || itemIconClassName}`}
+            />
+          )}
+          {dropdownItem.label}
+        </DropdownMenuRadioItem>
+      );
+    }
+
     return (
       <DropdownMenuItem
         key={dropdownItem.value}
@@ -110,7 +136,7 @@ export const ReusableDropdown = ({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
-        className={`border-border text-muted-foreground flex cursor-pointer items-center gap-2 rounded-md border p-2 text-[10px] ${
+        className={`border-border text-muted-foreground flex cursor-pointer items-center gap-2 rounded-md border p-2 text-sm ${
           trigger.className || ""
         } ${className || ""}`}
       >
@@ -121,7 +147,7 @@ export const ReusableDropdown = ({
             {trigger.icon && (
               <Icon
                 icon={trigger.icon}
-                className={`flex-shrink-0 ${trigger.iconClassName || "h-6 w-6"}`}
+                className={`flex-shrink-0 ${trigger.iconClassName || "h-4 w-4"}`}
               />
             )}
             {trigger.label}
@@ -140,7 +166,16 @@ export const ReusableDropdown = ({
         sideOffset={sideOffset}
         className={contentClassName}
       >
-        {items.map((item, index) => renderItem(item, index))}
+        {useRadioGroup ? (
+          <DropdownMenuRadioGroup
+            value={selectedValue}
+            onValueChange={onItemSelect}
+          >
+            {items.map((item, index) => renderItem(item, index))}
+          </DropdownMenuRadioGroup>
+        ) : (
+          items.map((item, index) => renderItem(item, index))
+        )}
       </DropdownMenuContent>
     </DropdownMenu>
   );

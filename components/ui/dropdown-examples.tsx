@@ -1,4 +1,4 @@
-import { ReusableDropdown } from "@/components/ui/reusable-dropdown";
+import { ReusableDropdown } from "@/components/ui/dropdown";
 import { Icon } from "@iconify/react/dist/iconify.js";
 
 // Example usage of the ReusableDropdown component

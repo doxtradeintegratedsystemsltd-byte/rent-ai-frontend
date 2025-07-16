@@ -104,6 +104,34 @@ function TableCaption({
   );
 }
 
+interface TableNoDataProps extends React.ComponentProps<"div"> {
+  colSpan: number;
+  children: React.ReactNode;
+}
+
+function TableNoData({
+  colSpan,
+  children,
+  className,
+  ...props
+}: TableNoDataProps) {
+  return (
+    <TableRow>
+      <TableCell colSpan={colSpan} className="text-center">
+        <div
+          className={cn(
+            "text-muted-foreground flex h-60 items-center justify-center",
+            className,
+          )}
+          {...props}
+        >
+          {children || "No data available"}
+        </div>
+      </TableCell>
+    </TableRow>
+  );
+}
+
 export {
   Table,
   TableHeader,
@@ -113,4 +141,5 @@ export {
   TableRow,
   TableCell,
   TableCaption,
+  TableNoData,
 };

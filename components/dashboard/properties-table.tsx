@@ -1,6 +1,6 @@
 "use client";
 
-import { ReusableDropdown } from "@/components/ui/reusable-dropdown";
+import { Dropdown } from "@/components/ui/dropdown";
 import { SearchInput } from "@/components/ui/search-input";
 import {
   Table,
@@ -8,6 +8,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
+  TableNoData,
   TableRow,
 } from "@/components/ui/table";
 import { getPaymentStatus } from "@/lib/status-util";
@@ -16,21 +17,25 @@ import Pagination from "../ui/pagination";
 import { useState, useMemo } from "react";
 
 const filterItems = [
-  { type: "label" as const, label: "All Properties" },
-  { type: "separator" as const },
+  { type: "label" as const, label: "Show" },
   {
-    label: "Available",
-    value: "available",
+    label: "All",
+    value: "all",
   },
   { label: "Occupied", value: "occupied" },
+  { label: "Unoccupied", value: "unoccupied" },
   {
-    label: "Maintenance",
-    value: "maintenance",
+    label: "Rent Paid",
+    value: "rentPaid",
+  },
+  {
+    label: "Rent Unpaid",
+    value: "rentUnpaid",
   },
 ];
 
 const locationItems = [
-  { type: "label" as const, label: "Locations" },
+  { type: "label" as const, label: "Arrange By" },
   {
     label: "All Locations",
     value: "all",
@@ -131,9 +136,10 @@ const tableData = [
 const PropertiesTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedFilter, setSelectedFilter] = useState("all");
+  const [selectedLocation, setSelectedLocation] = useState("all");
   const itemsPerPage = 10;
 
-  // Filter data based on search term
   const filteredData = useMemo(() => {
     return tableData.filter(
       (item) =>
@@ -143,13 +149,11 @@ const PropertiesTable = () => {
     );
   }, [searchTerm]);
 
-  // Calculate pagination
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
   const currentData = filteredData.slice(startIndex, endIndex);
 
-  // Reset to first page when search changes
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     setCurrentPage(1);
@@ -158,18 +162,46 @@ const PropertiesTable = () => {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
+
+  const handleFilterChange = (value: string) => {
+    setSelectedFilter(value);
+    setCurrentPage(1);
+  };
+
+  const handleLocationChange = (value: string) => {
+    setSelectedLocation(value);
+    setCurrentPage(1);
+  };
+
+  const getFilterLabel = (): string => {
+    const filterItem = filterItems.find(
+      (item) => "value" in item && item.value === selectedFilter,
+    ) as { label: string; value: string } | undefined;
+    return filterItem ? filterItem.label : "ALL";
+  };
+
+  const getLocationLabel = (): string => {
+    const locationItem = locationItems.find(
+      (item) => "value" in item && item.value === selectedLocation,
+    ) as { label: string; value: string } | undefined;
+    return locationItem ? locationItem.label : "Location";
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
           <p className="text-muted-foreground uppercase">Properties</p>
-          <ReusableDropdown
+          <Dropdown
             trigger={{
-              label: "ALL",
+              label: getFilterLabel(),
               icon: "material-symbols:filter-list-rounded",
               arrowIcon: "material-symbols:keyboard-arrow-down-rounded",
             }}
             items={filterItems}
+            selectedValue={selectedFilter}
+            onItemSelect={handleFilterChange}
+            useRadioGroup={true}
           />
         </div>
         <div className="flex gap-2">
@@ -179,13 +211,16 @@ const PropertiesTable = () => {
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
           />
-          <ReusableDropdown
+          <Dropdown
             trigger={{
-              label: "Location",
+              label: getLocationLabel(),
               icon: "material-symbols:format-line-spacing-rounded",
               arrowIcon: "material-symbols:keyboard-arrow-up-rounded",
             }}
             items={locationItems}
+            selectedValue={selectedLocation}
+            onItemSelect={handleLocationChange}
+            useRadioGroup={true}
             align="end"
           />
         </div>
@@ -201,25 +236,35 @@ const PropertiesTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {currentData.map((row, index) => (
-            <TableRow key={index}>
-              <TableCell className="flex items-center gap-2">
-                <Avatar
-                  src="/images/property-avatar.png"
-                  alt="Property Avatar"
-                  size="sm"
-                />
-                {row.property}
-              </TableCell>
-              <TableCell>{row.location}</TableCell>
-              <TableCell>{row.tenant}</TableCell>
-              <TableCell className="flex justify-center">
-                <p className={getPaymentStatus(row.rentStatus)}>
-                  {row.rentStatus}
-                </p>
-              </TableCell>
-            </TableRow>
-          ))}
+          {currentData && currentData.length > 0 ? (
+            currentData.map((row, index) => (
+              <TableRow key={index}>
+                <TableCell className="flex items-center gap-2">
+                  <Avatar
+                    src="/images/property-avatar.png"
+                    alt="Property Avatar"
+                    size="sm"
+                  />
+                  {row.property}
+                </TableCell>
+                <TableCell>{row.location}</TableCell>
+                <TableCell>{row.tenant}</TableCell>
+                <TableCell className="flex justify-center">
+                  <p className={getPaymentStatus(row.rentStatus)}>
+                    {row.rentStatus}
+                  </p>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableNoData className="flex flex-col" colSpan={tableHead.length}>
+              <p>No property added.</p>
+              <p>
+                Click <span className="font-bold">“Add Property”</span> to get
+                started.
+              </p>
+            </TableNoData>
+          )}
         </TableBody>
       </Table>
 
