@@ -18,3 +18,9 @@ export const formatCurrency = (
     style: "currency",
     currency,
   }).format(amount);
+
+export const formatDropdownItems = (items: string[]) =>
+  items.map((item) => ({
+    label: item,
+    value: item,
+  }));

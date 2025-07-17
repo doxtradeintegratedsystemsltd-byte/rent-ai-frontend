@@ -3,6 +3,17 @@ import Image from "next/image";
 import React from "react";
 import { Button } from "../ui/button";
 import Link from "next/link";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import AddPropertyForm from "./add-property-form";
+import { GoBackButton } from "../ui/go-back-button";
 
 const PropertyManagement = () => {
   return (
@@ -29,14 +40,40 @@ const PropertyManagement = () => {
           </div>
         </div>
         <div className="flex w-full justify-center">
-          <Button className="uppercase" variant="secondary">
-            <Icon
-              icon="material-symbols:add-home-outline-rounded"
-              className="mr-2"
-              size="lg"
-            />
-            Add Property
-          </Button>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button className="uppercase" variant="secondary">
+                <Icon
+                  icon="material-symbols:add-home-outline-rounded"
+                  className="mr-2"
+                  size="lg"
+                />
+                Add Property
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              className="w-[600px] max-w-[600px] min-w-[600px] [&>button]:hidden"
+              style={{ width: "600px" }}
+            >
+              <SheetHeader>
+                <SheetClose asChild className="mb-8 text-left">
+                  <Button variant="ghost" className="w-fit p-0">
+                    <Icon icon="material-symbols:arrow-back" className="mr-2" />
+                    Go Back
+                  </Button>
+                </SheetClose>
+                <SheetTitle className="text-lg font-bold">
+                  <Icon
+                    icon="material-symbols:add-home-outline-rounded"
+                    className="mr-2"
+                    size="lg"
+                  />
+                  Add Property
+                </SheetTitle>
+              </SheetHeader>
+              <AddPropertyForm />
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
       <Image
