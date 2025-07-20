@@ -1,6 +1,6 @@
-export function getPaymentStatus(
-  status: "paid" | "nearDue" | "due" | "overdue",
-) {
+import { paymentStatus } from "@/types/status";
+
+export function getPaymentStatus(status: paymentStatus) {
   const baseClasses =
     "border uppercase font-medium text-[10px] px-2 py-0.5 rounded-xl w-20 text-center";
 

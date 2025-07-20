@@ -17,6 +17,7 @@ import Pagination from "../ui/pagination";
 import { useState, useMemo } from "react";
 import { Button } from "../ui/button";
 import { Icon } from "@/components/ui/icon";
+import { useRouter } from "next/navigation";
 
 const filterItems = [
   { type: "label" as const, label: "Show" },
@@ -63,72 +64,84 @@ const tableHead = [
 
 const tableData = [
   {
+    id: 1,
     property: "Axel Home",
     location: "Gwarimpa, Abuja",
     tenant: "John Doe",
     rentStatus: "paid" as const,
   },
   {
+    id: 2,
     property: "Dominoes House",
     location: "Wuse, Abuja",
     tenant: "Jane Smith",
     rentStatus: "nearDue" as const,
   },
   {
+    id: 3,
     property: "Green Acres",
     location: "Lekki, Lagos",
     tenant: "Bob Johnson",
     rentStatus: "due" as const,
   },
   {
+    id: 4,
     property: "Sunny Villa",
     location: "Victoria Island, Lagos",
     tenant: "Alice Brown",
     rentStatus: "overdue" as const,
   },
   {
+    id: 5,
     property: "Ocean View",
     location: "Ikoyi, Lagos",
     tenant: "Charlie Davis",
     rentStatus: "paid" as const,
   },
   {
+    id: 6,
     property: "Castle Castle",
     location: "Ikeja, Lagos",
     tenant: "David Wilson",
     rentStatus: "nearDue" as const,
   },
   {
+    id: 7,
     property: "Bull House",
     location: "Asokoro, Abuja",
     tenant: "Eva Martinez",
     rentStatus: "paid" as const,
   },
   {
+    id: 8,
     property: "Sky Tower",
     location: "Maitama, Abuja",
     tenant: "Frank Miller",
     rentStatus: "overdue" as const,
   },
   {
+    id: 9,
     property: "Garden Heights",
     location: "Ajah, Lagos",
     tenant: "Grace Taylor",
     rentStatus: "due" as const,
   },
   {
+    id: 10,
     property: "Royal Residence",
     location: "Banana Island, Lagos",
     tenant: "Henry Anderson",
     rentStatus: "paid" as const,
   },
   {
+    id: 11,
     property: "Modern Apartment",
     location: "Garki, Abuja",
     tenant: "Ivy Thompson",
     rentStatus: "nearDue" as const,
   },
   {
+    id: 12,
     property: "Luxury Penthouse",
     location: "Oniru, Lagos",
     tenant: "Jack Robinson",
@@ -137,6 +150,7 @@ const tableData = [
 ];
 
 const PropertiesTable = () => {
+  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
@@ -188,6 +202,10 @@ const PropertiesTable = () => {
       (item) => "value" in item && item.value === selectedLocation,
     ) as { label: string; value: string } | undefined;
     return locationItem ? locationItem.label : "Location";
+  };
+
+  const navigateToProperty = (propertyId: number) => {
+    router.push(`/dashboard/property/${propertyId}`);
   };
 
   return (
@@ -263,7 +281,7 @@ const PropertiesTable = () => {
         <TableBody>
           {currentData && currentData.length > 0 ? (
             currentData.map((row, index) => (
-              <TableRow key={index}>
+              <TableRow key={row.id}>
                 <TableCell className="flex items-center gap-2">
                   <Avatar
                     src="/images/property-avatar.png"
@@ -280,7 +298,11 @@ const PropertiesTable = () => {
                   </p>
                 </TableCell>
                 <TableCell className="text-muted-foreground w-6 text-right">
-                  <Button variant="ghost" size="icon">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => navigateToProperty(row.id)}
+                  >
                     <Icon icon="material-symbols:keyboard-arrow-right" />
                   </Button>
                 </TableCell>
