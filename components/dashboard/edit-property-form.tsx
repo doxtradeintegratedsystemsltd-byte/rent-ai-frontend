@@ -218,7 +218,7 @@ const EditPropertyForm = () => {
           className="w-full uppercase"
           disabled={!form.formState.isValid}
         >
-          Add Property
+          Save
         </Button>
       </form>
     </Form>

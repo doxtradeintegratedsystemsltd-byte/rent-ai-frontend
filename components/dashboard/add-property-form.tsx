@@ -15,7 +15,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Dropdown } from "@/components/ui/dropdown";
 import { formatDropdownItems } from "@/lib/formatters";
-import { Icon } from "@/components/ui/icon";
 import { useState } from "react";
 
 const FormSchema = z.object({
