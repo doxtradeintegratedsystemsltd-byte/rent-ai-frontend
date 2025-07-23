@@ -1,6 +1,5 @@
 "use client";
 
-import { Dropdown } from "@/components/ui/dropdown";
 import { SearchInput } from "@/components/ui/search-input";
 import {
   Table,
@@ -16,49 +15,8 @@ import Pagination from "../../ui/pagination";
 import { useState, useMemo, useRef } from "react";
 import { Button } from "../../ui/button";
 import { Icon } from "@/components/ui/icon";
-import { useRouter } from "next/navigation";
 import usePrint, { PrintStyles } from "@/hooks/usePrint";
-import {
-  getFilterLabel,
-  getLocationLabel,
-  filterTableData,
-  getPaginatedData,
-} from "@/lib/table-utils";
-
-const filterItems = [
-  { type: "label" as const, label: "Show" },
-  {
-    label: "All",
-    value: "all",
-  },
-  { label: "Occupied", value: "occupied" },
-  { label: "Unoccupied", value: "unoccupied" },
-  {
-    label: "Rent Paid",
-    value: "rentPaid",
-  },
-  {
-    label: "Rent Unpaid",
-    value: "rentUnpaid",
-  },
-];
-
-const locationItems = [
-  { type: "label" as const, label: "Arrange By" },
-  {
-    label: "Locations",
-    value: "all",
-  },
-  {
-    label: "Downtown",
-    value: "downtown",
-  },
-  {
-    label: "Uptown",
-    value: "uptown",
-  },
-  { label: "Suburbs", value: "suburbs" },
-];
+import { filterTableData, getPaginatedData } from "@/lib/table-utils";
 
 const tableHead = [
   { label: "Property" },
@@ -296,11 +254,8 @@ const tableData = [
 ];
 
 const PaymentsTable = () => {
-  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("all");
-  const [selectedLocation, setSelectedLocation] = useState("all");
   const [selectedPayment, setSelectedPayment] = useState<
     (typeof tableData)[0] | null
   >(null);
@@ -330,20 +285,6 @@ const PaymentsTable = () => {
     setCurrentPage(page);
   };
 
-  const handleFilterChange = (value: string) => {
-    setSelectedFilter(value);
-    setCurrentPage(1);
-  };
-
-  const handleLocationChange = (value: string) => {
-    setSelectedLocation(value);
-    setCurrentPage(1);
-  };
-
-  const navigateToProperty = (propertyId: number) => {
-    router.push(`/dashboard/property/${propertyId}`);
-  };
-
   const handlePrintReceipt = (payment: (typeof tableData)[0]) => {
     setSelectedPayment(payment);
     // Small delay to ensure the state is updated before printing
@@ -355,38 +296,12 @@ const PaymentsTable = () => {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2.5">
-          <p className="text-muted-foreground uppercase">Properties</p>
-          <Dropdown
-            trigger={{
-              label: getFilterLabel(filterItems, selectedFilter),
-              icon: "material-symbols:filter-list-rounded",
-              arrowIcon: "material-symbols:keyboard-arrow-down-rounded",
-            }}
-            items={filterItems}
-            selectedValue={selectedFilter}
-            onItemSelect={handleFilterChange}
-            useRadioGroup={true}
-          />
-        </div>
         <div className="flex gap-2">
           <SearchInput
             placeholder="Search"
             className="bg-background"
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
-          />
-          <Dropdown
-            trigger={{
-              label: getLocationLabel(locationItems, selectedLocation),
-              icon: "material-symbols:format-line-spacing-rounded",
-              arrowIcon: "material-symbols:keyboard-arrow-up-rounded",
-            }}
-            items={locationItems}
-            selectedValue={selectedLocation}
-            onItemSelect={handleLocationChange}
-            useRadioGroup={true}
-            align="end"
           />
         </div>
       </div>
@@ -455,10 +370,10 @@ const PaymentsTable = () => {
               ))
             ) : (
               <TableNoData className="flex flex-col" colSpan={tableHead.length}>
-                <p>No property added.</p>
                 <p>
-                  Click <span className="font-bold">“Add Property”</span> to get
-                  started.
+                  No rent payment history yet. Payment will be recorded
+                  automatically when tenant pays or you manually record a
+                  payment on a property’s page.
                 </p>
               </TableNoData>
             )}
