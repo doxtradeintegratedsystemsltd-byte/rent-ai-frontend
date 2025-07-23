@@ -12,11 +12,16 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getPaymentStatus } from "@/lib/status-util";
-import Avatar from "../ui/avatar";
-import Pagination from "../ui/pagination";
+import Avatar from "../../ui/avatar";
+import Pagination from "../../ui/pagination";
 import { useState, useMemo } from "react";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 import { Icon } from "@/components/ui/icon";
+import {
+  getLocationLabel,
+  filterTableData,
+  getPaginatedData,
+} from "@/lib/table-utils";
 
 const locationItems = [
   { type: "label" as const, label: "Arrange By" },
@@ -126,18 +131,15 @@ const DueRentsTable = () => {
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => {
-    return tableData.filter(
-      (item) =>
-        item.property.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.tenant.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
+    return filterTableData(tableData, searchTerm, [
+      "property",
+      "location",
+      "tenant",
+    ]);
   }, [searchTerm]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentData = filteredData.slice(startIndex, endIndex);
+  const currentData = getPaginatedData(filteredData, currentPage, itemsPerPage);
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -158,13 +160,6 @@ const DueRentsTable = () => {
     setCurrentPage(1);
   };
 
-  const getLocationLabel = (): string => {
-    const locationItem = locationItems.find(
-      (item) => "value" in item && item.value === selectedLocation,
-    ) as { label: string; value: string } | undefined;
-    return locationItem ? locationItem.label : "Location";
-  };
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -180,7 +175,7 @@ const DueRentsTable = () => {
           />
           <Dropdown
             trigger={{
-              label: getLocationLabel(),
+              label: getLocationLabel(locationItems, selectedLocation),
               icon: "material-symbols:format-line-spacing-rounded",
               arrowIcon: "material-symbols:keyboard-arrow-up-rounded",
             }}
@@ -214,53 +209,57 @@ const DueRentsTable = () => {
           </Button>
         </div>
       )}
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {tableHead.map((head, index) => (
-              <TableHead key={index} className={head.className}>
-                {head.label}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {currentData && currentData.length > 0 ? (
-            currentData.map((row, index) => (
-              <TableRow key={index}>
-                <TableCell className="flex items-center gap-2">
-                  <Avatar
-                    src="/images/property-avatar.png"
-                    alt="Property Avatar"
-                    size="sm"
-                  />
-                  {row.property}
-                </TableCell>
-                <TableCell>{row.location}</TableCell>
-                <TableCell>{row.tenant}</TableCell>
-                <TableCell>
-                  <p className={getPaymentStatus(row.rentStatus)}>
-                    {row.rentStatus}
-                  </p>
-                </TableCell>
-                <TableCell className="text-muted-foreground w-6 text-right">
-                  <Button variant="ghost" size="icon">
-                    <Icon icon="material-symbols:keyboard-arrow-right" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableNoData className="flex flex-col" colSpan={tableHead.length}>
-              <p>No property added.</p>
-              <p>
-                Click <span className="font-bold">“Add Property”</span> to get
-                started.
-              </p>
-            </TableNoData>
-          )}
-        </TableBody>
-      </Table>
+      <div className="h-[570px] overflow-hidden rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {tableHead.map((head, index) => (
+                <TableHead key={index} className={head.className}>
+                  {head.label}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {currentData && currentData.length > 0 ? (
+              currentData.map((row, index) => (
+                <TableRow key={index}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Avatar
+                        src="/images/property-avatar.png"
+                        alt="Property Avatar"
+                        size="sm"
+                      />
+                      {row.property}
+                    </div>
+                  </TableCell>
+                  <TableCell>{row.location}</TableCell>
+                  <TableCell>{row.tenant}</TableCell>
+                  <TableCell>
+                    <p className={getPaymentStatus(row.rentStatus)}>
+                      {row.rentStatus}
+                    </p>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground w-6 text-right">
+                    <Button variant="ghost" size="icon">
+                      <Icon icon="material-symbols:keyboard-arrow-right" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableNoData className="flex flex-col" colSpan={tableHead.length}>
+                <p>No property added.</p>
+                <p>
+                  Click <span className="font-bold">“Add Property”</span> to get
+                  started.
+                </p>
+              </TableNoData>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       {filteredData.length > 0 && (
         <Pagination

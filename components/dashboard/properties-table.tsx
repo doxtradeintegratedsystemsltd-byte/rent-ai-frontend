@@ -18,6 +18,12 @@ import { useState, useMemo } from "react";
 import { Button } from "../ui/button";
 import { Icon } from "@/components/ui/icon";
 import { useRouter } from "next/navigation";
+import {
+  getFilterLabel,
+  getLocationLabel,
+  filterTableData,
+  getPaginatedData,
+} from "@/lib/table-utils";
 
 const filterItems = [
   { type: "label" as const, label: "Show" },
@@ -158,18 +164,15 @@ const PropertiesTable = () => {
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => {
-    return tableData.filter(
-      (item) =>
-        item.property.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.location.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.tenant.toLowerCase().includes(searchTerm.toLowerCase()),
-    );
+    return filterTableData(tableData, searchTerm, [
+      "property",
+      "location",
+      "tenant",
+    ]);
   }, [searchTerm]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const endIndex = startIndex + itemsPerPage;
-  const currentData = filteredData.slice(startIndex, endIndex);
+  const currentData = getPaginatedData(filteredData, currentPage, itemsPerPage);
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -190,20 +193,6 @@ const PropertiesTable = () => {
     setCurrentPage(1);
   };
 
-  const getFilterLabel = (): string => {
-    const filterItem = filterItems.find(
-      (item) => "value" in item && item.value === selectedFilter,
-    ) as { label: string; value: string } | undefined;
-    return filterItem ? filterItem.label : "ALL";
-  };
-
-  const getLocationLabel = (): string => {
-    const locationItem = locationItems.find(
-      (item) => "value" in item && item.value === selectedLocation,
-    ) as { label: string; value: string } | undefined;
-    return locationItem ? locationItem.label : "Location";
-  };
-
   const navigateToProperty = (propertyId: number) => {
     router.push(`/dashboard/property/${propertyId}`);
   };
@@ -215,7 +204,7 @@ const PropertiesTable = () => {
           <p className="text-muted-foreground uppercase">Properties</p>
           <Dropdown
             trigger={{
-              label: getFilterLabel(),
+              label: getFilterLabel(filterItems, selectedFilter),
               icon: "material-symbols:filter-list-rounded",
               arrowIcon: "material-symbols:keyboard-arrow-down-rounded",
             }}
@@ -234,7 +223,7 @@ const PropertiesTable = () => {
           />
           <Dropdown
             trigger={{
-              label: getLocationLabel(),
+              label: getLocationLabel(locationItems, selectedLocation),
               icon: "material-symbols:format-line-spacing-rounded",
               arrowIcon: "material-symbols:keyboard-arrow-up-rounded",
             }}
@@ -268,57 +257,61 @@ const PropertiesTable = () => {
           </Button>
         </div>
       )}
-      <Table>
-        <TableHeader>
-          <TableRow>
-            {tableHead.map((head, index) => (
-              <TableHead key={index} className={head.className}>
-                {head.label}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {currentData && currentData.length > 0 ? (
-            currentData.map((row, index) => (
-              <TableRow key={row.id}>
-                <TableCell className="flex items-center gap-2">
-                  <Avatar
-                    src="/images/property-avatar.png"
-                    alt="Property Avatar"
-                    size="sm"
-                  />
-                  {row.property}
-                </TableCell>
-                <TableCell>{row.location}</TableCell>
-                <TableCell>{row.tenant}</TableCell>
-                <TableCell>
-                  <p className={getPaymentStatus(row.rentStatus)}>
-                    {row.rentStatus}
-                  </p>
-                </TableCell>
-                <TableCell className="text-muted-foreground w-6 text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => navigateToProperty(row.id)}
-                  >
-                    <Icon icon="material-symbols:keyboard-arrow-right" />
-                  </Button>
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableNoData className="flex flex-col" colSpan={tableHead.length}>
-              <p>No property added.</p>
-              <p>
-                Click <span className="font-bold">“Add Property”</span> to get
-                started.
-              </p>
-            </TableNoData>
-          )}
-        </TableBody>
-      </Table>
+      <div className="h-[585px] overflow-hidden rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {tableHead.map((head, index) => (
+                <TableHead key={index} className={head.className}>
+                  {head.label}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {currentData && currentData.length > 0 ? (
+              currentData.map((row, index) => (
+                <TableRow key={row.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Avatar
+                        src="/images/property-avatar.png"
+                        alt="Property Avatar"
+                        size="sm"
+                      />
+                      {row.property}
+                    </div>
+                  </TableCell>
+                  <TableCell>{row.location}</TableCell>
+                  <TableCell>{row.tenant}</TableCell>
+                  <TableCell>
+                    <p className={getPaymentStatus(row.rentStatus)}>
+                      {row.rentStatus}
+                    </p>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground w-6 text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => navigateToProperty(row.id)}
+                    >
+                      <Icon icon="material-symbols:keyboard-arrow-right" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableNoData className="flex flex-col" colSpan={tableHead.length}>
+                <p>No property added.</p>
+                <p>
+                  Click <span className="font-bold">“Add Property”</span> to get
+                  started.
+                </p>
+              </TableNoData>
+            )}
+          </TableBody>
+        </Table>
+      </div>
 
       {filteredData.length > 0 && (
         <Pagination

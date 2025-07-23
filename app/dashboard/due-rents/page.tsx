@@ -1,4 +1,4 @@
-import DueRentsTable from "@/components/dashboard/due-rents-table";
+import DueRentsTable from "@/components/dashboard/due-rents/due-rents-table";
 import { GoBackButton } from "@/components/ui/go-back-button";
 
 const DueRentsPage = () => {

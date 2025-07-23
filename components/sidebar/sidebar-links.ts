@@ -6,7 +6,7 @@ export const mainLinks = [
   },
   {
     title: "Payments",
-    href: "/payments",
+    href: "/dashboard/payments",
     icon: "material-symbols:contract",
   },
 ];
