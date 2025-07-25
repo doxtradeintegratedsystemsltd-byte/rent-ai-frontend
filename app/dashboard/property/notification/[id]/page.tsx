@@ -20,6 +20,7 @@ import { paymentStatus } from "@/types/status";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { useBreadcrumb, createBreadcrumbs } from "@/hooks/useBreadcrumb";
 
 const tenantDetailsGrid = [
   {
@@ -65,6 +66,14 @@ const FormSchema = z.object({
 });
 
 const NotificationPage = () => {
+  useBreadcrumb({
+    items: createBreadcrumbs([
+      { name: "Properties", href: "/dashboard" },
+      { name: "Axel Home", href: "/dashboard/property/1" },
+      { name: "Send Notification", href: "#" },
+    ]),
+  });
+
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {

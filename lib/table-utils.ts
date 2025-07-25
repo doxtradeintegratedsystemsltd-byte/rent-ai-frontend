@@ -54,6 +54,19 @@ export const getLocationLabel = (
 };
 
 /**
+ * Get sort label specifically for sort/arrange by dropdowns
+ * @param items - Array of sort dropdown items
+ * @param selectedValue - The currently selected sort value
+ * @returns The label of the selected sort option or "Sort"
+ */
+export const getSortLabel = (
+  items: DropdownItem[],
+  selectedValue: string,
+): string => {
+  return getSelectedLabel(items, selectedValue, "Sort");
+};
+
+/**
  * Generic search filter function for table data
  * @param data - Array of data to filter
  * @param searchTerm - The search term to filter by

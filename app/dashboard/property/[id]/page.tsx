@@ -23,6 +23,7 @@ import AddTenantForm from "@/components/dashboard/property/add-tenant-form";
 import EditTenantForm from "@/components/dashboard/property/edit-tenant-form";
 import AddPaymentForm from "@/components/dashboard/property/add-payment-form";
 import { useRouter } from "next/navigation";
+import { useBreadcrumb, createBreadcrumbs } from "@/hooks/useBreadcrumb";
 
 const tenantDetailsGrid = [
   {
@@ -69,6 +70,13 @@ const PropertyPage = () => {
 
   const router = useRouter();
 
+  useBreadcrumb({
+    items: createBreadcrumbs([
+      { name: "Dashboard", href: "/dashboard" },
+      { name: "Axel Home", href: "#" },
+    ]),
+  });
+
   const tenant = true;
 
   const handleDeleteProperty = () => {
@@ -82,7 +90,6 @@ const PropertyPage = () => {
   };
 
   const id = 1;
-  const propertyId = 1;
 
   return (
     <>

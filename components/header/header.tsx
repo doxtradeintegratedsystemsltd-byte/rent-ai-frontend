@@ -17,19 +17,21 @@ import {
 import Profile from "../dashboard/profile/profile";
 import EditProfileForm from "../dashboard/profile/edit-profile-form";
 import Notifications from "../dashboard/notifications/notifications";
+import { useBreadcrumbs } from "@/contexts/breadcrumb-context";
 
 export function Header() {
   const [showEditForm, setShowEditForm] = useState(false);
+  const { breadcrumbs } = useBreadcrumbs();
 
   const pathname = usePathname();
 
-  // Generate breadcrumb items from pathname
-  const getBreadcrumbs = (path: string) => {
+  // Fallback breadcrumb generation for pages that don't set custom breadcrumbs
+  const getFallbackBreadcrumbs = (path: string) => {
     const segments = path.split("/").filter(Boolean);
-    const breadcrumbs = [];
+    const fallbackBreadcrumbs = [];
 
     // Always start with Dashboard
-    breadcrumbs.push({
+    fallbackBreadcrumbs.push({
       name: "Dashboard",
       href: "/dashboard",
       isLast: segments.length === 1 && segments[0] === "dashboard",
@@ -48,7 +50,7 @@ export function Header() {
           .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
           .join(" ");
 
-        breadcrumbs.push({
+        fallbackBreadcrumbs.push({
           name,
           href,
           isLast,
@@ -56,16 +58,18 @@ export function Header() {
       }
     }
 
-    return breadcrumbs;
+    return fallbackBreadcrumbs;
   };
 
-  const breadcrumbs = getBreadcrumbs(pathname);
+  // Use custom breadcrumbs if available, otherwise fall back to auto-generated ones
+  const displayBreadcrumbs =
+    breadcrumbs.length > 0 ? breadcrumbs : getFallbackBreadcrumbs(pathname);
 
   return (
     <header className="border-border bg-background sticky top-0 z-10 border-b px-8 py-4">
       <div className="flex items-center justify-between">
         <nav className="flex items-center space-x-2 text-sm">
-          {breadcrumbs.map((breadcrumb, index) => (
+          {displayBreadcrumbs.map((breadcrumb, index) => (
             <div key={breadcrumb.href} className="flex items-center">
               {breadcrumb.isLast ? (
                 <span className="text-foreground text-lg font-bold">
