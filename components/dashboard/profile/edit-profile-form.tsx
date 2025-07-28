@@ -15,6 +15,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Icon } from "@/components/ui/icon";
 
 const FormSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
@@ -92,27 +93,30 @@ const EditProfileForm = () => {
                     <FormItem>
                       <FormControl>
                         <div className="flex items-center gap-2">
-                          <Input
-                            key={fileInputKey}
-                            type="file"
-                            accept="image/*"
-                            className="flex-1 cursor-pointer py-2"
-                            placeholder="Select image to upload"
-                            onChange={(e) => {
-                              if (e.target.files && e.target.files[0]) {
-                                field.onChange(e.target.files[0]);
-                                handlePhotoChange(e.target.files[0]);
-                              }
-                            }}
-                          />
-                          <Button
-                            type="button"
-                            variant="outline"
-                            size="sm"
-                            className="shrink-0"
-                          >
-                            📤
-                          </Button>
+                          <div className="bg-muted w-full rounded-md border text-center">
+                            <input
+                              key={fileInputKey}
+                              type="file"
+                              accept="image/*"
+                              className="hidden"
+                              id="photo-upload"
+                              onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                  field.onChange(e.target.files[0]);
+                                  handlePhotoChange(e.target.files[0]);
+                                }
+                              }}
+                            />
+                            <label
+                              htmlFor="photo-upload"
+                              className="flex cursor-pointer items-center justify-between p-4"
+                            >
+                              <span className="text-muted-foreground text-sm font-medium">
+                                Select image to upload
+                              </span>
+                              <Icon icon="material-symbols:upload-rounded" />
+                            </label>
+                          </div>
                         </div>
                       </FormControl>
                       <p className="text-muted-foreground mt-1 text-xs">

@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
+import { Icon } from "@/components/ui/icon";
 
 const FormSchema = z.object({
   paymentDate: z.string().min(1, { message: "Payment date is required" }),
@@ -112,18 +113,30 @@ const AddPaymentForm = () => {
                 Bank transaction receipt
               </FormLabel>
               <FormControl>
-                <Input
-                  key={fileInputKey}
-                  type="file"
-                  accept="image/*"
-                  className="cursor-pointer py-2"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      field.onChange(e.target.files[0]);
-                      handleReceiptChange(e.target.files[0]);
-                    }
-                  }}
-                />
+                <div className="bg-muted rounded-md border text-center">
+                  <input
+                    key={fileInputKey}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    id="photo-upload"
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        field.onChange(e.target.files[0]);
+                        handleReceiptChange(e.target.files[0]);
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor="photo-upload"
+                    className="flex cursor-pointer items-center justify-between p-4"
+                  >
+                    <span className="text-muted-foreground text-sm font-medium">
+                      Select image to upload
+                    </span>
+                    <Icon icon="material-symbols:upload-rounded" />
+                  </label>
+                </div>
               </FormControl>
               <p className="text-muted-foreground mt-1 text-xs">
                 Image file size should be under 2MB.

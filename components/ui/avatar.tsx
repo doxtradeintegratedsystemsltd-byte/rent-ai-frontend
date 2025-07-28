@@ -6,6 +6,7 @@ export interface AvatarProps {
   src?: string;
   alt?: string;
   letter?: string;
+  name?: string;
   size?: "sm" | "md" | "lg" | "xl";
   className?: string;
 }
@@ -21,16 +22,29 @@ export const Avatar: React.FC<AvatarProps> = ({
   src,
   alt = "Avatar",
   letter,
+  name,
   size = "md",
   className,
 }) => {
   const baseClasses =
-    "overflow-hidden rounded-full bg-gray-300 flex items-center justify-center";
+    "overflow-hidden rounded-full text-sm bg-secondary-foreground flex items-center justify-center";
   const sizeClass = sizeClasses[size];
 
-  return (
-    <div className={cn(baseClasses, sizeClass, className)}>
-      {src ? (
+  // Function to generate initials from a name
+  const getInitials = (fullName: string): string => {
+    const names = fullName.trim().split(/\s+/);
+    if (names.length === 1) {
+      return names[0].charAt(0).toUpperCase();
+    }
+    return (
+      names[0].charAt(0) + names[names.length - 1].charAt(0)
+    ).toUpperCase();
+  };
+
+  // Determine what to display
+  const getDisplayContent = () => {
+    if (src) {
+      return (
         <Image
           src={src}
           alt={alt}
@@ -42,11 +56,24 @@ export const Avatar: React.FC<AvatarProps> = ({
             size === "sm" ? 32 : size === "md" ? 40 : size === "lg" ? 48 : 64
           }
         />
-      ) : (
-        <span className="font-medium text-gray-700 uppercase">
-          {letter ? letter.charAt(0) : "?"}
-        </span>
-      )}
+      );
+    }
+
+    let displayText = "?";
+    if (name) {
+      displayText = getInitials(name);
+    } else if (letter) {
+      displayText = letter.charAt(0).toUpperCase();
+    }
+
+    return (
+      <span className="text-muted font-bold uppercase">{displayText}</span>
+    );
+  };
+
+  return (
+    <div className={cn(baseClasses, sizeClass, className)}>
+      {getDisplayContent()}
     </div>
   );
 };

@@ -308,11 +308,7 @@ const TenantsTable = () => {
                 <TableRow key={row.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Avatar
-                        src="/images/avatar.png"
-                        alt="Tenant Avatar"
-                        size="sm"
-                      />
+                      <Avatar name={row.tenant} alt="Tenant Avatar" size="sm" />
                       {row.tenant}
                     </div>
                   </TableCell>
