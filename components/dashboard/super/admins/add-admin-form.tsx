@@ -151,15 +151,19 @@ const AddAdminForm = ({
                         className="flex cursor-pointer items-center justify-between p-4"
                       >
                         <span className="text-muted-foreground text-sm font-medium">
-                          Select image to upload
+                          {photoPreview
+                            ? form.getValues("displayPhoto")?.name ||
+                              "Change image"
+                            : "Select image to upload"}
                         </span>
                         <Icon icon="material-symbols:upload-rounded" />
                       </label>
                     </div>
                   ) : (
                     <div className="mt-4 flex items-center justify-between">
-                      <p className="text-muted-foreground mb-2 text-sm">
-                        Image preview
+                      <p className="text-muted-foreground mt-1 text-xs">
+                        {!photoPreview &&
+                          "Image file size should be under 2MB."}
                       </p>
                       <div className="">
                         <div className="border-border relative h-28 w-28 overflow-hidden rounded-lg border">

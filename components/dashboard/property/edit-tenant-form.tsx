@@ -341,11 +341,11 @@ const EditTenantForm = ({
                     </div>
                   </FormControl>
                   <p className="text-muted-foreground mt-1 text-xs">
-                    Image file size should be under 2MB.
+                    {!receiptPreview && "Image file size should be under 2MB."}
                   </p>
 
                   {receiptPreview && (
-                    <div className="mt-4 flex items-center justify-between">
+                    <div className="mt-2 flex items-center justify-between">
                       <p className="text-muted-foreground mb-2 text-sm">
                         Receipt preview
                       </p>

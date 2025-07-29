@@ -139,7 +139,7 @@ const AddPaymentForm = () => {
                 </div>
               </FormControl>
               <p className="text-muted-foreground mt-1 text-xs">
-                Image file size should be under 2MB.
+                {!receiptPreview && "Image file size should be under 2MB."}
               </p>
 
               {receiptPreview && (

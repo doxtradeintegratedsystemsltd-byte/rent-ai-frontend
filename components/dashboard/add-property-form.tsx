@@ -185,18 +185,21 @@ const AddPropertyForm = () => {
                     className="flex cursor-pointer items-center justify-between p-4"
                   >
                     <span className="text-muted-foreground text-sm font-medium">
-                      Select image to upload
+                      {imagePreview
+                        ? form.getValues("propertyImage")?.name ||
+                          "Change image"
+                        : "Select image to upload"}
                     </span>
                     <Icon icon="material-symbols:upload-rounded" />
                   </label>
                 </div>
               </FormControl>
               <p className="text-muted-foreground mt-1 text-xs">
-                Image file size should be under 2MB.
+                {!imagePreview && "Image file size should be under 2MB."}
               </p>
 
               {imagePreview && (
-                <div className="mt-4 flex items-center justify-between">
+                <div className="mt-2 flex items-center justify-between">
                   <p className="text-muted-foreground mb-2 text-sm">
                     Image preview
                   </p>
