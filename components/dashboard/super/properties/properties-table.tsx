@@ -294,7 +294,7 @@ const PropertiesTable = () => {
       <div className="h-[585px] overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-border">
               {tableHead.map((head, index) => (
                 <TableHead key={index} className={head.className}>
                   {head.label}
@@ -305,7 +305,7 @@ const PropertiesTable = () => {
           <TableBody>
             {currentData && currentData.length > 0 ? (
               currentData.map((row, index) => (
-                <TableRow key={row.id}>
+                <TableRow key={row.id} className="bg-background">
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar

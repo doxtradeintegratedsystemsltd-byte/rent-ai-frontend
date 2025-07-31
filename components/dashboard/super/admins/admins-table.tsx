@@ -16,7 +16,7 @@ import Pagination from "../../../ui/pagination";
 import { useState, useMemo } from "react";
 import { Button } from "../../../ui/button";
 import { Icon } from "@/components/ui/icon";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import {
   getFilterLabel,
   getLocationLabel,
@@ -138,7 +138,6 @@ const tableData = [
 ];
 
 const AdminsTable = () => {
-  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
@@ -169,10 +168,6 @@ const AdminsTable = () => {
   const handleSortChange = (value: string) => {
     setSelectedSort(value);
     setCurrentPage(1);
-  };
-
-  const navigateToAdmin = (adminId: number) => {
-    router.push(`/dashboard/super/admin/${adminId}`);
   };
 
   return (
@@ -228,7 +223,7 @@ const AdminsTable = () => {
       <div className="h-[585px] overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>
+            <TableRow className="bg-border">
               {tableHead.map((head, index) => (
                 <TableHead key={index} className={head.className}>
                   {head.label}
@@ -254,13 +249,13 @@ const AdminsTable = () => {
                   <TableCell>{row.tenants}</TableCell>
                   <TableCell>{row.rentsProcessed}</TableCell>
                   <TableCell className="text-muted-foreground w-6 text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => navigateToAdmin(row.id)}
-                    >
-                      <Icon icon="material-symbols:keyboard-arrow-right" />
-                    </Button>
+                    <Link href={`/dashboard/super/admin/${row.id}`}>
+                      <Button variant="ghost" size="icon" asChild>
+                        <span>
+                          <Icon icon="material-symbols:keyboard-arrow-right" />
+                        </span>
+                      </Button>
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))

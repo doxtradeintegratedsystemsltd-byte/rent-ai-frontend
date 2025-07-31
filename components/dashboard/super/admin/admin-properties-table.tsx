@@ -11,18 +11,28 @@ import {
   TableNoData,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Sheet,
+  SheetClose,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { getPaymentStatus } from "@/lib/status-util";
 import Avatar from "../../../ui/avatar";
 import Pagination from "../../../ui/pagination";
 import { useState, useMemo } from "react";
 import { Button } from "../../../ui/button";
 import { Icon } from "@/components/ui/icon";
-import { useRouter } from "next/navigation";
 import {
   getFilterLabel,
+  getLocationLabel,
   filterTableData,
   getPaginatedData,
 } from "@/lib/table-utils";
+import AddPropertyForm from "../properties/add-property-form";
+import Link from "next/link";
 
 const filterItems = [
   { type: "label" as const, label: "Show" },
@@ -30,8 +40,8 @@ const filterItems = [
     label: "All",
     value: "all",
   },
-  { label: "Active", value: "active" },
-  { label: "Inactive", value: "inactive" },
+  { label: "Occupied", value: "occupied" },
+  { label: "Unoccupied", value: "unoccupied" },
   {
     label: "Rent Paid",
     value: "rentPaid",
@@ -42,35 +52,27 @@ const filterItems = [
   },
 ];
 
-const sortItems = [
-  { type: "label" as const, label: "Sort By" },
+const locationItems = [
+  { type: "label" as const, label: "Arrange By" },
   {
-    label: "Tenant Name",
-    value: "tenant",
+    label: "Locations",
+    value: "all",
   },
   {
-    label: "Property",
-    value: "property",
+    label: "Downtown",
+    value: "downtown",
   },
   {
-    label: "Location",
-    value: "location",
+    label: "Uptown",
+    value: "uptown",
   },
-  {
-    label: "Admin",
-    value: "admin",
-  },
-  {
-    label: "Rent Status",
-    value: "rentStatus",
-  },
+  { label: "Suburbs", value: "suburbs" },
 ];
 
 const tableHead = [
-  { label: "Tenant" },
   { label: "Property" },
   { label: "Location" },
-  { label: "Admin" },
+  { label: "Tenant" },
   { label: "Rent Status" },
   { label: "", className: "text-right" },
 ];
@@ -78,131 +80,104 @@ const tableHead = [
 const tableData = [
   {
     id: 1,
-    tenant: "John Doe",
     property: "Axel Home",
     location: "Gwarimpa, Abuja",
-    admin: "Sarah Johnson",
+    tenant: "John Doe",
     rentStatus: "paid" as const,
   },
   {
     id: 2,
-    tenant: "Jane Smith",
     property: "Dominoes House",
     location: "Wuse, Abuja",
-    admin: "Michael Chen",
+    tenant: "Jane Smith",
     rentStatus: "nearDue" as const,
   },
   {
     id: 3,
-    tenant: "Bob Johnson",
     property: "Green Acres",
     location: "Lekki, Lagos",
-    admin: "Lisa Rodriguez",
+    tenant: "Bob Johnson",
     rentStatus: "due" as const,
   },
   {
     id: 4,
-    tenant: "Alice Brown",
     property: "Sunny Villa",
     location: "Victoria Island, Lagos",
-    admin: "David Thompson",
+    tenant: "Alice Brown",
     rentStatus: "overdue" as const,
   },
   {
     id: 5,
-    tenant: "Charlie Davis",
     property: "Ocean View",
     location: "Ikoyi, Lagos",
-    admin: "Emma Wilson",
+    tenant: "Charlie Davis",
     rentStatus: "paid" as const,
   },
   {
     id: 6,
-    tenant: "David Wilson",
     property: "Castle Castle",
     location: "Ikeja, Lagos",
-    admin: "James Martinez",
+    tenant: "David Wilson",
     rentStatus: "nearDue" as const,
   },
   {
     id: 7,
-    tenant: "Eva Martinez",
     property: "Bull House",
     location: "Asokoro, Abuja",
-    admin: "Rachel Green",
+    tenant: "Eva Martinez",
     rentStatus: "paid" as const,
   },
   {
     id: 8,
-    tenant: "Frank Miller",
     property: "Sky Tower",
     location: "Maitama, Abuja",
-    admin: "Kevin Lee",
+    tenant: "Frank Miller",
     rentStatus: "overdue" as const,
   },
   {
     id: 9,
-    tenant: "Grace Taylor",
     property: "Garden Heights",
     location: "Ajah, Lagos",
-    admin: "Amanda Clark",
+    tenant: "Grace Taylor",
     rentStatus: "due" as const,
   },
   {
     id: 10,
-    tenant: "Henry Anderson",
     property: "Royal Residence",
     location: "Banana Island, Lagos",
-    admin: "Robert Davis",
+    tenant: "Henry Anderson",
     rentStatus: "paid" as const,
   },
   {
     id: 11,
-    tenant: "Ivy Thompson",
     property: "Modern Apartment",
     location: "Garki, Abuja",
-    admin: "Sophia Brown",
+    tenant: "Ivy Thompson",
     rentStatus: "nearDue" as const,
   },
   {
     id: 12,
-    tenant: "Jack Robinson",
     property: "Luxury Penthouse",
     location: "Oniru, Lagos",
-    admin: "Mark Taylor",
+    tenant: "Jack Robinson",
     rentStatus: "overdue" as const,
   },
 ];
 
-const TenantsTable = () => {
-  const router = useRouter();
+const AdminPropertiesTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
-  const [selectedSort, setSelectedSort] = useState("tenant");
+  const [selectedLocation, setSelectedLocation] = useState("all");
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => {
-    let data = filterTableData(tableData, searchTerm, [
-      "tenant",
+    return filterTableData(tableData, searchTerm, [
       "property",
       "location",
-      "admin",
+      "tenant",
     ]);
-
-    // Sort the data
-    data.sort((a, b) => {
-      const aValue = a[selectedSort as keyof typeof a];
-      const bValue = b[selectedSort as keyof typeof b];
-
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return aValue.localeCompare(bValue);
-      }
-      return 0;
-    });
-
-    return data;
-  }, [searchTerm, selectedSort]);
+  }, [searchTerm]);
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const currentData = getPaginatedData(filteredData, currentPage, itemsPerPage);
@@ -221,31 +196,49 @@ const TenantsTable = () => {
     setCurrentPage(1);
   };
 
-  const handleSortChange = (value: string) => {
-    setSelectedSort(value);
+  const handleLocationChange = (value: string) => {
+    setSelectedLocation(value);
     setCurrentPage(1);
   };
-
-  const navigateToTenant = (tenantId: number) => {
-    router.push(`/dashboard/tenant/${tenantId}`);
-  };
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <p className="text-muted-foreground text-sm uppercase">Tenants</p>
-          <Dropdown
-            trigger={{
-              label: getFilterLabel(filterItems, selectedFilter),
-              icon: "material-symbols:filter-list-rounded",
-              arrowIcon: "material-symbols:keyboard-arrow-down-rounded",
-            }}
-            items={filterItems}
-            selectedValue={selectedFilter}
-            onItemSelect={handleFilterChange}
-            useRadioGroup={true}
-          />
+          <p className="text-muted-foreground text-sm uppercase">Properties</p>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button size="sm" className="uppercase">
+                <Icon
+                  icon="material-symbols:add-2-rounded"
+                  className="mr-2"
+                  size="sm"
+                />
+                Add Property
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              className="w-[600px] max-w-[600px] min-w-[600px] [&>button]:hidden"
+              style={{ width: "600px" }}
+            >
+              <SheetHeader>
+                <SheetClose asChild className="mb-8 text-left">
+                  <Button variant="ghost" className="w-fit p-0">
+                    <Icon icon="material-symbols:arrow-back" className="mr-2" />
+                    Go Back
+                  </Button>
+                </SheetClose>
+                <SheetTitle className="text-lg font-bold">
+                  <Icon
+                    icon="material-symbols:add-home-outline-rounded"
+                    className="mr-2"
+                    size="lg"
+                  />
+                  Add Property
+                </SheetTitle>
+              </SheetHeader>
+              <AddPropertyForm />
+            </SheetContent>
+          </Sheet>
         </div>
         <div className="flex gap-2">
           <SearchInput
@@ -256,14 +249,26 @@ const TenantsTable = () => {
           />
           <Dropdown
             trigger={{
-              label: getFilterLabel(sortItems, selectedSort),
+              label: getFilterLabel(filterItems, selectedFilter),
+              icon: "material-symbols:filter-list-rounded",
+              arrowIcon: "material-symbols:keyboard-arrow-down-rounded",
+              className: "bg-background",
+            }}
+            items={filterItems}
+            selectedValue={selectedFilter}
+            onItemSelect={handleFilterChange}
+            useRadioGroup={true}
+          />
+          <Dropdown
+            trigger={{
+              label: getLocationLabel(locationItems, selectedLocation),
               icon: "material-symbols:format-line-spacing-rounded",
               arrowIcon: "material-symbols:keyboard-arrow-up-rounded",
               className: "bg-background",
             }}
-            items={sortItems}
-            selectedValue={selectedSort}
-            onItemSelect={handleSortChange}
+            items={locationItems}
+            selectedValue={selectedLocation}
+            onItemSelect={handleLocationChange}
             useRadioGroup={true}
             align="end"
           />
@@ -308,34 +313,37 @@ const TenantsTable = () => {
                 <TableRow key={row.id} className="bg-background">
                   <TableCell>
                     <div className="flex items-center gap-2">
-                      <Avatar name={row.tenant} alt="Tenant Avatar" size="sm" />
-                      {row.tenant}
+                      <Avatar
+                        src="/images/property-avatar.png"
+                        alt="Property Avatar"
+                        size="sm"
+                      />
+                      {row.property}
                     </div>
                   </TableCell>
-                  <TableCell>{row.property}</TableCell>
                   <TableCell>{row.location}</TableCell>
-                  <TableCell>{row.admin}</TableCell>
+                  <TableCell>{row.tenant}</TableCell>
                   <TableCell>
                     <p className={getPaymentStatus(row.rentStatus)}>
                       {row.rentStatus}
                     </p>
                   </TableCell>
                   <TableCell className="text-muted-foreground w-6 text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => navigateToTenant(row.id)}
-                    >
-                      <Icon icon="material-symbols:keyboard-arrow-right" />
-                    </Button>
+                    <Link href={`/dashboard/super/property/${row.id}`}>
+                      <Button variant="ghost" size="icon" asChild>
+                        <span>
+                          <Icon icon="material-symbols:keyboard-arrow-right" />
+                        </span>
+                      </Button>
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableNoData className="flex flex-col" colSpan={tableHead.length}>
-                <p>No tenants found.</p>
+                <p>No property added.</p>
                 <p>
-                  Click <span className="font-bold">"Add Tenant"</span> to get
+                  Click <span className="font-bold">“Add Property”</span> to get
                   started.
                 </p>
               </TableNoData>
@@ -357,4 +365,4 @@ const TenantsTable = () => {
   );
 };
 
-export default TenantsTable;
+export default AdminPropertiesTable;

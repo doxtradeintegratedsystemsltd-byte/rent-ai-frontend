@@ -13,7 +13,7 @@ const StatCard: React.FC<StatCardProps> = ({
   subtitle = "-",
 }) => {
   return (
-    <Card className="w-full">
+    <Card className="bg-background w-full">
       <p className="text-muted-foreground text-sm font-medium">{title}</p>
       <p className="text-2xl font-bold" style={{ lineHeight: "40px" }}>
         {value}
