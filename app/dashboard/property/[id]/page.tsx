@@ -216,7 +216,7 @@ const PropertyPage = () => {
                 </span>
                 By
                 <span className="text-foreground mx-1 text-sm font-bold capitalize">
-                  Creator's name
+                  Creator&apos;s name
                 </span>
                 On
                 <span className="text-foreground ml-1 text-sm font-bold capitalize">

@@ -183,7 +183,7 @@ const PropertiesTable = () => {
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => {
-    let data = filterTableData(tableData, searchTerm, [
+    const data = filterTableData(tableData, searchTerm, [
       "property",
       "location",
       "admin",
@@ -274,7 +274,7 @@ const PropertiesTable = () => {
           <p className="text-muted-foreground text-xs uppercase">
             Showing{" "}
             <span className="text-foreground font-medium capitalize">
-              Search results for "{searchTerm}"
+              Search results for &quot;{searchTerm}&quot;
             </span>
           </p>
           <Button
@@ -304,7 +304,7 @@ const PropertiesTable = () => {
           </TableHeader>
           <TableBody>
             {currentData && currentData.length > 0 ? (
-              currentData.map((row, index) => (
+              currentData.map((row) => (
                 <TableRow key={row.id} className="bg-background">
                   <TableCell>
                     <div className="flex items-center gap-2">

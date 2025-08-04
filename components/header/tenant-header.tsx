@@ -1,11 +1,9 @@
 "use client";
 
-import { useState } from "react";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "../ui/button";
-import { Avatar } from "../ui/avatar";
 import {
   Sheet,
   SheetClose,
@@ -14,13 +12,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import Profile from "../dashboard/profile/profile";
-import EditProfileForm from "../dashboard/profile/edit-profile-form";
 import Notifications from "../dashboard/notifications/notifications";
 import { useBreadcrumbs } from "@/contexts/breadcrumb-context";
+import Logo from "../ui/logo";
 
-export function Header() {
-  const [showEditForm, setShowEditForm] = useState(false);
+export function TenantHeader() {
   const { breadcrumbs } = useBreadcrumbs();
 
   const pathname = usePathname();
@@ -66,8 +62,9 @@ export function Header() {
     breadcrumbs.length > 0 ? breadcrumbs : getFallbackBreadcrumbs(pathname);
 
   return (
-    <header className="border-border bg-background sticky top-0 z-10 border-b px-8 py-4">
-      <div className="flex items-center justify-between">
+    <header className="border-border bg-background sticky top-0 z-10 flex border-b px-8 py-4">
+      <Logo dark className="mr-8" />
+      <div className="flex w-full items-center justify-between">
         <nav className="flex items-center space-x-2 text-sm">
           {displayBreadcrumbs.map((breadcrumb) => (
             <div key={breadcrumb.href} className="flex items-center">
@@ -91,70 +88,12 @@ export function Header() {
         </nav>
 
         <div className="flex items-center space-x-4">
+          <p className="text-muted-foreground border-accent-foreground hidden border-l-2 py-1 pl-2 text-xs font-medium md:block">
+            2:10P.M. • Tuesday, February 5, 2025
+          </p>
+
           <Sheet>
-            <SheetTrigger asChild>
-              <div className="flex cursor-pointer items-center space-x-2">
-                <Avatar src="/images/avatar.png" alt="Admin Avatar" size="md" />
-                <div className="flex flex-col">
-                  <span className="text-foreground text-xs font-bold">
-                    Bala Joseph
-                  </span>
-                  <span className="text-muted-foreground text-[10px] font-medium">
-                    ADMIN
-                  </span>
-                </div>
-              </div>
-            </SheetTrigger>
-            <SheetContent
-              className="w-[600px] max-w-[600px] min-w-[600px] [&>button]:hidden"
-              style={{ width: "600px" }}
-            >
-              <SheetHeader>
-                <SheetClose asChild className="mb-8 text-left">
-                  <Button
-                    variant="ghost"
-                    className="w-fit p-0"
-                    onClick={() => setShowEditForm(false)}
-                  >
-                    <Icon icon="material-symbols:arrow-back" className="mr-2" />
-                    Go Back
-                  </Button>
-                </SheetClose>
-                <div className="flex items-center">
-                  <SheetTitle className="text-lg font-bold">
-                    {showEditForm ? (
-                      <>Edit Profile</>
-                    ) : (
-                      <>
-                        <Icon
-                          icon="material-symbols:account-circle-outline"
-                          className="mr-2"
-                        />
-                        Profile
-                      </>
-                    )}
-                  </SheetTitle>
-                  {!showEditForm && (
-                    <Button
-                      className="ml-auto uppercase"
-                      size="sm"
-                      onClick={() => setShowEditForm(true)}
-                    >
-                      <Icon
-                        icon="material-symbols:edit-outline-rounded"
-                        className="mr-2"
-                        size="sm"
-                      />
-                      Edit Details
-                    </Button>
-                  )}
-                </div>
-              </SheetHeader>
-              {showEditForm ? <EditProfileForm /> : <Profile />}
-            </SheetContent>
-          </Sheet>
-          <Sheet>
-            <SheetTrigger asChild>
+            <SheetTrigger asChild className="md:hidden">
               <Button variant="icon" size={"icon"}>
                 <Icon
                   icon="material-symbols:notifications"
@@ -162,10 +101,7 @@ export function Header() {
                 />
               </Button>
             </SheetTrigger>
-            <SheetContent
-              className="w-[600px] max-w-[600px] min-w-[600px] [&>button]:hidden"
-              style={{ width: "600px" }}
-            >
+            <SheetContent className="w-full max-w-full min-w-full [&>button]:hidden">
               <SheetHeader>
                 <SheetClose asChild className="mb-8 text-left">
                   <Button variant="ghost" className="w-fit p-0">

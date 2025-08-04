@@ -30,7 +30,7 @@ export function ForgotPasswordForm() {
     },
   });
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
+  function onSubmit() {
     router.push("/update-password");
   }
 

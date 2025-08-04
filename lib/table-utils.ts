@@ -73,7 +73,7 @@ export const getSortLabel = (
  * @param searchFields - Array of field names to search in
  * @returns Filtered array of data
  */
-export const filterTableData = <T extends Record<string, any>>(
+export const filterTableData = <T extends Record<string, unknown>>(
   data: T[],
   searchTerm: string,
   searchFields: (keyof T)[],

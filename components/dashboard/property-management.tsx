@@ -12,7 +12,6 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import AddPropertyForm from "./add-property-form";
-import { GoBackButton } from "../ui/go-back-button";
 
 const PropertyManagement = () => {
   return (

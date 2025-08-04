@@ -126,7 +126,6 @@ const tableData = [
 const DueRentsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
   const itemsPerPage = 10;
 
@@ -148,11 +147,6 @@ const DueRentsTable = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-  };
-
-  const handleFilterChange = (value: string) => {
-    setSelectedFilter(value);
-    setCurrentPage(1);
   };
 
   const handleLocationChange = (value: string) => {
@@ -192,7 +186,7 @@ const DueRentsTable = () => {
           <p className="text-muted-foreground text-xs uppercase">
             Showing{" "}
             <span className="text-foreground font-medium capitalize">
-              Search results for "{searchTerm}"
+              Search results for &quot;{searchTerm}&quot;
             </span>
           </p>
           <Button

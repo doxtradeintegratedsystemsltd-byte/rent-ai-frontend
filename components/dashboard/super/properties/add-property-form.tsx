@@ -17,6 +17,7 @@ import { Dropdown } from "@/components/ui/dropdown";
 import { formatDropdownItems } from "@/lib/formatters";
 import { useState } from "react";
 import { Icon } from "../../../ui/icon";
+import Image from "next/image";
 
 const FormSchema = z.object({
   propertyName: z.string().min(1, { message: "Property name is required" }),
@@ -67,7 +68,7 @@ const AddPropertyForm = () => {
 
   const removeImage = () => {
     setImagePreview(null);
-    form.setValue("propertyImage", undefined as any);
+    form.resetField("propertyImage");
     setFileInputKey((prev) => prev + 1); // Force re-render of input to clear file
   };
 
@@ -195,7 +196,9 @@ const AddPropertyForm = () => {
                   </p>
                   <div className="">
                     <div className="border-border relative h-20 w-28 overflow-hidden rounded-lg border">
-                      <img
+                      <Image
+                        width={112}
+                        height={80}
                         src={imagePreview}
                         alt="Property preview"
                         className="h-full w-full object-cover"

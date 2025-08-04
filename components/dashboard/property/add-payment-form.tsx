@@ -16,6 +16,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Icon } from "@/components/ui/icon";
+import Image from "next/image";
 
 const FormSchema = z.object({
   paymentDate: z.string().min(1, { message: "Payment date is required" }),
@@ -53,7 +54,7 @@ const AddPaymentForm = () => {
 
   const removeReceipt = () => {
     setReceiptPreview(null);
-    form.setValue("transactionReceipt", undefined as any);
+    form.resetField("transactionReceipt");
     setFileInputKey((prev) => prev + 1); // Force re-render of input to clear file
   };
 
@@ -149,7 +150,9 @@ const AddPaymentForm = () => {
                   </p>
                   <div className="">
                     <div className="border-border relative h-28 w-28 overflow-hidden rounded-lg border">
-                      <img
+                      <Image
+                        width={112}
+                        height={80}
                         src={receiptPreview}
                         alt="Receipt preview"
                         className="h-full w-full object-cover"

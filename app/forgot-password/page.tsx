@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 import { ForgotPasswordForm } from "@/components/auth/forgot-password-form";
 import Logo from "@/components/ui/logo";
 

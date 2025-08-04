@@ -18,8 +18,6 @@ import { Button } from "../../../ui/button";
 import { Icon } from "@/components/ui/icon";
 import Link from "next/link";
 import {
-  getFilterLabel,
-  getLocationLabel,
   getSortLabel,
   filterTableData,
   getPaginatedData,
@@ -140,7 +138,6 @@ const tableData = [
 const AdminsTable = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("all");
   const [selectedSort, setSelectedSort] = useState("all");
   const itemsPerPage = 10;
 
@@ -158,11 +155,6 @@ const AdminsTable = () => {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-  };
-
-  const handleFilterChange = (value: string) => {
-    setSelectedFilter(value);
-    setCurrentPage(1);
   };
 
   const handleSortChange = (value: string) => {
@@ -203,7 +195,7 @@ const AdminsTable = () => {
           <p className="text-muted-foreground text-xs uppercase">
             Showing{" "}
             <span className="text-foreground font-medium capitalize">
-              Search results for "{searchTerm}"
+              Search results for &quot;{searchTerm}&quot;
             </span>
           </p>
           <Button
@@ -233,7 +225,7 @@ const AdminsTable = () => {
           </TableHeader>
           <TableBody>
             {currentData && currentData.length > 0 ? (
-              currentData.map((row, index) => (
+              currentData.map((row) => (
                 <TableRow key={row.id} className="bg-background">
                   <TableCell>
                     <div className="flex items-center gap-2">

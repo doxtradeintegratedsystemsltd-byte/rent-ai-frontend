@@ -3,7 +3,7 @@ import SuperDashboardStats from "@/components/dashboard/super/super-dashboard-st
 import SuperTabs from "@/components/dashboard/super/super-tabs";
 import { useBreadcrumb } from "@/hooks/useBreadcrumb";
 
-const page = () => {
+const SuperDashboardPage = () => {
   useBreadcrumb({
     items: [{ name: "Dashboard", href: "/dashboard/super" }],
   });
@@ -16,4 +16,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default SuperDashboardPage;

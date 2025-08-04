@@ -18,6 +18,7 @@ import { Dropdown } from "@/components/ui/dropdown";
 import { formatDropdownItems } from "@/lib/formatters";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Icon } from "@/components/ui/icon";
+import Image from "next/image";
 
 const FormSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
@@ -93,7 +94,7 @@ const AddTenantForm = ({
 
   const removeReceipt = () => {
     setReceiptPreview(null);
-    form.setValue("transactionReceipt", undefined as any);
+    form.resetField("transactionReceipt");
     setFileInputKey((prev) => prev + 1); // Force re-render of input to clear file
   };
 
@@ -196,7 +197,10 @@ const AddTenantForm = ({
                   <FormControl>
                     <DatePicker
                       date={selectedStartDate}
-                      onDateSelect={setSelectedStartDate}
+                      onDateSelect={(date) => {
+                        setSelectedStartDate(date);
+                        field.onChange(date?.toISOString() || "");
+                      }}
                       placeholder="Select start date"
                       className="w-full text-sm"
                     />
@@ -216,7 +220,10 @@ const AddTenantForm = ({
                   <FormControl>
                     <DatePicker
                       date={selectedEndDate}
-                      onDateSelect={setSelectedEndDate}
+                      onDateSelect={(date) => {
+                        setSelectedEndDate(date);
+                        field.onChange(date?.toISOString() || "");
+                      }}
                       placeholder="Select end date"
                       className="w-full text-sm"
                     />
@@ -281,7 +288,10 @@ const AddTenantForm = ({
                     <FormControl>
                       <DatePicker
                         date={selectedPaymentDate}
-                        onDateSelect={setSelectedPaymentDate}
+                        onDateSelect={(date) => {
+                          setSelectedPaymentDate(date);
+                          field.onChange(date?.toISOString() || "");
+                        }}
                         placeholder="Select payment date"
                         className="w-full text-sm"
                       />
@@ -351,7 +361,9 @@ const AddTenantForm = ({
                       </p>
                       <div className="">
                         <div className="border-border relative h-28 w-28 overflow-hidden rounded-lg border">
-                          <img
+                          <Image
+                            width={112}
+                            height={80}
                             src={receiptPreview}
                             alt="Receipt preview"
                             className="h-full w-full object-cover"

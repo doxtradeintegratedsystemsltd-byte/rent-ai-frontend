@@ -279,7 +279,7 @@ const AdminPropertiesTable = () => {
           <p className="text-muted-foreground text-xs uppercase">
             Showing{" "}
             <span className="text-foreground font-medium capitalize">
-              Search results for "{searchTerm}"
+              Search results for &quot;{searchTerm}&quot;
             </span>
           </p>
           <Button
@@ -309,7 +309,7 @@ const AdminPropertiesTable = () => {
           </TableHeader>
           <TableBody>
             {currentData && currentData.length > 0 ? (
-              currentData.map((row, index) => (
+              currentData.map((row) => (
                 <TableRow key={row.id} className="bg-background">
                   <TableCell>
                     <div className="flex items-center gap-2">

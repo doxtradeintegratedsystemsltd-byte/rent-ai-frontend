@@ -15,6 +15,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Icon } from "@/components/ui/icon";
+import Image from "next/image";
 
 const FormSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
@@ -45,7 +46,7 @@ const AddAdminForm = ({
 
   const onSubmit = (data: z.infer<typeof FormSchema>) => {
     console.log("Form submitted with data:", data);
-    setIsSubmitted && setIsSubmitted(true);
+    setIsSubmitted?.(true);
   };
 
   const handlePhotoChange = (file: File | null) => {
@@ -62,7 +63,7 @@ const AddAdminForm = ({
 
   const removePhoto = () => {
     setPhotoPreview(null);
-    form.setValue("displayPhoto", undefined as any);
+    form.resetField("displayPhoto");
     setFileInputKey((prev) => prev + 1); // Force re-render of input to clear file
   };
 
@@ -167,10 +168,12 @@ const AddAdminForm = ({
                       </p>
                       <div className="">
                         <div className="border-border relative h-28 w-28 overflow-hidden rounded-lg border">
-                          <img
+                          <Image
                             src={photoPreview}
                             alt="Image preview"
                             className="h-full w-full object-cover"
+                            width={112}
+                            height={80}
                           />
                         </div>
                         <Button

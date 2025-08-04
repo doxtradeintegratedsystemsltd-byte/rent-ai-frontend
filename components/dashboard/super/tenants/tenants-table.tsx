@@ -183,7 +183,7 @@ const TenantsTable = () => {
   const itemsPerPage = 10;
 
   const filteredData = useMemo(() => {
-    let data = filterTableData(tableData, searchTerm, [
+    const data = filterTableData(tableData, searchTerm, [
       "tenant",
       "property",
       "location",
@@ -274,7 +274,7 @@ const TenantsTable = () => {
           <p className="text-muted-foreground text-xs uppercase">
             Showing{" "}
             <span className="text-foreground font-medium capitalize">
-              Search results for "{searchTerm}"
+              Search results for &quot;{searchTerm}&quot;
             </span>
           </p>
           <Button
@@ -304,7 +304,7 @@ const TenantsTable = () => {
           </TableHeader>
           <TableBody>
             {currentData && currentData.length > 0 ? (
-              currentData.map((row, index) => (
+              currentData.map((row) => (
                 <TableRow key={row.id} className="bg-background">
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -335,8 +335,9 @@ const TenantsTable = () => {
               <TableNoData className="flex flex-col" colSpan={tableHead.length}>
                 <p>No tenants found.</p>
                 <p>
-                  Click <span className="font-bold">"Add Tenant"</span> to get
-                  started.
+                  Click{" "}
+                  <span className="font-bold">&quot;Add Tenant&quot;</span> to
+                  get started.
                 </p>
               </TableNoData>
             )}

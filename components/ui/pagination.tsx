@@ -35,40 +35,6 @@ export const Pagination: React.FC<PaginationProps> = ({
     }
   };
 
-  const getPageNumbers = () => {
-    const pages = [];
-    const showEllipsis = totalPages > 7;
-
-    if (!showEllipsis) {
-      // Show all pages if 7 or fewer
-      for (let i = 1; i <= totalPages; i++) {
-        pages.push(i);
-      }
-    } else {
-      // Show ellipsis logic
-      if (currentPage <= 3) {
-        // Show first 3 pages, ellipsis, last page
-        pages.push(1, 2, 3, "ellipsis", totalPages);
-      } else if (currentPage >= totalPages - 2) {
-        // Show first page, ellipsis, last 3 pages
-        pages.push(1, "ellipsis", totalPages - 2, totalPages - 1, totalPages);
-      } else {
-        // Show first page, ellipsis, current-1, current, current+1, ellipsis, last page
-        pages.push(
-          1,
-          "ellipsis",
-          currentPage - 1,
-          currentPage,
-          currentPage + 1,
-          "ellipsis",
-          totalPages,
-        );
-      }
-    }
-
-    return pages;
-  };
-
   if (totalPages <= 1) {
     return null;
   }

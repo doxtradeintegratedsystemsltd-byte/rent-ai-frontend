@@ -1,5 +1,4 @@
 import React from "react";
-import Image from "next/image";
 import { UpdatePasswordForm } from "@/components/auth/update-password-form";
 import Logo from "@/components/ui/logo";
 

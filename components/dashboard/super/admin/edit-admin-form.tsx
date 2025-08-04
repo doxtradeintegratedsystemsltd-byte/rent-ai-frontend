@@ -38,7 +38,6 @@ const EditAdminForm = () => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(
     userData.displayPhoto,
   );
-  const [fileInputKey, setFileInputKey] = useState(0);
 
   const form = useForm({
     resolver: zodResolver(FormSchema),
@@ -95,7 +94,6 @@ const EditAdminForm = () => {
                         <div className="flex items-center gap-2">
                           <div className="bg-muted w-full rounded-md border text-center">
                             <input
-                              key={fileInputKey}
                               type="file"
                               accept="image/*"
                               className="hidden"

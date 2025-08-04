@@ -35,7 +35,7 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit(data: z.infer<typeof FormSchema>) {
+  function onSubmit() {
     router.push("/dashboard");
   }
 
