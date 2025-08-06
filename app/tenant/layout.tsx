@@ -1,6 +1,5 @@
 import { TenantHeader } from "@/components/header/tenant-header";
 import { TenantGuard } from "@/components/auth/auth-guard";
-import React from "react";
 
 const TenantLayout = ({ children }: { children: React.ReactNode }) => {
   return (

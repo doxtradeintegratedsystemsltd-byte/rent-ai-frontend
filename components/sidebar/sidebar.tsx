@@ -1,19 +1,23 @@
 "use client";
 
-import { mainLinks } from "./sidebar-links";
+import { getSidebarLinks } from "./sidebar-links";
 import { SidebarItem } from "./sidebar-items";
 import Logo from "../ui/logo";
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
+import { useUserRole } from "@/store/authStore";
 
 export function Sidebar() {
+  const userRole = useUserRole();
+  const sidebarLinks = getSidebarLinks(userRole);
+
   return (
     <aside className="border-border sticky top-0 flex h-screen w-64 flex-col justify-between border-r px-6 py-4">
       <div className="flex flex-col gap-4">
         <div className="pb-3">
           <Logo dark />
         </div>
-        {mainLinks.map((item) => (
+        {sidebarLinks.map((item) => (
           <SidebarItem key={item.href} {...item} />
         ))}
       </div>

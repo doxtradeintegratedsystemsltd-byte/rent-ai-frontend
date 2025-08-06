@@ -1,4 +1,3 @@
-import React from "react";
 import { UpdatePasswordForm } from "@/components/auth/update-password-form";
 import Logo from "@/components/ui/logo";
 
