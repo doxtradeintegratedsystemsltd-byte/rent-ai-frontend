@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Manrope } from "next/font/google";
 import "./globals.css";
 import { BreadcrumbProvider } from "@/contexts/breadcrumb-context";
+import { QueryProvider } from "@/providers/query-provider";
 
 const manrope = Manrope({
   variable: "--font-manrope-sans",
@@ -21,7 +22,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${manrope.variable} font-sans antialiased`}>
-        <BreadcrumbProvider>{children}</BreadcrumbProvider>
+        <QueryProvider>
+          <BreadcrumbProvider>{children}</BreadcrumbProvider>
+        </QueryProvider>
       </body>
     </html>
   );

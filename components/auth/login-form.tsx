@@ -16,16 +16,20 @@ import { Input } from "@/components/ui/input";
 import { Icon } from "@/components/ui/icon";
 import { Link } from "@/components/ui/link";
 import { useRouter } from "next/navigation";
+import { useLogin } from "@/mutations/useLogin";
+import { useIsAuthenticated, useUserRole } from "@/store/authStore";
+import { useEffect } from "react";
 
 const FormSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
-  password: z
-    .string()
-    .min(6, { message: "Password must be at least 6 characters long" }),
+  password: z.string().min(1, { message: "Password is required" }),
 });
 
 export function LoginForm() {
   const router = useRouter();
+  const loginMutation = useLogin();
+  const isAuthenticated = useIsAuthenticated();
+  const userRole = useUserRole();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -35,9 +39,42 @@ export function LoginForm() {
     },
   });
 
-  function onSubmit() {
-    router.push("/dashboard");
+  useEffect(() => {
+    if (isAuthenticated && userRole) {
+      const redirectPath =
+        userRole === "tenant"
+          ? "/tenant"
+          : userRole === "superAdmin"
+            ? "/dashboard/super"
+            : "/dashboard";
+      router.push(redirectPath);
+    }
+  }, [isAuthenticated, userRole, router]);
+
+  function onSubmit(data: z.infer<typeof FormSchema>) {
+    loginMutation.mutate(data, {
+      onSuccess: () => {
+        form.reset();
+      },
+    });
   }
+
+  const getErrorMessage = () => {
+    if (loginMutation.isError) {
+      const error = loginMutation.error as Error & {
+        response?: {
+          data?: {
+            message?: string;
+          };
+        };
+      };
+      if (error?.response?.data?.message) {
+        return error.response.data.message;
+      }
+      return error?.message || "Login failed. Please try again.";
+    }
+    return null;
+  };
 
   return (
     <Form {...form}>
@@ -46,6 +83,15 @@ export function LoginForm() {
         className="w-full space-y-6 md:w-5/6"
       >
         <h1 className="mb-10 text-4xl font-extrabold">Login</h1>
+
+        {getErrorMessage() && (
+          <div className="rounded-md border border-red-200 bg-red-50 p-4">
+            <p className="text-sm font-medium text-red-600">
+              {getErrorMessage()}
+            </p>
+          </div>
+        )}
+
         <FormField
           control={form.control}
           name="email"
@@ -76,8 +122,12 @@ export function LoginForm() {
             </FormItem>
           )}
         />
-        <Button type="submit" className="w-full">
-          Sign In
+        <Button
+          type="submit"
+          className="w-full"
+          disabled={loginMutation.isPending}
+        >
+          {loginMutation.isPending ? "Signing In..." : "Sign In"}
           <Icon
             icon="material-symbols:east-rounded"
             className="ml-2"
