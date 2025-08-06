@@ -12,7 +12,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import Notifications from "../dashboard/notifications/notifications";
+import Notifications from "../admin/notifications/notifications";
 import { useBreadcrumbs } from "@/contexts/breadcrumb-context";
 import Logo from "../ui/logo";
 
@@ -29,7 +29,7 @@ export function TenantHeader() {
     // Always start with Dashboard
     fallbackBreadcrumbs.push({
       name: "Dashboard",
-      href: "/dashboard",
+      href: "/admin",
       isLast: segments.length === 1 && segments[0] === "dashboard",
     });
 

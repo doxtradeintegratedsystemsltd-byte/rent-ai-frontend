@@ -52,9 +52,9 @@ export function AuthGuard({
   const getDefaultRedirect = (role: UserType): string => {
     switch (role) {
       case "superAdmin":
-        return "/dashboard/super";
+        return "/super";
       case "admin":
-        return "/dashboard";
+        return "/admin";
       case "tenant":
         return "/tenant";
       default:
@@ -89,14 +89,4 @@ export function AdminGuard({ children }: { children: React.ReactNode }) {
 
 export function TenantGuard({ children }: { children: React.ReactNode }) {
   return <AuthGuard allowedRoles={["tenant"]}>{children}</AuthGuard>;
-}
-
-export function AdminOrSuperAdminGuard({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <AuthGuard allowedRoles={["admin", "superAdmin"]}>{children}</AuthGuard>
-  );
 }

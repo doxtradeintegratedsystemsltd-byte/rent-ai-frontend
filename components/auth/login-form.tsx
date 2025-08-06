@@ -45,8 +45,8 @@ export function LoginForm() {
         userRole === "tenant"
           ? "/tenant"
           : userRole === "superAdmin"
-            ? "/dashboard/super"
-            : "/dashboard";
+            ? "/super"
+            : "/admin";
       router.push(redirectPath);
     }
   }, [isAuthenticated, userRole, router]);

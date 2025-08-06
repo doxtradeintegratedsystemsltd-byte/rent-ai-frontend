@@ -37,10 +37,10 @@ export function createBreadcrumbs(
   items: Omit<BreadcrumbItem, "isLast">[],
 ): Omit<BreadcrumbItem, "isLast">[] {
   // Always start with Dashboard unless it's already included
-  const hasDashboard = items.some((item) => item.href === "/dashboard");
+  const hasDashboard = items.some((item) => item.href === "/admin");
 
   if (!hasDashboard) {
-    return [{ name: "Dashboard", href: "/dashboard" }, ...items];
+    return [{ name: "Dashboard", href: "/admin" }, ...items];
   }
 
   return items;

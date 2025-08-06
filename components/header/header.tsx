@@ -14,9 +14,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import Profile from "../dashboard/profile/profile";
-import EditProfileForm from "../dashboard/profile/edit-profile-form";
-import Notifications from "../dashboard/notifications/notifications";
+import Profile from "../admin/profile/profile";
+import EditProfileForm from "../admin/profile/edit-profile-form";
+import Notifications from "../admin/notifications/notifications";
 import { useBreadcrumbs } from "@/contexts/breadcrumb-context";
 
 export function Header() {
@@ -33,7 +33,7 @@ export function Header() {
     // Always start with Dashboard
     fallbackBreadcrumbs.push({
       name: "Dashboard",
-      href: "/dashboard",
+      href: "/admin",
       isLast: segments.length === 1 && segments[0] === "dashboard",
     });
 

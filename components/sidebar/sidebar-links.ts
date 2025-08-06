@@ -1,12 +1,12 @@
 export const mainLinks = [
   {
     title: "Dashboard",
-    href: "/dashboard",
+    href: "/admin",
     icon: "material-symbols:home-app-logo",
   },
   {
     title: "Payments",
-    href: "/dashboard/payments",
+    href: "/admin/payments",
     icon: "material-symbols:contract",
   },
 ];
