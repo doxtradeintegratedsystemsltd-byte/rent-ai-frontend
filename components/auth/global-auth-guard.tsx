@@ -14,13 +14,35 @@ interface GlobalAuthGuardProps {
   children: React.ReactNode;
 }
 
+// Define all existing routes in your application
+const ALL_APP_ROUTES = [
+  "/",
+  "/forgot-password",
+  "/update-password",
+  "/unauthorized",
+  "/super",
+  "/super/admin",
+  "/super/payments",
+  "/super/property",
+  "/admin",
+  "/admin/due-rents",
+  "/admin/payments",
+  "/admin/property",
+  "/tenant",
+];
+
 // Define public routes that don't require authentication
-const PUBLIC_ROUTES = ["/", "/forgot-password", "/update-password"];
+const PUBLIC_ROUTES = [
+  "/",
+  "/forgot-password",
+  "/update-password",
+  "/unauthorized",
+];
 
 // Define role-based route mappings
 const ROLE_ROUTES: Record<UserType, string[]> = {
-  superAdmin: ["/super"],
-  admin: ["/admin"],
+  superAdmin: ["/super", "/super/admin", "/super/payments", "/super/property"],
+  admin: ["/admin", "/admin/due-rents", "/admin/payments", "/admin/property"],
   tenant: ["/tenant"],
 };
 
@@ -41,6 +63,17 @@ const getDefaultRoute = (role: UserType): string => {
 // Check if a path matches any pattern in the routes array
 const isRouteAllowed = (pathname: string, routes: string[]): boolean => {
   return routes.some((route) => {
+    // Exact match
+    if (pathname === route) return true;
+    // Nested route match (e.g., /admin matches /admin/anything)
+    if (pathname.startsWith(route + "/")) return true;
+    return false;
+  });
+};
+
+// Check if the route exists in your application
+const isAppRoute = (pathname: string): boolean => {
+  return ALL_APP_ROUTES.some((route) => {
     // Exact match
     if (pathname === route) return true;
     // Nested route match (e.g., /admin matches /admin/anything)
@@ -75,7 +108,10 @@ export function GlobalAuthGuard({ children }: GlobalAuthGuardProps) {
       // Allow access to public routes
       if (isPublicRoute(pathname)) return;
 
-      // Redirect to login for protected routes
+      // If it's not an app route (doesn't exist), let Next.js handle 404
+      if (!isAppRoute(pathname)) return;
+
+      // Redirect to login for protected routes that actually exist
       router.push("/");
       return;
     }
@@ -83,18 +119,27 @@ export function GlobalAuthGuard({ children }: GlobalAuthGuardProps) {
     // If user is authenticated
     if (isAuthenticated && userRole) {
       // If user is on a public route (like login page), redirect to their dashboard
-      if (isPublicRoute(pathname)) {
+      if (isPublicRoute(pathname) && pathname !== "/unauthorized") {
         router.push(getDefaultRoute(userRole));
         return;
       }
 
       // Check if user has access to the current route
       const allowedRoutes = getAllowedRoutes(userRole);
-      if (!isRouteAllowed(pathname, allowedRoutes)) {
-        // Redirect to their default dashboard if they don't have access
-        router.push(getDefaultRoute(userRole));
+
+      // Only redirect to unauthorized if the route exists but user doesn't have access
+      if (
+        isAppRoute(pathname) && // Route exists in the app
+        !isRouteAllowed(pathname, allowedRoutes) && // User doesn't have access
+        pathname !== "/unauthorized" // Not already on unauthorized page
+      ) {
+        // Redirect to unauthorized page if they don't have access
+        router.push("/unauthorized");
         return;
       }
+
+      // If route doesn't exist in the app, let Next.js handle 404
+      // by not interfering with the rendering
     }
   }, [isAuthenticated, userRole, pathname, router, isLoading]);
 
@@ -103,16 +148,18 @@ export function GlobalAuthGuard({ children }: GlobalAuthGuardProps) {
     return <LoadingSpinner fullScreen />;
   }
 
-  // Show loading while redirecting unauthorized users
-  if (!isAuthenticated && !isPublicRoute(pathname)) {
+  // Show loading while redirecting unauthorized users (but not for non-existent routes)
+  if (!isAuthenticated && !isPublicRoute(pathname) && isAppRoute(pathname)) {
     return <LoadingSpinner fullScreen />;
   }
 
   // Show loading while redirecting authenticated users from public routes or unauthorized routes
   if (isAuthenticated && userRole) {
     if (
-      isPublicRoute(pathname) ||
-      !isRouteAllowed(pathname, getAllowedRoutes(userRole))
+      (isPublicRoute(pathname) && pathname !== "/unauthorized") ||
+      (isAppRoute(pathname) &&
+        !isRouteAllowed(pathname, getAllowedRoutes(userRole)) &&
+        pathname !== "/unauthorized")
     ) {
       return <LoadingSpinner fullScreen />;
     }
