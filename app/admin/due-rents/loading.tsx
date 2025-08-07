@@ -1,5 +1,3 @@
-import { LoadingSpinner } from "@/components/ui/loading-spinner";
-
 export default function DueRentsLoading() {
   return (
     <div className="space-y-6 p-6">

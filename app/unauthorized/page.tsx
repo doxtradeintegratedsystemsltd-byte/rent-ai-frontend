@@ -16,7 +16,7 @@ export default function Unauthorized() {
         </div>
 
         <p className="text-muted-foreground text-lg leading-relaxed">
-          You don't have permission to access this resource.
+          You don&apos;t have permission to access this resource.
         </p>
 
         <Link href="/">
