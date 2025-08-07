@@ -5,11 +5,20 @@ import { SidebarItem } from "./sidebar-items";
 import Logo from "../ui/logo";
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
-import { useUserRole } from "@/store/authStore";
+import { useUserRole, useAuthActions } from "@/store/authStore";
+import { Button } from "../ui/button";
+import { useRouter } from "next/navigation";
 
 export function Sidebar() {
   const userRole = useUserRole();
+  const { logout } = useAuthActions();
+  const router = useRouter();
   const sidebarLinks = getSidebarLinks(userRole);
+
+  const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
 
   return (
     <aside className="border-border sticky top-0 flex h-screen w-64 flex-col justify-between border-r px-6 py-4">
@@ -39,13 +48,14 @@ export function Sidebar() {
             <p>2:10 P.M.</p>
             <p>Tuesday, February 5, 2025</p>
           </div>
-          <Link
-            href="/"
+          <Button
+            onClick={handleLogout}
+            variant="secondary"
             className="border-border bg-background hover:bg-foreground/5 flex items-center gap-3 rounded-md border px-4 py-3 text-sm font-medium"
           >
             <Icon icon="material-symbols:logout" className="text-[#9B9B9B]" />
             Logout
-          </Link>
+          </Button>
         </div>
       </div>
     </aside>

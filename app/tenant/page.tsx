@@ -17,6 +17,8 @@ import {
 import TenantProfile from "@/components/tenant/tenant-profile";
 import PropertyManagerProfile from "@/components/tenant/property-manager-profile";
 import PayRentContent from "@/components/tenant/pay-rent-content";
+import { useAuthActions } from "@/store/authStore";
+import { useRouter } from "next/navigation";
 
 const tenantDetails = [
   {
@@ -71,6 +73,14 @@ const notificationsData = [
 const TenantHomepage = () => {
   const [notifications, setNotifications] = useState(notificationsData);
   const [isPropertyExpanded, setIsPropertyExpanded] = useState(false);
+
+  const { logout } = useAuthActions();
+  const router = useRouter();
+
+  const handleLogout = () => {
+    logout();
+    router.push("/");
+  };
 
   const toggleNotification = (id: number) => {
     setNotifications(
@@ -261,7 +271,7 @@ const TenantHomepage = () => {
               <PropertyManagerProfile />
             </SheetContent>
           </Sheet>
-          <Button size="sm" variant="secondary">
+          <Button size="sm" variant="secondary" onClick={handleLogout}>
             <Icon icon="material-symbols:logout" />
             Logout
           </Button>

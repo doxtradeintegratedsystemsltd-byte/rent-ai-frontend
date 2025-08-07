@@ -128,16 +128,25 @@ export const useIsAdmin = () => useAuthStore((state) => state.isAdmin());
 export const useIsTenant = () => useAuthStore((state) => state.isTenant());
 
 // Auth actions
-export const useAuthActions = () =>
-  useAuthStore((state) => ({
-    setUser: state.setUser,
-    setToken: state.setToken,
-    setLoading: state.setLoading,
-    login: state.login,
-    logout: state.logout,
-    updateUser: state.updateUser,
-    hasRole: state.hasRole,
-  }));
+export const useAuthActions = () => {
+  const setUser = useAuthStore((state) => state.setUser);
+  const setToken = useAuthStore((state) => state.setToken);
+  const setLoading = useAuthStore((state) => state.setLoading);
+  const login = useAuthStore((state) => state.login);
+  const logout = useAuthStore((state) => state.logout);
+  const updateUser = useAuthStore((state) => state.updateUser);
+  const hasRole = useAuthStore((state) => state.hasRole);
+
+  return {
+    setUser,
+    setToken,
+    setLoading,
+    login,
+    logout,
+    updateUser,
+    hasRole,
+  };
+};
 
 // Helper to get auth state outside of React components
 export const getAuthState = () => useAuthStore.getState();

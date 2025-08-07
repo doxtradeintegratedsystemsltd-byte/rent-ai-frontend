@@ -3,6 +3,7 @@ import { Manrope } from "next/font/google";
 import "./globals.css";
 import { BreadcrumbProvider } from "@/contexts/breadcrumb-context";
 import { QueryProvider } from "@/providers/query-provider";
+import { GlobalAuthGuard } from "@/components/auth/global-auth-guard";
 
 const manrope = Manrope({
   variable: "--font-manrope-sans",
@@ -23,7 +24,9 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${manrope.variable} font-sans antialiased`}>
         <QueryProvider>
-          <BreadcrumbProvider>{children}</BreadcrumbProvider>
+          <BreadcrumbProvider>
+            <GlobalAuthGuard>{children}</GlobalAuthGuard>
+          </BreadcrumbProvider>
         </QueryProvider>
       </body>
     </html>
