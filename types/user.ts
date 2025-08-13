@@ -5,6 +5,8 @@ export interface User {
   lastName: string;
   email: string;
   userType: UserType;
+  photoUrl: string | null;
+  phoneNumber: string | null;
   tenantId: string | null;
   createdAt: string;
   updatedAt: string;

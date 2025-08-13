@@ -17,13 +17,15 @@ import Pagination from "../ui/pagination";
 import { useState, useMemo } from "react";
 import { Button } from "../ui/button";
 import { Icon } from "@/components/ui/icon";
-import { useRouter } from "next/navigation";
+import { getFilterLabel, getLocationLabel } from "@/lib/table-utils";
+import { useFetchProperties } from "@/mutations/property";
+import type { Property } from "@/types/property";
 import {
-  getFilterLabel,
-  getLocationLabel,
-  filterTableData,
-  getPaginatedData,
-} from "@/lib/table-utils";
+  TableSkeleton,
+  TableSkeletonPresets,
+} from "@/components/ui/table-skeleton";
+import { useDebounce } from "@/hooks/useDebounce";
+import Link from "next/link";
 
 const filterItems = [
   { type: "label" as const, label: "Show" },
@@ -31,15 +33,13 @@ const filterItems = [
     label: "All",
     value: "all",
   },
-  { label: "Occupied", value: "occupied" },
-  { label: "Unoccupied", value: "unoccupied" },
   {
     label: "Rent Paid",
-    value: "rentPaid",
+    value: "paid",
   },
   {
     label: "Rent Unpaid",
-    value: "rentUnpaid",
+    value: "unpaid",
   },
 ];
 
@@ -68,111 +68,59 @@ const tableHead = [
   { label: "", className: "text-right" },
 ];
 
-const tableData = [
-  {
-    id: 1,
-    property: "Axel Home",
-    location: "Gwarimpa, Abuja",
-    tenant: "John Doe",
-    rentStatus: "paid" as const,
-  },
-  {
-    id: 2,
-    property: "Dominoes House",
-    location: "Wuse, Abuja",
-    tenant: "Jane Smith",
-    rentStatus: "nearDue" as const,
-  },
-  {
-    id: 3,
-    property: "Green Acres",
-    location: "Lekki, Lagos",
-    tenant: "Bob Johnson",
-    rentStatus: "due" as const,
-  },
-  {
-    id: 4,
-    property: "Sunny Villa",
-    location: "Victoria Island, Lagos",
-    tenant: "Alice Brown",
-    rentStatus: "overdue" as const,
-  },
-  {
-    id: 5,
-    property: "Ocean View",
-    location: "Ikoyi, Lagos",
-    tenant: "Charlie Davis",
-    rentStatus: "paid" as const,
-  },
-  {
-    id: 6,
-    property: "Castle Castle",
-    location: "Ikeja, Lagos",
-    tenant: "David Wilson",
-    rentStatus: "nearDue" as const,
-  },
-  {
-    id: 7,
-    property: "Bull House",
-    location: "Asokoro, Abuja",
-    tenant: "Eva Martinez",
-    rentStatus: "paid" as const,
-  },
-  {
-    id: 8,
-    property: "Sky Tower",
-    location: "Maitama, Abuja",
-    tenant: "Frank Miller",
-    rentStatus: "overdue" as const,
-  },
-  {
-    id: 9,
-    property: "Garden Heights",
-    location: "Ajah, Lagos",
-    tenant: "Grace Taylor",
-    rentStatus: "due" as const,
-  },
-  {
-    id: 10,
-    property: "Royal Residence",
-    location: "Banana Island, Lagos",
-    tenant: "Henry Anderson",
-    rentStatus: "paid" as const,
-  },
-  {
-    id: 11,
-    property: "Modern Apartment",
-    location: "Garki, Abuja",
-    tenant: "Ivy Thompson",
-    rentStatus: "nearDue" as const,
-  },
-  {
-    id: 12,
-    property: "Luxury Penthouse",
-    location: "Oniru, Lagos",
-    tenant: "Jack Robinson",
-    rentStatus: "overdue" as const,
-  },
-];
-
 const PropertiesTable = () => {
-  const router = useRouter();
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFilter, setSelectedFilter] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
-  const itemsPerPage = 10;
+  const itemsPerPage = 20;
 
-  const filteredData = useMemo(() => {
-    return filterTableData(tableData, searchTerm, [
-      "property",
-      "location",
-      "tenant",
-    ]);
-  }, [searchTerm]);
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const currentData = getPaginatedData(filteredData, currentPage, itemsPerPage);
+  const { data, isLoading, isError, error } = useFetchProperties({
+    page: currentPage - 1,
+    pageSize: itemsPerPage,
+    search: debouncedSearchTerm || undefined,
+    filter: selectedFilter !== "all" ? selectedFilter : undefined,
+    location: selectedLocation !== "all" ? selectedLocation : undefined,
+  });
+
+  const tableData = useMemo(() => {
+    const properties: Property[] = data?.data?.data || [];
+    return properties.map((property) => ({
+      id: property.id,
+      property: property.propertyName,
+      location: `${property.propertyArea}, ${property.propertyState}`,
+      tenant: property.currentLease?.tenant?.firstName
+        ? `${property.currentLease.tenant.firstName} ${property.currentLease.tenant.lastName || ""}`.trim()
+        : "No Tenant",
+      rentStatus:
+        property.currentLease?.rentStatus === "paid"
+          ? ("paid" as const)
+          : property.currentLease?.rentStatus === "overdue"
+            ? ("overdue" as const)
+            : property.currentLease?.rentStatus === "unpaid"
+              ? ("due" as const)
+              : ("due" as const),
+    }));
+  }, [data]);
+
+  const paginationInfo = useMemo(() => {
+    return {
+      totalItems: data?.data?.totalItems || 0,
+      totalPages: data?.data?.totalPages || 0,
+      currentPage: (data?.data?.currentPage || 0) + 1,
+      pageSize: data?.data?.pageSize || itemsPerPage,
+    };
+  }, [data, itemsPerPage]);
+
+  if (isError) {
+    return (
+      <div className="py-8 text-center text-red-600">
+        <p>Error loading properties: {error?.message || "Unknown error"}</p>
+      </div>
+    );
+  }
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -191,10 +139,6 @@ const PropertiesTable = () => {
   const handleLocationChange = (value: string) => {
     setSelectedLocation(value);
     setCurrentPage(1);
-  };
-
-  const navigateToProperty = (propertyId: number) => {
-    router.push(`/admin/property/${propertyId}`);
   };
 
   return (
@@ -257,7 +201,15 @@ const PropertiesTable = () => {
           </Button>
         </div>
       )}
-      <div className="h-[585px] overflow-hidden rounded-md border">
+      {isLoading ? (
+        <TableSkeleton
+          {...TableSkeletonPresets.properties}
+          rows={10}
+          showFilters={false}
+          showPagination={false}
+          tableHeight="h-full"
+        />
+      ) : (
         <Table>
           <TableHeader>
             <TableRow>
@@ -269,8 +221,8 @@ const PropertiesTable = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentData && currentData.length > 0 ? (
-              currentData.map((row) => (
+            {tableData && tableData.length > 0 ? (
+              tableData.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>
                     <div className="flex items-center gap-2">
@@ -290,13 +242,13 @@ const PropertiesTable = () => {
                     </p>
                   </TableCell>
                   <TableCell className="text-muted-foreground w-6 text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => navigateToProperty(row.id)}
-                    >
-                      <Icon icon="material-symbols:keyboard-arrow-right" />
-                    </Button>
+                    <Link href={`/admin/property/${row.id}`}>
+                      <Button variant="ghost" size="icon" asChild>
+                        <span>
+                          <Icon icon="material-symbols:keyboard-arrow-right" />
+                        </span>
+                      </Button>
+                    </Link>
                   </TableCell>
                 </TableRow>
               ))
@@ -311,15 +263,15 @@ const PropertiesTable = () => {
             )}
           </TableBody>
         </Table>
-      </div>
+      )}
 
-      {filteredData.length > 0 && (
+      {paginationInfo.totalItems > 0 && (
         <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
+          currentPage={paginationInfo.currentPage}
+          totalPages={paginationInfo.totalPages}
           onPageChange={handlePageChange}
-          itemsPerPage={itemsPerPage}
-          totalItems={filteredData.length}
+          itemsPerPage={paginationInfo.pageSize}
+          totalItems={paginationInfo.totalItems}
         />
       )}
     </div>

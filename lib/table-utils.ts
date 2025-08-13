@@ -2,6 +2,8 @@
  * Utility functions for table components
  */
 
+import { Property } from "@/types/property";
+
 export interface DropdownItem {
   type?: "label";
   label: string;
@@ -132,4 +134,11 @@ export const getPaginatedData = <T>(
     itemsPerPage,
   );
   return data.slice(startIndex, endIndex);
+};
+
+export const getPropertyTenant = (property: Property): string => {
+  if (property.currentLease?.tenant) {
+    return `${property.currentLease.tenant.firstName} ${property.currentLease.tenant.lastName}`;
+  }
+  return "No tenant";
 };

@@ -34,7 +34,7 @@ export function Header() {
     fallbackBreadcrumbs.push({
       name: "Dashboard",
       href: "/admin",
-      isLast: segments.length === 1 && segments[0] === "dashboard",
+      isLast: segments.length === 1 && segments[0] === "admin",
     });
 
     // Add segments after dashboard

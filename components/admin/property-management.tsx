@@ -68,7 +68,9 @@ const PropertyManagement = () => {
                   Add Property
                 </SheetTitle>
               </SheetHeader>
-              <AddPropertyForm />
+              <div className="flex-1 overflow-y-auto pr-2">
+                <AddPropertyForm />
+              </div>
             </SheetContent>
           </Sheet>
         </div>

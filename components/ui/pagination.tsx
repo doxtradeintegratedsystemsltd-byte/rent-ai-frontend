@@ -34,37 +34,40 @@ export const Pagination: React.FC<PaginationProps> = ({
     }
   };
 
-  if (totalPages <= 1) {
-    return null;
-  }
+  // Show pagination info even for single pages, but disable navigation buttons
+  const showNavigation = totalPages > 1;
 
   return (
     <div className={cn("flex items-center justify-between", className)}>
       <div className="text-muted-foreground flex items-center gap-2 text-sm uppercase">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handlePrevious}
-          disabled={currentPage === 1}
-          className="flex items-center gap-1"
-        >
-          <Icon icon="material-symbols:keyboard-arrow-left" />
-        </Button>
+        {showNavigation && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handlePrevious}
+            disabled={currentPage === 1}
+            className="flex items-center gap-1"
+          >
+            <Icon icon="material-symbols:keyboard-arrow-left" />
+          </Button>
+        )}
         <span>Showing</span>
         <span className="text-foreground font-medium">
           {startItem}-{endItem}
         </span>
         <span>of</span>
         <span className="text-foreground font-medium">{totalItems}</span>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleNext}
-          disabled={currentPage === totalPages}
-          className="flex items-center gap-1"
-        >
-          <Icon icon="material-symbols:keyboard-arrow-right" />
-        </Button>
+        {showNavigation && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleNext}
+            disabled={currentPage === totalPages}
+            className="flex items-center gap-1"
+          >
+            <Icon icon="material-symbols:keyboard-arrow-right" />
+          </Button>
+        )}
       </div>
     </div>
   );

@@ -40,12 +40,10 @@ const statsData = [
 ];
 
 const AdminPage = () => {
-  useBreadcrumb({
-    items: [
-      { name: "Dashboard", href: "/super" },
-      { name: "Admin", href: "" },
-    ],
-  });
+  useBreadcrumb([
+    { name: "Dashboard", href: "/super" },
+    { name: "Admin", href: "" },
+  ]);
 
   const [open, setOpen] = useState(false);
 

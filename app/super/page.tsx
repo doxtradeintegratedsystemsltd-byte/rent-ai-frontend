@@ -4,9 +4,7 @@ import SuperTabs from "@/components/super/super-tabs";
 import { useBreadcrumb } from "@/hooks/useBreadcrumb";
 
 const SuperDashboardPage = () => {
-  useBreadcrumb({
-    items: [{ name: "Dashboard", href: "/super" }],
-  });
+  useBreadcrumb([{ name: "Dashboard", href: "/super" }]);
 
   return (
     <div className="flex flex-col gap-8">

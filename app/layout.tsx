@@ -4,6 +4,7 @@ import "./globals.css";
 import { BreadcrumbProvider } from "@/contexts/breadcrumb-context";
 import { QueryProvider } from "@/providers/query-provider";
 import { GlobalAuthGuard } from "@/components/auth/global-auth-guard";
+import { Toaster } from "@/components/ui/sonner";
 
 const manrope = Manrope({
   variable: "--font-manrope-sans",
@@ -28,6 +29,7 @@ export default function RootLayout({
             <GlobalAuthGuard>{children}</GlobalAuthGuard>
           </BreadcrumbProvider>
         </QueryProvider>
+        <Toaster richColors position="top-center" duration={3000} />
       </body>
     </html>
   );

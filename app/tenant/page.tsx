@@ -96,9 +96,7 @@ const TenantHomepage = () => {
     setIsPropertyExpanded(!isPropertyExpanded);
   };
 
-  useBreadcrumb({
-    items: [{ name: "Tenant Dashboard", href: "/tenant" }],
-  });
+  useBreadcrumb([{ name: "Tenant Dashboard", href: "/tenant" }]);
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="flex flex-col gap-4">

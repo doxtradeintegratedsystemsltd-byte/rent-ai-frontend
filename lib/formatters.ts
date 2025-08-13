@@ -24,3 +24,7 @@ export const formatDropdownItems = (items: string[]) =>
     label: item,
     value: item,
   }));
+
+export const formatAmount = (amount: string): number => {
+  return parseFloat(amount);
+};

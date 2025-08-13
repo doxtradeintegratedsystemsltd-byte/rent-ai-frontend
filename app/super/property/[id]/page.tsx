@@ -23,7 +23,7 @@ import AddTenantForm from "@/components/admin/property/add-tenant-form";
 import EditTenantForm from "@/components/admin/property/edit-tenant-form";
 import AddPaymentForm from "@/components/admin/property/add-payment-form";
 import { useRouter } from "next/navigation";
-import { useBreadcrumb, createBreadcrumbs } from "@/hooks/useBreadcrumb";
+import { useBreadcrumb } from "@/hooks/useBreadcrumb";
 
 const tenantDetailsGrid = [
   {
@@ -70,12 +70,10 @@ const AdminPropertyPage = () => {
 
   const router = useRouter();
 
-  useBreadcrumb({
-    items: createBreadcrumbs([
-      { name: "Dashboard", href: "/admin" },
-      { name: "Axel Home", href: "#" },
-    ]),
-  });
+  useBreadcrumb([
+    { name: "Dashboard", href: "/admin" },
+    { name: "Axel Home", href: "#" },
+  ]);
 
   const tenant = true;
 

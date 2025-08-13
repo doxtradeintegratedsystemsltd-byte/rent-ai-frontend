@@ -1,3 +1,4 @@
+import { Property } from "@/types/property";
 import { paymentStatus } from "@/types/status";
 
 export function getPaymentStatus(status: paymentStatus) {
@@ -23,3 +24,9 @@ export function getBookingStatusLabel(
     rejected: "Rejected",
   }[status];
 }
+
+export const getPropertyStatus = (
+  property: Property,
+): "occupied" | "vacant" => {
+  return property.currentLease ? "occupied" : "vacant";
+};

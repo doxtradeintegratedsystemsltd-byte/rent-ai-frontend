@@ -1,15 +1,7 @@
 import { useEffect, useRef } from "react";
-import {
-  useBreadcrumbs,
-  setBreadcrumbItems,
-  BreadcrumbItem,
-} from "@/contexts/breadcrumb-context";
+import { useBreadcrumbs, BreadcrumbItem } from "@/contexts/breadcrumb-context";
 
-interface UseBreadcrumbOptions {
-  items: Omit<BreadcrumbItem, "isLast">[];
-}
-
-export function useBreadcrumb({ items }: UseBreadcrumbOptions) {
+export function useBreadcrumb(items: Omit<BreadcrumbItem, "isLast">[]) {
   const { setBreadcrumbs } = useBreadcrumbs();
   const previousItemsRef = useRef<string>("");
 
@@ -19,17 +11,16 @@ export function useBreadcrumb({ items }: UseBreadcrumbOptions) {
 
     // Only update if items have actually changed
     if (previousItemsRef.current !== currentItemsJson) {
-      setBreadcrumbItems(setBreadcrumbs, items);
+      // Process items to add isLast property
+      const breadcrumbsWithLast = items.map((item, index) => ({
+        ...item,
+        isLast: index === items.length - 1,
+      }));
+
+      setBreadcrumbs(breadcrumbsWithLast);
       previousItemsRef.current = currentItemsJson;
     }
   }, [items, setBreadcrumbs]);
-
-  // Clear breadcrumbs when component unmounts
-  useEffect(() => {
-    return () => {
-      setBreadcrumbs([]);
-    };
-  }, [setBreadcrumbs]);
 }
 
 // Helper function for common breadcrumb patterns

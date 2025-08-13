@@ -16,7 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Icon } from "@/components/ui/icon";
 import { Link } from "@/components/ui/link";
 import { useRouter } from "next/navigation";
-import { useLogin } from "@/mutations/useLogin";
+import { useLogin } from "@/mutations/login";
 import { useIsAuthenticated, useUserRole } from "@/store/authStore";
 import { useEffect } from "react";
 
