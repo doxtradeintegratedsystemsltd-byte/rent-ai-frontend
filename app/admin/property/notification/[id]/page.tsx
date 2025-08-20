@@ -21,44 +21,12 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useBreadcrumb } from "@/hooks/useBreadcrumb";
-
-const tenantDetailsGrid = [
-  {
-    label: "Phone",
-    value: "08123456789",
-  },
-  {
-    label: "Email",
-    value: "aadebayo@gmail.com",
-  },
-  {
-    label: "Level of Education",
-    value: "Tertiary",
-  },
-  {
-    label: "Job",
-    value: "Accountant",
-  },
-];
-
-const tenancyDetailsGrid = [
-  {
-    label: "Start Date",
-    value: "January 1, 2025",
-  },
-  {
-    label: "End Date",
-    value: "December 31, 2025",
-  },
-  {
-    label: "Rent Amount",
-    value: "₦1,000,000",
-  },
-  {
-    label: "Status",
-    value: "paid",
-  },
-];
+import { useParams, useRouter } from "next/navigation";
+import { useFetchProperty } from "@/mutations/property";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { formatLongDate, formatCurrency, formatAmount } from "@/lib/formatters";
+import { useCreateNotification } from "@/mutations/notification";
+import { toast } from "sonner";
 
 const FormSchema = z.object({
   messageTitle: z.string().min(1, { message: "Message title is required" }),
@@ -66,11 +34,92 @@ const FormSchema = z.object({
 });
 
 const NotificationPage = () => {
+  const router = useRouter();
+  const params = useParams();
+  const propertyId = params.id as string;
+
+  // Fetch property data
+  const {
+    data: propertyResponse,
+    isLoading,
+    isError,
+    error,
+  } = useFetchProperty(propertyId);
+
+  const property = propertyResponse?.data;
+
+  const createNotification = useCreateNotification();
+
+  // Dynamic tenant details grid
+  const tenantDetailsGrid = property?.currentLease?.tenant
+    ? [
+        {
+          label: "Phone",
+          value: property.currentLease.tenant.phoneNumber || "Not provided",
+        },
+        {
+          label: "Email",
+          value: property.currentLease.tenant.email || "Not provided",
+        },
+        {
+          label: "Level of Education",
+          value:
+            property.currentLease.tenant.levelOfEducation || "Not provided",
+        },
+      ]
+    : [];
+
+  // Dynamic tenancy details grid
+  const tenancyDetailsGrid = property?.currentLease
+    ? [
+        {
+          label: "Start Date",
+          value: property.currentLease.startDate
+            ? formatLongDate(property.currentLease.startDate)
+            : "Not set",
+        },
+        {
+          label: "End Date",
+          value: property.currentLease.endDate
+            ? formatLongDate(property.currentLease.endDate)
+            : "Not set",
+        },
+        {
+          label: "Rent Amount",
+          value: formatCurrency(
+            formatAmount(property.currentLease.rentAmount.toString()),
+          ),
+        },
+        {
+          label: "Status",
+          value: property.currentLease.rentStatus || "unknown",
+        },
+      ]
+    : [
+        {
+          label: "Lease Years",
+          value: `${property?.leaseYears || 0} years`,
+        },
+        {
+          label: "Rent Amount",
+          value: formatCurrency(formatAmount(property?.rentAmount || "0")),
+        },
+        {
+          label: "Status",
+          value: "No active lease",
+        },
+      ];
+
   useBreadcrumb([
     { name: "Properties", href: "/admin" },
-    { name: "Axel Home", href: "/admin/property/1" },
+    {
+      name: property?.propertyName || "Property",
+      href: `/admin/property/${propertyId}`,
+    },
     { name: "Send Notification", href: "#" },
   ]);
+
+  const tenant = !!property?.currentLease?.tenant;
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -80,9 +129,25 @@ const NotificationPage = () => {
     },
   });
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
-    console.log("Notification form submitted with data:", data);
-    // Handle form submission logic here
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    if (!property?.currentLeaseId) {
+      toast.error("No active lease found for this property.");
+      return;
+    }
+
+    const payload = {
+      leaseId: property.currentLeaseId,
+      notificationTitle: data.messageTitle,
+      notificationContent: data.message,
+    };
+
+    try {
+      await createNotification.mutateAsync(payload);
+      toast.success("Notification sent successfully!");
+      form.reset();
+    } catch {
+      toast.error("Failed to send notification.");
+    }
   };
 
   const handleSendWhatsApp = () => {
@@ -94,6 +159,79 @@ const NotificationPage = () => {
       form.trigger(); // Trigger validation to show errors
     }
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <LoadingSpinner />
+        <p className="text-muted-foreground">Loading property details...</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <Icon
+          icon="material-symbols:error-outline"
+          size="xl"
+          className="text-red-600"
+        />
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">Error loading property</h2>
+          <p className="text-muted-foreground">
+            {error?.message || "Something went wrong. Please try again."}
+          </p>
+        </div>
+        <Button onClick={() => router.back()}>Go Back</Button>
+      </div>
+    );
+  }
+
+  // Property not found
+  if (!property) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <Icon
+          icon="material-symbols:home-outline"
+          size="xl"
+          className="text-muted-foreground"
+        />
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">Property not found</h2>
+          <p className="text-muted-foreground">
+            The property you&apos;re looking for doesn&apos;t exist or has been
+            removed.
+          </p>
+        </div>
+        <Button onClick={() => router.back()}>Go Back</Button>
+      </div>
+    );
+  }
+
+  // No tenant assigned
+  if (!tenant) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <Icon
+          icon="material-symbols:person-off-outline"
+          size="xl"
+          className="text-muted-foreground"
+        />
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">No tenant assigned</h2>
+          <p className="text-muted-foreground">
+            This property doesn&apos;t have a tenant assigned. You can only send
+            notifications to properties with active tenants.
+          </p>
+        </div>
+        <Button onClick={() => router.back()}>Go Back</Button>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col gap-4">
       <GoBackButton className="self-start" />
@@ -144,13 +282,17 @@ const NotificationPage = () => {
                   type="submit"
                   className="text-xs uppercase"
                   size="md"
-                  disabled={!form.formState.isValid}
+                  disabled={
+                    !form.formState.isValid || createNotification.isPending
+                  }
                 >
                   <Icon
                     icon="material-symbols:send-outline-rounded"
                     className="mr-2"
                   />
-                  Send Notification
+                  {createNotification.isPending
+                    ? "Sending..."
+                    : "Send Notification"}
                 </Button>
                 <Button
                   type="button"
@@ -177,7 +319,7 @@ const NotificationPage = () => {
             <div className="border-secondary-foreground text-secondary-foreground relative rounded-full border p-2">
               <Icon icon="material-symbols:home-app-logo" size="lg" />
             </div>
-            <h2 className="text-lg font-bold">Axel Home</h2>
+            <h2 className="text-lg font-bold">{property?.propertyName}</h2>
           </div>
           <Card className="bg-muted flex items-start gap-2 py-6">
             <div className="border-border text-foreground after:bg-secondary-foreground relative mr-1 rounded-full border p-2 after:absolute after:top-full after:left-1/2 after:h-8 after:w-px after:-translate-x-1/2">
@@ -187,8 +329,10 @@ const NotificationPage = () => {
               />
             </div>
             <div className="flex flex-col gap-4">
-              <p className="text-md font-semibold">Gwarimpa, Abuja</p>
-              <p className="text-md">20, Malami Street, GRA, Gwarimpa, Abuja</p>
+              <p className="text-md font-semibold">
+                {property?.propertyArea}, {property?.propertyState}
+              </p>
+              <p className="text-md">{property?.propertyAddress}</p>
             </div>
           </Card>
           {/* Tenant Information */}
@@ -205,7 +349,11 @@ const NotificationPage = () => {
                       size="lg"
                     />
                   </div>
-                  <p className="text-lg font-semibold">Abdul Adebayo</p>
+                  <p className="text-lg font-semibold">
+                    {property?.currentLease?.tenant
+                      ? `${property.currentLease.tenant.firstName} ${property.currentLease.tenant.lastName || ""}`.trim()
+                      : "No tenant assigned"}
+                  </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   {tenantDetailsGrid.map((item) => (

@@ -1,11 +1,12 @@
+import { User } from "@/types/user";
 import Image from "next/image";
 
-const Profile = () => {
+const Profile = ({ user }: { user: User }) => {
   const userDetails = {
-    user: "ADMIN - Property Manager",
-    name: "Bala Joseph",
-    email: "bjoseph@gmail.com",
-    phone: "08112345678",
+    user: user.userType,
+    name: user.firstName + " " + user.lastName,
+    email: user.email,
+    phone: user.phoneNumber,
   };
 
   return (
@@ -16,7 +17,7 @@ const Profile = () => {
         </p>
         <div className="h-30 w-30 rounded-full">
           <Image
-            src="/images/big-avatar.png"
+            src={user.photoUrl || "/images/big-avatar.png"}
             alt="Admin Avatar"
             width={1200}
             height={1200}
@@ -30,7 +31,9 @@ const Profile = () => {
           <p className="text-muted-foreground text-xs font-medium uppercase">
             User
           </p>
-          <p className="text-foreground font-medium">{userDetails.user}</p>
+          <p className="text-foreground font-medium uppercase">
+            {userDetails.user}
+          </p>
         </div>
 
         <div className="flex flex-col gap-1">
@@ -51,7 +54,9 @@ const Profile = () => {
           <p className="text-muted-foreground text-xs font-medium uppercase">
             Phone
           </p>
-          <p className="text-foreground font-medium">{userDetails.phone}</p>
+          <p className="text-foreground font-medium">
+            {userDetails.phone || "N/A"}
+          </p>
         </div>
       </div>
     </div>

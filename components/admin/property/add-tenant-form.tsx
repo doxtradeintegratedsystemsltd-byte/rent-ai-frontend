@@ -15,10 +15,13 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Dropdown } from "@/components/ui/dropdown";
-import { formatDropdownItems } from "@/lib/formatters";
+import { formatDropdownItems, formatCurrency } from "@/lib/formatters";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Icon } from "@/components/ui/icon";
 import Image from "next/image";
+import { useAddTenantToProperty } from "@/mutations/tenant";
+import { useSingleImageUpload } from "@/mutations/upload";
+import { toast } from "sonner";
 
 const FormSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
@@ -29,12 +32,11 @@ const FormSchema = z.object({
     .string()
     .min(1, { message: "Level of education is required" }),
   startDate: z.string().min(1, { message: "Start date is required" }),
-  endDate: z.string().min(1, { message: "End date is required" }),
-  rentAmount: z.string().min(1, { message: "Rent amount is required" }),
-  rentStatus: z.string().min(1, { message: "Rent status is required" }),
-  paymentDate: z.string().optional(),
-  amountPaid: z.string().optional(),
-  transactionReceipt: z.instanceof(File).optional(),
+  paymentDate: z.string().min(1, { message: "Payment date is required" }),
+  amountPaid: z.string().min(1, { message: "Amount paid is required" }),
+  transactionReceipt: z.instanceof(File, {
+    message: "Transaction receipt is required",
+  }),
 });
 
 const levelOfEducationItems = [
@@ -44,18 +46,37 @@ const levelOfEducationItems = [
   "Postgraduate",
 ];
 
-const rentStatusItems = ["Paid", "Unpaid"];
-
 const AddTenantForm = ({
-  setIsSubmitted,
+  rentAmount,
+  propertyId,
+  onSuccess,
 }: {
-  setIsSubmitted: (value: boolean) => void;
+  rentAmount: number;
+  propertyId: string;
+  onSuccess?: () => void;
 }) => {
   const [selectedStartDate, setSelectedStartDate] = useState<Date>();
-  const [selectedEndDate, setSelectedEndDate] = useState<Date>();
   const [selectedPaymentDate, setSelectedPaymentDate] = useState<Date>();
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
+
+  // Initialize mutations
+  const addTenantMutation = useAddTenantToProperty();
+  const uploadImageMutation = useSingleImageUpload();
+
+  // Generate payment cycle options
+  const generatePaymentCycleOptions = () => {
+    const cycles = [];
+    for (let i = 1; i <= 12; i++) {
+      const amount = rentAmount * i;
+      const label = `${i} cycle${i > 1 ? "s" : ""} (${formatCurrency(amount)})`;
+      cycles.push({
+        label,
+        value: amount.toString(),
+      });
+    }
+    return cycles;
+  };
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -66,18 +87,71 @@ const AddTenantForm = ({
       phoneNumber: "",
       levelOfEducation: "",
       startDate: "",
-      endDate: "",
-      rentAmount: "",
-      rentStatus: "",
       paymentDate: "",
       amountPaid: "",
       transactionReceipt: undefined,
     },
   });
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
-    console.log("Form submitted with data:", data);
-    setIsSubmitted(true);
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    try {
+      // Upload the receipt image first - this is required
+      let paymentReceiptUrl = "";
+      if (data.transactionReceipt) {
+        const uploadResponse = await uploadImageMutation.mutateAsync(
+          data.transactionReceipt,
+        );
+        paymentReceiptUrl = uploadResponse.data || "";
+
+        if (!paymentReceiptUrl) {
+          toast.error(
+            "Failed to upload receipt. Tenant cannot be created without a receipt.",
+          );
+          return;
+        }
+      } else {
+        toast.error("Receipt is required for tenant creation.");
+        return;
+      }
+
+      // Calculate lease cycles from the selected amount
+      const selectedAmount = parseFloat(data.amountPaid);
+      const leaseCycles = Math.round(selectedAmount / rentAmount);
+
+      // Create payload for API
+      const payload = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phoneNumber: data.phoneNumber,
+        levelOfEducation: data.levelOfEducation,
+        startDate: data.startDate,
+        propertyId: propertyId,
+        leaseCycles: leaseCycles,
+        paymentReceipt: paymentReceiptUrl,
+        paymentDate: data.paymentDate,
+      };
+
+      await addTenantMutation.mutateAsync(payload);
+      toast.success("Tenant added successfully!");
+
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error: unknown) {
+      console.error("Error adding tenant:", error);
+
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to add payment. Please try again.";
+
+      if (errorMessage === "Next lease rent is already paid") {
+        toast.error("Next lease rent is already paid!");
+      } else {
+        toast.error("Failed to add payment. Please try again.");
+      }
+    }
   };
 
   const handleReceiptChange = (file: File | null) => {
@@ -209,22 +283,30 @@ const AddTenantForm = ({
                 </FormItem>
               )}
             />
+          </div>
+          <div className="flex items-center gap-6"></div>
+        </div>
+        <div className="flex flex-col gap-4">
+          <p className="text-muted-foreground font-medium uppercase">
+            Rent Payment
+          </p>
+          <div className="flex gap-6">
             <FormField
               control={form.control}
-              name="endDate"
+              name="paymentDate"
               render={({ field }) => (
                 <FormItem className="flex-1">
                   <FormLabel required className="text-sm">
-                    End date
+                    Date of payment
                   </FormLabel>
                   <FormControl>
                     <DatePicker
-                      date={selectedEndDate}
+                      date={selectedPaymentDate}
                       onDateSelect={(date) => {
-                        setSelectedEndDate(date);
+                        setSelectedPaymentDate(date);
                         field.onChange(date?.toISOString() || "");
                       }}
-                      placeholder="Select end date"
+                      placeholder="Select payment date"
                       className="w-full text-sm"
                     />
                   </FormControl>
@@ -232,37 +314,28 @@ const AddTenantForm = ({
                 </FormItem>
               )}
             />
-          </div>
-          <div className="flex items-center gap-6">
             <FormField
               control={form.control}
-              name="rentAmount"
+              name="amountPaid"
               render={({ field }) => (
                 <FormItem className="flex-1">
-                  <FormLabel required>Rent Amount</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter rent amount" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="rentStatus"
-              render={({ field }) => (
-                <FormItem className="flex-1">
-                  <FormLabel required>Rent Status</FormLabel>
+                  <FormLabel required className="text-sm">
+                    Amount paid
+                  </FormLabel>
                   <FormControl>
                     <Dropdown
                       trigger={{
-                        label: field.value || "Select paid or unpaid",
+                        label: field.value
+                          ? generatePaymentCycleOptions().find(
+                              (option) => option.value === field.value,
+                            )?.label || "Select amount paid"
+                          : "Select amount paid",
                         arrowIcon: "material-symbols:keyboard-arrow-down",
                         className: "w-full justify-between",
                       }}
-                      items={formatDropdownItems(rentStatusItems)}
+                      items={generatePaymentCycleOptions()}
                       onItemSelect={(value) => field.onChange(value)}
-                      className="p-4"
+                      className="w-full px-4 py-2"
                     />
                   </FormControl>
                   <FormMessage />
@@ -270,130 +343,99 @@ const AddTenantForm = ({
               )}
             />
           </div>
-        </div>
-        {form.watch("rentStatus") === "Paid" && (
-          <div className="flex flex-col gap-4">
-            <p className="text-muted-foreground font-medium uppercase">
-              Rent Payment
-            </p>
-            <div className="flex gap-6">
-              <FormField
-                control={form.control}
-                name="paymentDate"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel required className="text-sm">
-                      Date of payment
-                    </FormLabel>
-                    <FormControl>
-                      <DatePicker
-                        date={selectedPaymentDate}
-                        onDateSelect={(date) => {
-                          setSelectedPaymentDate(date);
-                          field.onChange(date?.toISOString() || "");
-                        }}
-                        placeholder="Select payment date"
-                        className="w-full text-sm"
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="amountPaid"
-                render={({ field }) => (
-                  <FormItem className="flex-1">
-                    <FormLabel required className="text-sm">
-                      Amount paid
-                    </FormLabel>
-                    <FormControl>
-                      <Input placeholder="Enter amount paid" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-            <FormField
-              control={form.control}
-              name="transactionReceipt"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel required className="text-sm">
-                    Bank transaction receipt
-                  </FormLabel>
-                  <FormControl>
-                    <div className="bg-muted rounded-md border text-center">
-                      <input
-                        key={fileInputKey}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        id="photo-upload"
-                        onChange={(e) => {
-                          if (e.target.files && e.target.files[0]) {
-                            field.onChange(e.target.files[0]);
-                            handleReceiptChange(e.target.files[0]);
-                          }
-                        }}
-                      />
-                      <label
-                        htmlFor="photo-upload"
-                        className="flex cursor-pointer items-center justify-between p-4"
-                      >
-                        <span className="text-muted-foreground text-sm font-medium">
-                          Select image to upload
-                        </span>
-                        <Icon icon="material-symbols:upload-rounded" />
-                      </label>
-                    </div>
-                  </FormControl>
-                  <p className="text-muted-foreground mt-1 text-xs">
-                    Image file size should be under 2MB.
-                  </p>
+          <FormField
+            control={form.control}
+            name="transactionReceipt"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel required className="text-sm">
+                  Bank transaction receipt
+                </FormLabel>
+                <FormControl>
+                  <div className="bg-muted rounded-md border text-center">
+                    <input
+                      key={fileInputKey}
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      id="photo-upload"
+                      onChange={(e) => {
+                        if (e.target.files && e.target.files[0]) {
+                          field.onChange(e.target.files[0]);
+                          handleReceiptChange(e.target.files[0]);
+                        }
+                      }}
+                    />
+                    <label
+                      htmlFor="photo-upload"
+                      className="flex cursor-pointer items-center justify-between p-4"
+                    >
+                      <span className="text-muted-foreground text-sm font-medium">
+                        Select image to upload
+                      </span>
+                      <Icon icon="material-symbols:upload-rounded" />
+                    </label>
+                  </div>
+                </FormControl>
+                <p className="text-muted-foreground mt-1 text-xs">
+                  {!receiptPreview && "Image file size should be under 2MB."}
+                </p>
 
-                  {receiptPreview && (
-                    <div className="mt-4 flex items-center justify-between">
-                      <p className="text-muted-foreground mb-2 text-sm">
-                        Receipt preview
-                      </p>
-                      <div className="">
-                        <div className="border-border relative h-28 w-28 overflow-hidden rounded-lg border">
-                          <Image
-                            width={112}
-                            height={80}
-                            src={receiptPreview}
-                            alt="Receipt preview"
-                            className="h-full w-full object-cover"
-                          />
-                        </div>
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="xs"
-                          onClick={removeReceipt}
-                          className="text-muted-foreground hover:text-foreground mt-2 h-auto p-0"
-                        >
-                          Remove receipt
-                        </Button>
+                {receiptPreview && (
+                  <div className="mt-4 flex items-center justify-between">
+                    <p className="text-muted-foreground mb-2 text-sm">
+                      Receipt preview
+                    </p>
+                    <div className="">
+                      <div className="border-border relative h-28 w-28 overflow-hidden rounded-lg border">
+                        <Image
+                          width={112}
+                          height={80}
+                          src={receiptPreview}
+                          alt="Receipt preview"
+                          className="h-full w-full object-cover"
+                        />
                       </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="xs"
+                        onClick={removeReceipt}
+                        className="text-muted-foreground hover:text-foreground mt-2 h-auto p-0"
+                      >
+                        Remove receipt
+                      </Button>
                     </div>
-                  )}
+                  </div>
+                )}
 
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-          </div>
-        )}
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <Button
           type="submit"
           className="w-full uppercase"
-          disabled={!form.formState.isValid}
+          disabled={
+            !form.formState.isValid ||
+            addTenantMutation.isPending ||
+            uploadImageMutation.isPending
+          }
         >
-          Add Tenant
+          {addTenantMutation.isPending || uploadImageMutation.isPending ? (
+            <>
+              <Icon
+                icon="material-symbols:progress-activity"
+                className="mr-2 animate-spin"
+              />
+              {uploadImageMutation.isPending
+                ? "Uploading..."
+                : "Adding Tenant..."}
+            </>
+          ) : (
+            "Add Tenant"
+          )}
         </Button>
       </form>
     </Form>

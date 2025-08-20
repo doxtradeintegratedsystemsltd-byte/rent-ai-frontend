@@ -1,7 +1,16 @@
-export const formatDate = (date: string | Date, locale = "en-NG") =>
-  new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(
-    new Date(date),
-  );
+export const formatDate = (date: string | Date, locale = "en-GB") =>
+  new Intl.DateTimeFormat(locale, {
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+  }).format(new Date(date));
+
+export const formatLongDate = (date: string | Date, locale = "en-US") =>
+  new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+  }).format(new Date(date));
 
 export const formatDateTime = (date: string | Date, locale = "en-NG") =>
   new Intl.DateTimeFormat(locale, {

@@ -2,7 +2,8 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { User, UserType, AuthState } from "@/types/user";
+import type { User, UserType, AuthState, WhoAmIResponse } from "@/types/user";
+import api from "@/service/api";
 
 interface AuthStore extends AuthState {
   // Actions
@@ -12,6 +13,7 @@ interface AuthStore extends AuthState {
   login: (user: User, token: string) => void;
   logout: () => void;
   updateUser: (updates: Partial<User>) => void;
+  refreshUser: () => Promise<void>;
 
   // Getters/computed values
   getUserRole: () => UserType | null;
@@ -66,6 +68,29 @@ export const useAuthStore = create<AuthStore>()(
         set((state) => ({
           user: state.user ? { ...state.user, ...updates } : null,
         })),
+
+      refreshUser: async () => {
+        const { token, isAuthenticated } = get();
+        if (!token || !isAuthenticated) return;
+
+        try {
+          set({ isLoading: true });
+          const response = await api.get("/users/who-am-i");
+          const whoAmIData: WhoAmIResponse = response.data;
+          set({ user: whoAmIData.data });
+        } catch (error) {
+          console.error("Failed to refresh user data:", error);
+          // If refresh fails due to authentication, logout the user
+          if (error && typeof error === "object" && "response" in error) {
+            const response = error.response as any;
+            if (response?.status === 401) {
+              get().logout();
+            }
+          }
+        } finally {
+          set({ isLoading: false });
+        }
+      },
 
       // Getters/computed values
       getUserRole: () => {
@@ -135,6 +160,7 @@ export const useAuthActions = () => {
   const login = useAuthStore((state) => state.login);
   const logout = useAuthStore((state) => state.logout);
   const updateUser = useAuthStore((state) => state.updateUser);
+  const refreshUser = useAuthStore((state) => state.refreshUser);
   const hasRole = useAuthStore((state) => state.hasRole);
 
   return {
@@ -144,6 +170,7 @@ export const useAuthActions = () => {
     login,
     logout,
     updateUser,
+    refreshUser,
     hasRole,
   };
 };
@@ -167,4 +194,10 @@ export const getCurrentUser = () => {
 export const getCurrentToken = () => {
   const state = useAuthStore.getState();
   return state.token;
+};
+
+// Helper to refresh user data outside of React components
+export const refreshCurrentUser = async () => {
+  const state = useAuthStore.getState();
+  await state.refreshUser();
 };

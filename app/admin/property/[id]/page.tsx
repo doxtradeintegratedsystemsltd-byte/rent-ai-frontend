@@ -22,72 +22,200 @@ import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import AddTenantForm from "@/components/admin/property/add-tenant-form";
 import EditTenantForm from "@/components/admin/property/edit-tenant-form";
 import AddPaymentForm from "@/components/admin/property/add-payment-form";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { useBreadcrumb } from "@/hooks/useBreadcrumb";
-
-const tenantDetailsGrid = [
-  {
-    label: "Phone",
-    value: "08123456789",
-  },
-  {
-    label: "Email",
-    value: "aadebayo@gmail.com",
-  },
-  {
-    label: "Level of Education",
-    value: "Tertiary",
-  },
-  {
-    label: "Job",
-    value: "Accountant",
-  },
-];
-
-const tenancyDetailsGrid = [
-  {
-    label: "Start Date",
-    value: "January 1, 2025",
-  },
-  {
-    label: "End Date",
-    value: "December 31, 2025",
-  },
-  {
-    label: "Rent Amount",
-    value: "₦1,000,000",
-  },
-  {
-    label: "Status",
-    value: "paid",
-  },
-];
+import { useFetchProperty, useDeleteProperty } from "@/mutations/property";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { toast } from "sonner";
+import { formatLongDate } from "@/lib/formatters";
+import { useRemoveTenantFromProperty } from "@/mutations/tenant";
 
 const PropertyPage = () => {
   const [showDialog, setShowDialog] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(true);
+  const [showEditPropertySheet, setShowEditPropertySheet] = useState(false);
+  const [showAddTenantSheet, setShowAddTenantSheet] = useState(false);
+  const [showEditTenantSheet, setShowEditTenantSheet] = useState(false);
+  const [showAddPaymentSheet, setShowAddPaymentSheet] = useState(false);
   const [showTenantDialog, setShowTenantDialog] = useState(false);
 
   const router = useRouter();
+  const params = useParams();
+  const propertyId = params.id as string;
+
+  // Fetch property data
+  const {
+    data: propertyResponse,
+    isLoading,
+    isError,
+    error,
+  } = useFetchProperty(propertyId);
+
+  const deleteProperty = useDeleteProperty();
+
+  const removeTenant = useRemoveTenantFromProperty();
+
+  const property = propertyResponse?.data;
+
+  // Dynamic tenant details grid
+  const tenantDetailsGrid = property?.currentLease?.tenant
+    ? [
+        {
+          label: "Phone",
+          value: property.currentLease.tenant.phoneNumber || "Not provided",
+        },
+        {
+          label: "Email",
+          value: property.currentLease.tenant.email || "Not provided",
+        },
+        {
+          label: "Level of Education",
+          value:
+            property.currentLease.tenant.levelOfEducation || "Not provided",
+        },
+      ]
+    : [];
+
+  // Dynamic tenancy details grid
+  const tenancyDetailsGrid = property?.currentLease
+    ? [
+        {
+          label: "Start Date",
+          value: property.currentLease.startDate
+            ? new Date(property.currentLease.startDate).toLocaleDateString(
+                "en-US",
+                {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                },
+              )
+            : "Not set",
+        },
+        {
+          label: "End Date",
+          value: property.currentLease.endDate
+            ? new Date(property.currentLease.endDate).toLocaleDateString(
+                "en-US",
+                {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                },
+              )
+            : "Not set",
+        },
+        {
+          label: "Rent Amount",
+          value: `₦${parseFloat(property.currentLease.rentAmount.toString()).toLocaleString()}`,
+        },
+        {
+          label: "Status",
+          value: property.currentLease.rentStatus || "unknown",
+        },
+      ]
+    : [
+        {
+          label: "Lease Years",
+          value: `${property?.leaseYears || 0} years`,
+        },
+        {
+          label: "Rent Amount",
+          value: `₦${parseFloat(property?.rentAmount || "0").toLocaleString()}`,
+        },
+        {
+          label: "Status",
+          value: "No active lease",
+        },
+      ];
 
   useBreadcrumb([
     { name: "Dashboard", href: "/admin" },
-    { name: "Axel Home", href: "#" },
+    { name: property?.propertyName || "Property", href: "#" },
   ]);
 
-  const tenant = true;
+  const tenant = !!property?.currentLease?.tenant;
 
-  const handleDeleteProperty = () => {
-    // Your delete logic here
-    console.log("Item deleted!");
+  const handleDeleteProperty = async () => {
+    try {
+      await deleteProperty.mutateAsync(propertyId);
+      toast.success("Property deleted successfully!");
+
+      // Close the dialog
+      setShowDialog(false);
+
+      // Navigate back to properties list
+      router.push("/admin");
+    } catch (error) {
+      console.error("Error deleting property:", error);
+      toast.error("Failed to delete property. Please try again.");
+    }
   };
 
-  const handleTenantRemoval = () => {
-    // Your tenant removal logic here
-    console.log("Tenant removed!");
+  const handleTenantRemoval = async () => {
+    try {
+      if (!property?.currentLeaseId) {
+        toast.error("No lease found to remove tenant from.");
+        return;
+      }
+      await removeTenant.mutateAsync(property.currentLeaseId);
+      toast.success("Tenant removed successfully!");
+      setShowTenantDialog(false);
+    } catch (error) {
+      console.error("Error removing tenant:", error);
+      toast.error("Failed to remove tenant. Please try again.");
+    }
   };
 
-  const id = 1;
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <LoadingSpinner />
+        <p className="text-muted-foreground">Loading property details...</p>
+      </div>
+    );
+  }
+
+  // Error state
+  if (isError) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <Icon
+          icon="material-symbols:error-outline"
+          size="xl"
+          className="text-red-600"
+        />
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">Error loading property</h2>
+          <p className="text-muted-foreground">
+            {error?.message || "Something went wrong. Please try again."}
+          </p>
+        </div>
+        <Button onClick={() => router.back()}>Go Back</Button>
+      </div>
+    );
+  }
+
+  // Property not found
+  if (!property) {
+    return (
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <Icon
+          icon="material-symbols:home-outline"
+          size="xl"
+          className="text-muted-foreground"
+        />
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">Property not found</h2>
+          <p className="text-muted-foreground">
+            The property you&apos;re looking for doesn&apos;t exist or has been
+            removed.
+          </p>
+        </div>
+        <Button onClick={() => router.back()}>Go Back</Button>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -102,30 +230,35 @@ const PropertyPage = () => {
                 <div className="border-secondary-foreground text-secondary-foreground relative rounded-full border p-2">
                   <Icon icon="material-symbols:home-app-logo" size="lg" />
                 </div>
-                <h2 className="text-lg font-bold">Axel Home</h2>
+                <h2 className="text-lg font-bold">{property?.propertyName}</h2>
               </div>
 
               {/* Add Tenant Button and Sheet */}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className="ml-auto text-xs font-medium uppercase"
-                  >
-                    <Icon
-                      icon="material-symbols:bookmark-add-outline-rounded"
-                      className="mr-2"
-                    />
-                    Add Tenant
-                  </Button>
-                </SheetTrigger>
-                <SheetContent
-                  className="flex w-[600px] max-w-[600px] min-w-[600px] flex-col [&>button]:hidden"
-                  style={{ width: "600px" }}
+              {!property?.currentLease && (
+                <Sheet
+                  open={showAddTenantSheet}
+                  onOpenChange={(open) => {
+                    setShowAddTenantSheet(open);
+                  }}
                 >
-                  <SheetHeader className="flex-shrink-0">
-                    <SheetClose asChild className="mb-8 text-left">
-                      {isSubmitted ? null : (
+                  <SheetTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="ml-auto text-xs font-medium uppercase"
+                    >
+                      <Icon
+                        icon="material-symbols:bookmark-add-outline-rounded"
+                        className="mr-2"
+                      />
+                      Add Tenant
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent
+                    className="flex w-[600px] max-w-[600px] min-w-[600px] flex-col [&>button]:hidden"
+                    style={{ width: "600px" }}
+                  >
+                    <SheetHeader className="flex-shrink-0">
+                      <SheetClose asChild className="mb-8 text-left">
                         <Button variant="ghost" className="w-fit p-0">
                           <Icon
                             icon="material-symbols:arrow-back"
@@ -133,10 +266,8 @@ const PropertyPage = () => {
                           />
                           Go Back
                         </Button>
-                      )}
-                    </SheetClose>
-                    <SheetTitle className="text-lg font-bold">
-                      {isSubmitted ? null : (
+                      </SheetClose>
+                      <SheetTitle className="text-lg font-bold">
                         <>
                           <Icon
                             icon="material-symbols:location-home-outline-rounded"
@@ -145,44 +276,20 @@ const PropertyPage = () => {
                           />
                           Add Tenant
                         </>
-                      )}
-                    </SheetTitle>
-                  </SheetHeader>
-                  <div className="flex-1 overflow-y-auto pr-2">
-                    {isSubmitted ? (
-                      <div className="flex h-full flex-col items-center justify-center gap-8 text-center">
-                        <div className="bg-muted flex w-full flex-col items-center gap-6 rounded-md border px-8 py-16">
-                          <div className="flex h-16 w-16 items-center justify-center">
-                            <Image
-                              src="/images/check.png"
-                              alt="Checkmark"
-                              width={64}
-                              height={64}
-                            />
-                          </div>
-                          <div className="space-y-2">
-                            <h3 className="text-foreground text-2xl font-bold">
-                              Tenant Assigned
-                            </h3>
-                            <p className="text-secondary-foreground text-sm font-medium">
-                              The tenant will be notified and receive login
-                              details in their mail
-                            </p>
-                          </div>
-                        </div>
-                        <Button
-                          className="w-full uppercase"
-                          onClick={() => setIsSubmitted(false)}
-                        >
-                          GO TO PROPERTY
-                        </Button>
-                      </div>
-                    ) : (
-                      <AddTenantForm setIsSubmitted={setIsSubmitted} />
-                    )}
-                  </div>
-                </SheetContent>
-              </Sheet>
+                      </SheetTitle>
+                    </SheetHeader>
+                    <div className="flex-1 overflow-y-auto pr-2">
+                      <AddTenantForm
+                        rentAmount={parseFloat(property?.rentAmount) || 0}
+                        propertyId={propertyId}
+                        onSuccess={() => {
+                          setShowAddTenantSheet(false);
+                        }}
+                      />
+                    </div>
+                  </SheetContent>
+                </Sheet>
+              )}
             </div>
             <Card className="bg-muted flex items-start gap-2 py-6">
               <div className="border-border text-foreground after:bg-secondary-foreground relative mr-1 rounded-full border p-2 after:absolute after:top-full after:left-1/2 after:h-8 after:w-px after:-translate-x-1/2">
@@ -192,16 +299,16 @@ const PropertyPage = () => {
                 />
               </div>
               <div className="flex flex-col gap-4">
-                <p className="text-md font-semibold">Gwarimpa, Abuja</p>
-                <p className="text-md">
-                  20, Malami Street, GRA, Gwarimpa, Abuja
+                <p className="text-md font-semibold">
+                  {property?.propertyArea}, {property?.propertyState}
                 </p>
+                <p className="text-md">{property?.propertyAddress}</p>
               </div>
             </Card>
             <div className="h-[554px] w-full overflow-hidden rounded-md">
               <Image
-                src="/images/full-house.png"
-                alt="Property Image"
+                src={property?.propertyImage || ""}
+                alt={`${property?.propertyName || "Property"} Image`}
                 width={5290}
                 height={5540}
                 className="h-full w-full object-cover"
@@ -209,22 +316,26 @@ const PropertyPage = () => {
             </div>
             <div className="">
               <p className="text-muted-foreground text-xs font-medium uppercase">
-                <span className="bg-muted text-secondary-foreground mr-1 px-3 py-1">
+                <span className="bg-border text-secondary-foreground mr-1 px-3 py-1">
                   Created
                 </span>
                 By
                 <span className="text-foreground mx-1 text-sm font-bold capitalize">
-                  Creator&apos;s name
+                  {property?.createdBy?.firstName}{" "}
+                  {property?.createdBy?.lastName}
                 </span>
                 On
                 <span className="text-foreground ml-1 text-sm font-bold capitalize">
-                  December 1, 2024
+                  {property?.createdAt && formatLongDate(property.createdAt)}
                 </span>
               </p>
             </div>
             <div className="flex gap-4">
               {/* Edit Property Button and Sheet */}
-              <Sheet>
+              <Sheet
+                open={showEditPropertySheet}
+                onOpenChange={setShowEditPropertySheet}
+              >
                 <SheetTrigger asChild>
                   <Button
                     variant="outline"
@@ -261,7 +372,12 @@ const PropertyPage = () => {
                     </SheetTitle>
                   </SheetHeader>
                   <div className="flex-1 overflow-y-auto pr-2">
-                    <EditPropertyForm />
+                    {property && (
+                      <EditPropertyForm
+                        property={property}
+                        onSuccess={() => setShowEditPropertySheet(false)}
+                      />
+                    )}
                   </div>
                 </SheetContent>
               </Sheet>
@@ -269,12 +385,25 @@ const PropertyPage = () => {
               <Button
                 className="text-xs font-medium uppercase"
                 onClick={() => setShowDialog(true)}
+                disabled={deleteProperty.isPending}
               >
-                <Icon
-                  icon="material-symbols:bookmark-remove-outline-rounded"
-                  className="mr-2"
-                />
-                Remove Property
+                {deleteProperty.isPending ? (
+                  <>
+                    <Icon
+                      icon="material-symbols:progress-activity"
+                      className="mr-2 animate-spin"
+                    />
+                    Removing...
+                  </>
+                ) : (
+                  <>
+                    <Icon
+                      icon="material-symbols:bookmark-remove-outline-rounded"
+                      className="mr-2"
+                    />
+                    Remove Property
+                  </>
+                )}
               </Button>
             </div>
           </div>
@@ -287,7 +416,10 @@ const PropertyPage = () => {
               </h2>
               <div className="flex gap-4">
                 {/* Edit Tenant Button and Sheet */}
-                <Sheet>
+                <Sheet
+                  open={showEditTenantSheet}
+                  onOpenChange={setShowEditTenantSheet}
+                >
                   <SheetTrigger asChild>
                     <Button
                       variant="outline"
@@ -326,11 +458,13 @@ const PropertyPage = () => {
                       </SheetTitle>
                     </SheetHeader>
                     <div className="flex-1 overflow-y-auto pr-2">
-                      <EditTenantForm />
+                      <EditTenantForm
+                        tenant={property?.currentLease?.tenant}
+                        onSuccess={() => setShowEditTenantSheet(false)}
+                      />
                     </div>
                   </SheetContent>
                 </Sheet>
-
                 <Button
                   className="text-xs font-medium uppercase"
                   disabled={!tenant}
@@ -355,7 +489,11 @@ const PropertyPage = () => {
                         size="lg"
                       />
                     </div>
-                    <p className="text-lg font-semibold">Abdul Adebayo</p>
+                    <p className="text-lg font-semibold">
+                      {property?.currentLease?.tenant
+                        ? `${property.currentLease.tenant.firstName} ${property.currentLease.tenant.lastName || ""}`.trim()
+                        : "No tenant assigned"}
+                    </p>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     {tenantDetailsGrid.map((item) => (
@@ -396,7 +534,7 @@ const PropertyPage = () => {
                 <Button
                   className="self-end text-xs font-medium uppercase"
                   onClick={() =>
-                    router.push(`/admin/property/notification/${id}`)
+                    router.push(`/admin/property/notification/${propertyId}`)
                   }
                 >
                   <Icon
@@ -412,7 +550,10 @@ const PropertyPage = () => {
                     </p>
 
                     {/* Add Payment Button and Sheet */}
-                    <Sheet>
+                    <Sheet
+                      open={showAddPaymentSheet}
+                      onOpenChange={setShowAddPaymentSheet}
+                    >
                       <SheetTrigger asChild>
                         <Button
                           variant="outline"
@@ -450,7 +591,11 @@ const PropertyPage = () => {
                           </SheetTitle>
                         </SheetHeader>
                         <div className="flex-1 overflow-y-auto pr-2">
-                          <AddPaymentForm />
+                          <AddPaymentForm
+                            rentAmount={parseFloat(property?.rentAmount) || 0}
+                            leaseId={property?.currentLeaseId || ""}
+                            onSuccess={() => setShowAddPaymentSheet(false)}
+                          />
                         </div>
                       </SheetContent>
                     </Sheet>
@@ -508,6 +653,8 @@ const PropertyPage = () => {
         onConfirm={showDialog ? handleDeleteProperty : handleTenantRemoval}
         confirmText={showDialog ? "Yes, Remove Property" : "Yes, Remove Tenant"}
         cancelText="No, Go Back"
+        confirmLoading={showDialog ? deleteProperty.isPending : false}
+        confirmVariant="destructive"
       />
     </>
   );

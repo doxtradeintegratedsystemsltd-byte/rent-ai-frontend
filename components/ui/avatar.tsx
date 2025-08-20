@@ -2,7 +2,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export interface AvatarProps {
-  src?: string;
+  src?: string | null;
   alt?: string;
   letter?: string;
   name?: string;

@@ -35,20 +35,32 @@ const usePrint = (
                 size: auto;
             }
             @media print {
-                body { -webkit-print-color-adjust: exact; }
+                body { 
+                    -webkit-print-color-adjust: exact;
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    min-height: 100vh;
+                    margin: 0;
+                    padding: 0;
+                }
                 .print-receipt { 
                     font-size: 12px; 
-                    max-width: 300px;
+                    max-width: 400px;
+                    margin: 0 auto;
                 }
                 .print-receipt-standard { 
                     font-size: 14px; 
-                    max-width: 400px;
+                    max-width: 600px;
+                    margin: 0 auto;
                 }
                 .print-invoice { 
-                    font-size: 13px; 
+                    font-size: 13px;
+                    margin: 0 auto;
                 }
                 .print-report { 
-                    font-size: 11px; 
+                    font-size: 11px;
+                    margin: 0 auto;
                 }
                 [data-no-print] {
                     display: none !important;

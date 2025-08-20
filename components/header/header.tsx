@@ -18,12 +18,19 @@ import Profile from "../admin/profile/profile";
 import EditProfileForm from "../admin/profile/edit-profile-form";
 import Notifications from "../admin/notifications/notifications";
 import { useBreadcrumbs } from "@/contexts/breadcrumb-context";
+import { useUser } from "@/store/authStore";
+import { useGetUnreadNotificationsCount } from "@/mutations/notification";
 
 export function Header() {
   const [showEditForm, setShowEditForm] = useState(false);
   const { breadcrumbs } = useBreadcrumbs();
 
   const pathname = usePathname();
+
+  const user = useUser();
+  const { data: countData } = useGetUnreadNotificationsCount();
+
+  const count = countData?.count;
 
   // Fallback breadcrumb generation for pages that don't set custom breadcrumbs
   const getFallbackBreadcrumbs = (path: string) => {
@@ -94,13 +101,13 @@ export function Header() {
           <Sheet>
             <SheetTrigger asChild>
               <div className="flex cursor-pointer items-center space-x-2">
-                <Avatar src="/images/avatar.png" alt="Admin Avatar" size="md" />
+                <Avatar src={user?.photoUrl} alt="Admin Avatar" size="md" />
                 <div className="flex flex-col">
                   <span className="text-foreground text-xs font-bold">
-                    Bala Joseph
+                    {user?.firstName} {user?.lastName}
                   </span>
-                  <span className="text-muted-foreground text-[10px] font-medium">
-                    ADMIN
+                  <span className="text-muted-foreground text-[10px] font-medium uppercase">
+                    {user?.userType}
                   </span>
                 </div>
               </div>
@@ -150,16 +157,22 @@ export function Header() {
                   )}
                 </div>
               </SheetHeader>
-              {showEditForm ? <EditProfileForm /> : <Profile />}
+              {user &&
+                (showEditForm ? <EditProfileForm /> : <Profile user={user} />)}
             </SheetContent>
           </Sheet>
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="icon" size={"icon"}>
+              <Button variant="icon" size={"icon"} className="relative">
                 <Icon
                   icon="material-symbols:notifications"
                   className="text-foreground"
                 />
+                {count && count > 0 && (
+                  <span className="bg-destructive text-background absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-xs font-semibold">
+                    {count > 9 ? "9+" : count}
+                  </span>
+                )}
               </Button>
             </SheetTrigger>
             <SheetContent
@@ -181,7 +194,9 @@ export function Header() {
                   Notifications
                 </SheetTitle>
               </SheetHeader>
-              <Notifications />
+              <div className="overflow-y-auto">
+                <Notifications />
+              </div>
             </SheetContent>
           </Sheet>
         </div>

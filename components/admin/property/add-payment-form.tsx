@@ -4,6 +4,7 @@ import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Form,
@@ -13,10 +14,13 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import { DatePicker } from "@/components/ui/date-picker";
 import { Icon } from "@/components/ui/icon";
 import Image from "next/image";
+import { formatCurrency } from "@/lib/formatters";
+import { Dropdown } from "@/components/ui/dropdown";
+import { useAddPayment } from "@/mutations/payment";
+import { useSingleImageUpload } from "@/mutations/upload";
 
 const FormSchema = z.object({
   paymentDate: z.string().min(1, { message: "Payment date is required" }),
@@ -26,10 +30,34 @@ const FormSchema = z.object({
   }),
 });
 
-const AddPaymentForm = () => {
+const AddPaymentForm = ({
+  rentAmount,
+  leaseId,
+  onSuccess,
+}: {
+  rentAmount: number;
+  leaseId: string;
+  onSuccess?: () => void;
+}) => {
   const [selectedPaymentDate, setSelectedPaymentDate] = useState<Date>();
   const [receiptPreview, setReceiptPreview] = useState<string | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
+
+  const addPaymentMutation = useAddPayment();
+  const uploadImageMutation = useSingleImageUpload();
+
+  const generatePaymentCycleOptions = () => {
+    const cycles = [];
+    for (let i = 1; i <= 12; i++) {
+      const amount = rentAmount * i;
+      const label = `${i} cycle${i > 1 ? "s" : ""} (${formatCurrency(amount)})`;
+      cycles.push({
+        label,
+        value: amount.toString(),
+      });
+    }
+    return cycles;
+  };
 
   const form = useForm({
     resolver: zodResolver(FormSchema),
@@ -55,11 +83,62 @@ const AddPaymentForm = () => {
   const removeReceipt = () => {
     setReceiptPreview(null);
     form.resetField("transactionReceipt");
-    setFileInputKey((prev) => prev + 1); // Force re-render of input to clear file
+    setFileInputKey((prev) => prev + 1);
   };
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
-    console.log("Form submitted with data:", data);
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    try {
+      // Upload the receipt image first - this is required
+      let paymentReceiptUrl = "";
+      if (data.transactionReceipt) {
+        const uploadResponse = await uploadImageMutation.mutateAsync(
+          data.transactionReceipt,
+        );
+        paymentReceiptUrl = uploadResponse.data || "";
+
+        if (!paymentReceiptUrl) {
+          toast.error(
+            "Failed to upload receipt. Payment cannot be created without a receipt.",
+          );
+          return;
+        }
+      } else {
+        toast.error("Receipt is required for payment creation.");
+        return;
+      }
+
+      // Calculate lease cycles from the amount paid
+      const amountPaid = parseFloat(data.amountPaid);
+      const leaseCycles = Math.round(amountPaid / rentAmount);
+
+      // Create payload for API
+      const payload = {
+        leaseId: leaseId,
+        leaseCycles: leaseCycles,
+        paymentReceipt: paymentReceiptUrl,
+        paymentDate: data.paymentDate,
+      };
+
+      await addPaymentMutation.mutateAsync(payload);
+      toast.success("Payment added successfully!");
+
+      if (onSuccess) {
+        onSuccess();
+      }
+    } catch (error: unknown) {
+      console.error("Error adding payment:", error);
+
+      const errorMessage =
+        error instanceof Error
+          ? error.message
+          : "Failed to add payment. Please try again.";
+
+      if (errorMessage === "Next lease rent is already paid") {
+        toast.error("Next lease rent is already paid!");
+      } else {
+        toast.error("Failed to add payment. Please try again.");
+      }
+    }
   };
 
   return (
@@ -98,7 +177,20 @@ const AddPaymentForm = () => {
                 Amount paid
               </FormLabel>
               <FormControl>
-                <Input placeholder="Enter amount paid" {...field} />
+                <Dropdown
+                  trigger={{
+                    label: field.value
+                      ? generatePaymentCycleOptions().find(
+                          (option) => option.value === field.value,
+                        )?.label || "Select amount paid"
+                      : "Select amount paid",
+                    arrowIcon: "material-symbols:keyboard-arrow-down",
+                    className: "w-full justify-between",
+                  }}
+                  items={generatePaymentCycleOptions()}
+                  onItemSelect={(value) => field.onChange(value)}
+                  className="w-full px-4 py-2"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -179,9 +271,15 @@ const AddPaymentForm = () => {
         <Button
           type="submit"
           className="w-full uppercase"
-          disabled={!form.formState.isValid}
+          disabled={
+            !form.formState.isValid ||
+            addPaymentMutation.isPending ||
+            uploadImageMutation.isPending
+          }
         >
-          Add Payment
+          {addPaymentMutation.isPending || uploadImageMutation.isPending
+            ? "Adding Payment..."
+            : "Add Payment"}
         </Button>
       </form>
     </Form>

@@ -10,11 +10,28 @@ type SidebarItemProps = {
   href?: string;
   icon: string;
   onClick?: () => void;
+  exact?: boolean;
 };
 
-export function SidebarItem({ title, href, icon, onClick }: SidebarItemProps) {
+export function SidebarItem({
+  title,
+  href,
+  icon,
+  onClick,
+  exact,
+}: SidebarItemProps) {
   const pathname = usePathname();
-  const isActive = href ? pathname.startsWith(href) : false;
+
+  // Normalize paths by removing trailing slashes (except root)
+  const normalize = (p: string) => (p && p !== "/" ? p.replace(/\/+$/, "") : p);
+  const current = normalize(pathname || "");
+  const target = href ? normalize(href) : "";
+
+  const isActive = href
+    ? exact
+      ? current === target
+      : current === target || current.startsWith(target + "/")
+    : false;
 
   const className = cn(
     "flex items-center gap-3 px-4 py-3 rounded-md transition-colors text-sm font-medium",

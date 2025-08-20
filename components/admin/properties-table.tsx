@@ -14,7 +14,7 @@ import {
 import { getPaymentStatus } from "@/lib/status-util";
 import Avatar from "../ui/avatar";
 import Pagination from "../ui/pagination";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "../ui/button";
 import { Icon } from "@/components/ui/icon";
 import { getFilterLabel, getLocationLabel } from "@/lib/table-utils";
@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/table-skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const filterItems = [
   { type: "label" as const, label: "Show" },
@@ -35,11 +36,11 @@ const filterItems = [
   },
   {
     label: "Rent Paid",
-    value: "paid",
+    value: "rent-paid",
   },
   {
     label: "Rent Unpaid",
-    value: "unpaid",
+    value: "rent-unpaid",
   },
 ];
 
@@ -69,19 +70,89 @@ const tableHead = [
 ];
 
 const PropertiesTable = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("all");
-  const [selectedLocation, setSelectedLocation] = useState("all");
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
+  // Initialize state from URL parameters
+  const [currentPage, setCurrentPage] = useState(() => {
+    const page = searchParams.get("page");
+    return page ? parseInt(page, 10) : 1;
+  });
+
+  const [searchTerm, setSearchTerm] = useState(() => {
+    return searchParams.get("search") || "";
+  });
+
+  const [selectedFilter, setSelectedFilter] = useState(() => {
+    return searchParams.get("status") || "all";
+  });
+
+  const [selectedLocation, setSelectedLocation] = useState(() => {
+    return searchParams.get("location") || "all";
+  });
+
   const itemsPerPage = 20;
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // Function to update URL with current filter state
+  const updateURL = useCallback(
+    (params: {
+      page?: number;
+      search?: string;
+      status?: string;
+      location?: string;
+    }) => {
+      const current = new URLSearchParams(window.location.search);
+
+      // Update or remove parameters
+      if (params.page && params.page > 1) {
+        current.set("page", params.page.toString());
+      } else {
+        current.delete("page");
+      }
+
+      if (params.search && params.search.trim()) {
+        current.set("search", params.search);
+      } else {
+        current.delete("search");
+      }
+
+      if (params.status && params.status !== "all") {
+        current.set("status", params.status);
+      } else {
+        current.delete("status");
+      }
+
+      if (params.location && params.location !== "all") {
+        current.set("location", params.location);
+      } else {
+        current.delete("location");
+      }
+
+      // Update URL without triggering a page reload
+      const search = current.toString();
+      const query = search ? `?${search}` : "";
+      router.replace(`${window.location.pathname}${query}`, { scroll: false });
+    },
+    [router],
+  );
+
+  // Update URL when filters change
+  useEffect(() => {
+    updateURL({
+      page: currentPage,
+      search: searchTerm,
+      status: selectedFilter,
+      location: selectedLocation,
+    });
+  }, [currentPage, searchTerm, selectedFilter, selectedLocation, updateURL]);
 
   const { data, isLoading, isError, error } = useFetchProperties({
     page: currentPage - 1,
     pageSize: itemsPerPage,
     search: debouncedSearchTerm || undefined,
-    filter: selectedFilter !== "all" ? selectedFilter : undefined,
+    status: selectedFilter !== "all" ? selectedFilter : undefined,
     location: selectedLocation !== "all" ? selectedLocation : undefined,
   });
 

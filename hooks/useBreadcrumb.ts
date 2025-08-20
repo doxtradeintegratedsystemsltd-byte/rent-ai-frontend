@@ -1,3 +1,5 @@
+"use client";
+
 import { useEffect, useRef } from "react";
 import { useBreadcrumbs, BreadcrumbItem } from "@/contexts/breadcrumb-context";
 

@@ -66,6 +66,8 @@ export interface UpdateUserRequest {
   email?: string;
   userType?: UserType;
   tenantId?: string | null;
+  phoneNumber?: string | null;
+  photoUrl?: string | null;
 }
 
 // Password related interfaces

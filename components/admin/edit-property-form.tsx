@@ -16,34 +16,112 @@ import { Input } from "@/components/ui/input";
 import { Dropdown } from "@/components/ui/dropdown";
 import { formatDropdownItems } from "@/lib/formatters";
 import { Icon } from "@/components/ui/icon";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
+import { usePropertyImageUpload } from "@/mutations/upload";
+import { useUpdateProperty } from "@/mutations/property";
+import { toast } from "sonner";
+import { Property } from "@/types/property";
 
 const FormSchema = z.object({
   propertyName: z.string().min(1, { message: "Property name is required" }),
   propertyState: z.string().min(1, { message: "Property state is required" }),
   propertyArea: z.string().min(1, { message: "Property area is required" }),
   propertyAddress: z.string().min(1, { message: "Address is required" }),
-  propertyImage: z.instanceof(File, { message: "Property image is required" }),
+  propertyImage: z.union([
+    z.instanceof(File),
+    z.string().url({ message: "Valid image URL is required" }),
+  ]),
+  leaseYears: z.number().min(1, { message: "Lease duration is required" }),
+  rentAmount: z.number().min(1, { message: "Rent amount is required" }),
 });
 
-const EditPropertyForm = () => {
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+interface PropertySubmissionData {
+  propertyName: string;
+  propertyState: string;
+  propertyArea: string;
+  propertyAddress: string;
+  propertyImage: string;
+  leaseYears: number;
+  rentAmount: number;
+}
+
+interface EditPropertyFormProps {
+  property: Property;
+  onSuccess?: () => void;
+}
+
+const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
+  const [imagePreview, setImagePreview] = useState<string | null>(
+    property?.propertyImage || null,
+  );
   const [fileInputKey, setFileInputKey] = useState(0);
+  const [isImageChanged, setIsImageChanged] = useState(false);
+
+  const imageUpload = usePropertyImageUpload();
+  const updateProperty = useUpdateProperty();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      propertyName: "",
-      propertyState: "",
-      propertyArea: "",
-      propertyAddress: "",
-      propertyImage: undefined,
+      propertyName: property?.propertyName || "",
+      propertyState: property?.propertyState || "",
+      propertyArea: property?.propertyArea || "",
+      propertyAddress: property?.propertyAddress || "",
+      propertyImage: property?.propertyImage || "",
+      leaseYears: property?.leaseYears || 1,
+      rentAmount: parseInt(property?.rentAmount || "0") || 0,
     },
   });
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
-    console.log("Form submitted with data:", data);
+  // Update form values when property changes
+  useEffect(() => {
+    if (property) {
+      form.reset({
+        propertyName: property.propertyName || "",
+        propertyState: property.propertyState || "",
+        propertyArea: property.propertyArea || "",
+        propertyAddress: property.propertyAddress || "",
+        propertyImage: property.propertyImage || "",
+        leaseYears: property.leaseYears || 1,
+        rentAmount: parseInt(property.rentAmount || "0") || 0,
+      });
+      setImagePreview(property.propertyImage || null);
+    }
+  }, [property, form]);
+
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    try {
+      let propertyImageUrl = property?.propertyImage || "";
+
+      // Upload new image if it was changed
+      if (isImageChanged && data.propertyImage instanceof File) {
+        propertyImageUrl = await imageUpload.uploadImageForProperty(
+          data.propertyImage,
+        );
+      }
+
+      const submissionData: PropertySubmissionData = {
+        propertyName: data.propertyName,
+        propertyState: data.propertyState,
+        propertyArea: data.propertyArea,
+        propertyAddress: data.propertyAddress,
+        propertyImage: propertyImageUrl,
+        leaseYears: data.leaseYears,
+        rentAmount: data.rentAmount,
+      };
+
+      await updateProperty.mutateAsync({
+        id: property.id,
+        propertyData: submissionData,
+      });
+
+      toast.success("Property updated successfully!");
+      onSuccess?.();
+    } catch (error) {
+      console.error("Error updating property:", error);
+      toast.error("Failed to update property. Please try again.");
+    }
   };
 
   const states = ["Lagos", "Abuja", "Kano", "Rivers", "Ogun"];
@@ -56,15 +134,18 @@ const EditPropertyForm = () => {
         setImagePreview(e.target?.result as string);
       };
       reader.readAsDataURL(file);
+      setIsImageChanged(true);
     } else {
-      setImagePreview(null);
+      setImagePreview(property?.propertyImage || null);
+      setIsImageChanged(false);
     }
   };
 
   const removeImage = () => {
-    setImagePreview(null);
-    form.resetField("propertyImage");
+    setImagePreview(property?.propertyImage || null);
+    form.setValue("propertyImage", property?.propertyImage || "");
     setFileInputKey((prev) => prev + 1); // Force re-render of input to clear file
+    setIsImageChanged(false);
   };
 
   return (
@@ -158,6 +239,52 @@ const EditPropertyForm = () => {
             </FormItem>
           )}
         />
+        <div className="flex gap-4">
+          <FormField
+            control={form.control}
+            name="leaseYears"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel required className="text-sm">
+                  Lease duration (years)
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="1"
+                    className="py-2"
+                    placeholder="Enter lease duration"
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="rentAmount"
+            render={({ field }) => (
+              <FormItem className="w-full">
+                <FormLabel required className="text-sm">
+                  Rent amount (₦)
+                </FormLabel>
+                <FormControl>
+                  <Input
+                    type="number"
+                    min="1"
+                    className="py-2"
+                    placeholder="Enter rent amount"
+                    {...field}
+                    onChange={(e) => field.onChange(parseInt(e.target.value))}
+                  />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
         <FormField
           control={form.control}
           name="propertyImage"
@@ -231,9 +358,23 @@ const EditPropertyForm = () => {
         <Button
           type="submit"
           className="w-full uppercase"
-          disabled={!form.formState.isValid}
+          disabled={
+            !form.formState.isValid ||
+            updateProperty.isPending ||
+            imageUpload.isPending
+          }
         >
-          Save
+          {updateProperty.isPending || imageUpload.isPending ? (
+            <>
+              <Icon
+                icon="material-symbols:progress-activity"
+                className="mr-2 animate-spin"
+              />
+              {imageUpload.isPending ? "Uploading..." : "Updating..."}
+            </>
+          ) : (
+            "Update Property"
+          )}
         </Button>
       </form>
     </Form>

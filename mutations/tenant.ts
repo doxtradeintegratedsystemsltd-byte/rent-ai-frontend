@@ -1,0 +1,140 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import api from "@/service/api";
+import type { ApiResponse } from "@/types/user";
+import {
+  AddTenantToPropertyRequest,
+  AddTenantToPropertyResponse,
+  EditTenantRequest,
+  EditTenantResponse,
+} from "@/types/tenant";
+import { PropertySingleResponse } from "@/types/property";
+
+// Add tenant to property mutation
+export const useAddTenantToProperty = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      tenantData: AddTenantToPropertyRequest,
+    ): Promise<ApiResponse<AddTenantToPropertyResponse>> => {
+      const response = await api.post("/tenants", tenantData);
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      // Update the specific property in cache to reflect the new tenant
+      queryClient.setQueryData(
+        ["property", variables.propertyId],
+        (oldData: ApiResponse<PropertySingleResponse> | undefined) => {
+          if (oldData && oldData.data && data.data) {
+            return {
+              ...oldData,
+              data: {
+                ...oldData.data,
+                currentLease: data.data.lease,
+                currentLeaseId: data.data.lease.id,
+              },
+            };
+          }
+          return oldData;
+        },
+      );
+
+      // Invalidate properties list to ensure consistency
+      queryClient.invalidateQueries({
+        queryKey: ["properties"],
+        refetchType: "none",
+      });
+
+      // Optionally invalidate the specific property query to get fresh data
+      queryClient.invalidateQueries({
+        queryKey: ["property", variables.propertyId],
+        refetchType: "none",
+      });
+
+      // Invalidate due rents since adding a tenant affects property lease status
+      queryClient.invalidateQueries({
+        queryKey: ["properties", "due-rents"],
+        refetchType: "none",
+      });
+    },
+  });
+};
+
+// Edit tenant mutation
+export const useEditTenant = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({
+      tenantId,
+      tenantData,
+    }: {
+      tenantId: string;
+      tenantData: EditTenantRequest;
+    }): Promise<ApiResponse<EditTenantResponse>> => {
+      const response = await api.put(`/tenants/${tenantId}`, tenantData);
+      return response.data;
+    },
+    onSuccess: (data, variables) => {
+      // Invalidate specific queries to ensure consistency and immediate refetch
+      queryClient.invalidateQueries({
+        queryKey: ["tenant", variables.tenantId],
+      });
+
+      // Invalidate properties list to reflect updated tenant information
+      queryClient.invalidateQueries({
+        queryKey: ["properties"],
+      });
+
+      // Invalidate all property queries to ensure fresh data
+      queryClient.invalidateQueries({
+        queryKey: ["property"],
+      });
+
+      // Invalidate due rents since tenant updates might affect rent status
+      queryClient.invalidateQueries({
+        queryKey: ["properties", "due-rents"],
+      });
+    },
+  });
+};
+
+// Remove tenant from property mutation
+export const useRemoveTenantFromProperty = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      leaseId: string,
+    ): Promise<ApiResponse<{ message: string }>> => {
+      const response = await api.delete(`/leases/remove-tenant/${leaseId}`);
+      return response.data;
+    },
+    onSuccess: (data, leaseId) => {
+      // Invalidate properties list to reflect tenant removal
+      queryClient.invalidateQueries({
+        queryKey: ["properties"],
+      });
+
+      // Invalidate all property queries to ensure fresh data
+      queryClient.invalidateQueries({
+        queryKey: ["property"],
+      });
+
+      // Invalidate tenant-related queries
+      queryClient.invalidateQueries({
+        queryKey: ["tenant"],
+      });
+
+      // Invalidate lease-related queries if they exist
+      queryClient.invalidateQueries({
+        queryKey: ["lease"],
+      });
+
+      // Invalidate due rents since removing a tenant affects lease and rent status
+      queryClient.invalidateQueries({
+        queryKey: ["properties", "due-rents"],
+      });
+    },
+  });
+};

@@ -16,12 +16,12 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import EditPropertyForm from "@/components/admin/edit-property-form";
+// import EditPropertyForm from "@/components/admin/edit-property-form";
 import { useState } from "react";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
-import AddTenantForm from "@/components/admin/property/add-tenant-form";
+// import AddTenantForm from "@/components/admin/property/add-tenant-form";
 import EditTenantForm from "@/components/admin/property/edit-tenant-form";
-import AddPaymentForm from "@/components/admin/property/add-payment-form";
+// import AddPaymentForm from "@/components/admin/property/add-payment-form";
 import { useRouter } from "next/navigation";
 import { useBreadcrumb } from "@/hooks/useBreadcrumb";
 
@@ -65,7 +65,7 @@ const tenancyDetailsGrid = [
 
 const AdminPropertyPage = () => {
   const [showDialog, setShowDialog] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(true);
+  // const [isSubmitted, setIsSubmitted] = useState(true);
   const [showTenantDialog, setShowTenantDialog] = useState(false);
 
   const router = useRouter();
@@ -125,7 +125,7 @@ const AdminPropertyPage = () => {
                 >
                   <SheetHeader className="flex-shrink-0">
                     <SheetClose asChild className="mb-8 text-left">
-                      {isSubmitted ? null : (
+                      {/* {isSubmitted ? null : (
                         <Button variant="ghost" className="w-fit p-0">
                           <Icon
                             icon="material-symbols:arrow-back"
@@ -133,10 +133,10 @@ const AdminPropertyPage = () => {
                           />
                           Go Back
                         </Button>
-                      )}
+                      )} */}
                     </SheetClose>
                     <SheetTitle className="text-lg font-bold">
-                      {isSubmitted ? null : (
+                      {/* {isSubmitted ? null : (
                         <>
                           <Icon
                             icon="material-symbols:location-home-outline-rounded"
@@ -145,11 +145,11 @@ const AdminPropertyPage = () => {
                           />
                           Add Tenant
                         </>
-                      )}
+                      )} */}
                     </SheetTitle>
                   </SheetHeader>
                   <div className="flex-1 overflow-y-auto pr-2">
-                    {isSubmitted ? (
+                    {/* {isSubmitted ? (
                       <div className="flex h-full flex-col items-center justify-center gap-8 text-center">
                         <div className="bg-muted flex w-full flex-col items-center gap-6 rounded-md border px-8 py-16">
                           <div className="flex h-16 w-16 items-center justify-center">
@@ -179,7 +179,7 @@ const AdminPropertyPage = () => {
                       </div>
                     ) : (
                       <AddTenantForm setIsSubmitted={setIsSubmitted} />
-                    )}
+                    )} */}
                   </div>
                 </SheetContent>
               </Sheet>
@@ -261,7 +261,7 @@ const AdminPropertyPage = () => {
                     </SheetTitle>
                   </SheetHeader>
                   <div className="flex-1 overflow-y-auto pr-2">
-                    <EditPropertyForm />
+                    {/* <EditPropertyForm /> */}
                   </div>
                 </SheetContent>
               </Sheet>
@@ -450,7 +450,7 @@ const AdminPropertyPage = () => {
                           </SheetTitle>
                         </SheetHeader>
                         <div className="flex-1 overflow-y-auto pr-2">
-                          <AddPaymentForm />
+                          {/* <AddPaymentForm /> */}
                         </div>
                       </SheetContent>
                     </Sheet>

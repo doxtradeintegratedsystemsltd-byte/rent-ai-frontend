@@ -3,7 +3,6 @@
 import { getSidebarLinks } from "./sidebar-links";
 import { SidebarItem } from "./sidebar-items";
 import Logo from "../ui/logo";
-import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { useUserRole, useAuthActions } from "@/store/authStore";
 import { Button } from "../ui/button";
@@ -27,36 +26,29 @@ export function Sidebar() {
           <Logo dark />
         </div>
         {sidebarLinks.map((item) => (
-          <SidebarItem key={item.href} {...item} />
+          <SidebarItem
+            key={item.href}
+            {...item}
+            exact={
+              item.href === (userRole === "superAdmin" ? "/super" : "/admin")
+            }
+          />
         ))}
       </div>
 
-      <div className="space-y-2 pt-6">
-        <Link
-          href="/"
-          className="border-border bg-muted hover:bg-muted/50 flex items-center gap-3 rounded-md border px-4 py-3 text-sm font-medium"
-        >
-          <Icon icon="material-symbols:account-circle-outline" />
-          User Profile
-          <Icon
-            icon="material-symbols:keyboard-arrow-right"
-            className="ml-auto"
-          />
-        </Link>
-        <div className="border-border bg-muted flex flex-col gap-4 rounded-md border px-4 py-2">
-          <div className="text-muted-foreground border-l-2 border-[#9B9B9B] p-2.5 text-xs font-medium">
-            <p>2:10 P.M.</p>
-            <p>Tuesday, February 5, 2025</p>
-          </div>
-          <Button
-            onClick={handleLogout}
-            variant="secondary"
-            className="border-border bg-background hover:bg-foreground/5 flex items-center gap-3 rounded-md border px-4 py-3 text-sm font-medium"
-          >
-            <Icon icon="material-symbols:logout" className="text-[#9B9B9B]" />
-            Logout
-          </Button>
+      <div className="border-border bg-muted flex flex-col gap-4 rounded-md border px-4 py-2">
+        <div className="text-muted-foreground border-l-2 border-[#9B9B9B] p-2.5 text-xs font-medium">
+          <p>2:10 P.M.</p>
+          <p>Tuesday, February 5, 2025</p>
         </div>
+        <Button
+          onClick={handleLogout}
+          variant="secondary"
+          className="border-border bg-background hover:bg-foreground/5 flex items-center gap-3 rounded-md border px-4 py-3 text-sm font-medium"
+        >
+          <Icon icon="material-symbols:logout" className="text-[#9B9B9B]" />
+          Logout
+        </Button>
       </div>
     </aside>
   );
