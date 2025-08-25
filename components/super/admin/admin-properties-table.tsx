@@ -22,17 +22,20 @@ import {
 import { getPaymentStatus } from "@/lib/status-util";
 import Avatar from "../../ui/avatar";
 import Pagination from "../../ui/pagination";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "../../ui/button";
 import { Icon } from "@/components/ui/icon";
-import {
-  getFilterLabel,
-  getLocationLabel,
-  filterTableData,
-  getPaginatedData,
-} from "@/lib/table-utils";
+import { getFilterLabel, getLocationLabel } from "@/lib/table-utils";
 import AddPropertyForm from "../properties/add-property-form";
 import Link from "next/link";
+import { useFetchProperties } from "@/mutations/property";
+import type { Property } from "@/types/property";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useRouter, useSearchParams, useParams } from "next/navigation";
+import {
+  TableSkeleton,
+  TableSkeletonPresets,
+} from "@/components/ui/table-skeleton";
 
 const filterItems = [
   { type: "label" as const, label: "Show" },
@@ -40,15 +43,13 @@ const filterItems = [
     label: "All",
     value: "all",
   },
-  { label: "Occupied", value: "occupied" },
-  { label: "Unoccupied", value: "unoccupied" },
   {
     label: "Rent Paid",
-    value: "rentPaid",
+    value: "rent-paid",
   },
   {
     label: "Rent Unpaid",
-    value: "rentUnpaid",
+    value: "rent-unpaid",
   },
 ];
 
@@ -77,118 +78,136 @@ const tableHead = [
   { label: "", className: "text-right" },
 ];
 
-const tableData = [
-  {
-    id: 1,
-    property: "Axel Home",
-    location: "Gwarimpa, Abuja",
-    tenant: "John Doe",
-    rentStatus: "paid" as const,
-  },
-  {
-    id: 2,
-    property: "Dominoes House",
-    location: "Wuse, Abuja",
-    tenant: "Jane Smith",
-    rentStatus: "nearDue" as const,
-  },
-  {
-    id: 3,
-    property: "Green Acres",
-    location: "Lekki, Lagos",
-    tenant: "Bob Johnson",
-    rentStatus: "due" as const,
-  },
-  {
-    id: 4,
-    property: "Sunny Villa",
-    location: "Victoria Island, Lagos",
-    tenant: "Alice Brown",
-    rentStatus: "overdue" as const,
-  },
-  {
-    id: 5,
-    property: "Ocean View",
-    location: "Ikoyi, Lagos",
-    tenant: "Charlie Davis",
-    rentStatus: "paid" as const,
-  },
-  {
-    id: 6,
-    property: "Castle Castle",
-    location: "Ikeja, Lagos",
-    tenant: "David Wilson",
-    rentStatus: "nearDue" as const,
-  },
-  {
-    id: 7,
-    property: "Bull House",
-    location: "Asokoro, Abuja",
-    tenant: "Eva Martinez",
-    rentStatus: "paid" as const,
-  },
-  {
-    id: 8,
-    property: "Sky Tower",
-    location: "Maitama, Abuja",
-    tenant: "Frank Miller",
-    rentStatus: "overdue" as const,
-  },
-  {
-    id: 9,
-    property: "Garden Heights",
-    location: "Ajah, Lagos",
-    tenant: "Grace Taylor",
-    rentStatus: "due" as const,
-  },
-  {
-    id: 10,
-    property: "Royal Residence",
-    location: "Banana Island, Lagos",
-    tenant: "Henry Anderson",
-    rentStatus: "paid" as const,
-  },
-  {
-    id: 11,
-    property: "Modern Apartment",
-    location: "Garki, Abuja",
-    tenant: "Ivy Thompson",
-    rentStatus: "nearDue" as const,
-  },
-  {
-    id: 12,
-    property: "Luxury Penthouse",
-    location: "Oniru, Lagos",
-    tenant: "Jack Robinson",
-    rentStatus: "overdue" as const,
-  },
-];
-
 const AdminPropertiesTable = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("all");
-  const [selectedLocation, setSelectedLocation] = useState("all");
-  const itemsPerPage = 10;
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const params = useParams();
+  const adminId = params.id as string;
 
-  const filteredData = useMemo(() => {
-    return filterTableData(tableData, searchTerm, [
-      "property",
-      "location",
-      "tenant",
-    ]);
-  }, [searchTerm]);
+  // Initialize state from URL parameters
+  const [currentPage, setCurrentPage] = useState(() => {
+    const page = searchParams.get("page");
+    return page ? parseInt(page, 10) : 1;
+  });
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const currentData = getPaginatedData(filteredData, currentPage, itemsPerPage);
+  const [searchTerm, setSearchTerm] = useState(() => {
+    return searchParams.get("search") || "";
+  });
+
+  const [selectedFilter, setSelectedFilter] = useState(() => {
+    return searchParams.get("status") || "all";
+  });
+
+  const [selectedLocation, setSelectedLocation] = useState(() => {
+    return searchParams.get("location") || "all";
+  });
+
+  const itemsPerPage = 20;
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // Function to update URL with current filter state
+  const updateURL = useCallback(
+    (params: {
+      page?: number;
+      search?: string;
+      status?: string;
+      location?: string;
+    }) => {
+      const current = new URLSearchParams(window.location.search);
+
+      // Update or remove parameters
+      if (params.page && params.page > 1) {
+        current.set("page", params.page.toString());
+      } else {
+        current.delete("page");
+      }
+
+      if (params.search && params.search.trim()) {
+        current.set("search", params.search);
+      } else {
+        current.delete("search");
+      }
+
+      if (params.status && params.status !== "all") {
+        current.set("status", params.status);
+      } else {
+        current.delete("status");
+      }
+
+      if (params.location && params.location !== "all") {
+        current.set("location", params.location);
+      } else {
+        current.delete("location");
+      }
+
+      // Update URL without triggering a page reload
+      const search = current.toString();
+      const query = search ? `?${search}` : "";
+      router.replace(`${window.location.pathname}${query}`, { scroll: false });
+    },
+    [router],
+  );
+
+  // Update URL when filters change
+  useEffect(() => {
+    updateURL({
+      page: currentPage,
+      search: searchTerm,
+      status: selectedFilter,
+      location: selectedLocation,
+    });
+  }, [currentPage, searchTerm, selectedFilter, selectedLocation, updateURL]);
+
+  const { data, isLoading, isError, error } = useFetchProperties({
+    page: currentPage - 1,
+    pageSize: itemsPerPage,
+    search: debouncedSearchTerm || undefined,
+    status: selectedFilter !== "all" ? selectedFilter : undefined,
+    location: selectedLocation !== "all" ? selectedLocation : undefined,
+    adminId: adminId, // Always include adminId to filter by this admin
+  });
+
+  const tableData = useMemo(() => {
+    const properties: Property[] = data?.data?.data || [];
+    return properties.map((property) => ({
+      id: property.id,
+      property: property.propertyName,
+      location: `${property.propertyArea}, ${property.propertyState}`,
+      tenant: property.currentLease?.tenant?.firstName
+        ? `${property.currentLease.tenant.firstName} ${property.currentLease.tenant.lastName || ""}`.trim()
+        : "No Tenant",
+      rentStatus:
+        property.currentLease?.rentStatus === "paid"
+          ? ("paid" as const)
+          : property.currentLease?.rentStatus === "overdue"
+            ? ("overdue" as const)
+            : property.currentLease?.rentStatus === "unpaid"
+              ? ("due" as const)
+              : ("due" as const),
+    }));
+  }, [data]);
+
+  const paginationInfo = useMemo(() => {
+    return {
+      totalItems: data?.data?.totalItems || 0,
+      totalPages: data?.data?.totalPages || 0,
+      currentPage: (data?.data?.currentPage || 0) + 1,
+      pageSize: data?.data?.pageSize || itemsPerPage,
+    };
+  }, [data, itemsPerPage]);
+
+  if (isError) {
+    return (
+      <div className="py-8 text-center text-red-600">
+        <p>Error loading properties: {error?.message || "Unknown error"}</p>
+      </div>
+    );
+  }
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
     setCurrentPage(1);
-  };
-
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
   };
 
   const handleFilterChange = (value: string) => {
@@ -236,7 +255,7 @@ const AdminPropertiesTable = () => {
                   Add Property
                 </SheetTitle>
               </SheetHeader>
-              <AddPropertyForm />
+              <AddPropertyForm adminId={adminId} />
             </SheetContent>
           </Sheet>
         </div>
@@ -296,69 +315,79 @@ const AdminPropertiesTable = () => {
           </Button>
         </div>
       )}
-      <div className="h-[585px] overflow-hidden rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-border">
-              {tableHead.map((head, index) => (
-                <TableHead key={index} className={head.className}>
-                  {head.label}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {currentData && currentData.length > 0 ? (
-              currentData.map((row) => (
-                <TableRow key={row.id} className="bg-background">
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Avatar
-                        src="/images/property-avatar.png"
-                        alt="Property Avatar"
-                        size="sm"
-                      />
-                      {row.property}
-                    </div>
-                  </TableCell>
-                  <TableCell>{row.location}</TableCell>
-                  <TableCell>{row.tenant}</TableCell>
-                  <TableCell>
-                    <p className={getPaymentStatus(row.rentStatus)}>
-                      {row.rentStatus}
-                    </p>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground w-6 text-right">
-                    <Link href={`/admin/super/property/${row.id}`}>
-                      <Button variant="ghost" size="icon" asChild>
-                        <span>
-                          <Icon icon="material-symbols:keyboard-arrow-right" />
-                        </span>
-                      </Button>
-                    </Link>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableNoData className="flex flex-col" colSpan={tableHead.length}>
-                <p>No property added.</p>
-                <p>
-                  Click <span className="font-bold">“Add Property”</span> to get
-                  started.
-                </p>
-              </TableNoData>
-            )}
-          </TableBody>
-        </Table>
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-border">
+            {tableHead.map((head, index) => (
+              <TableHead key={index} className={head.className}>
+                {head.label}
+              </TableHead>
+            ))}
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {isLoading ? (
+            <TableSkeleton
+              {...TableSkeletonPresets.properties}
+              rows={10}
+              showFilters={false}
+              showPagination={false}
+              tableHeight="h-full"
+            />
+          ) : tableData && tableData.length > 0 ? (
+            tableData.map((row) => (
+              <TableRow key={row.id} className="bg-background">
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Avatar
+                      src="/images/property-avatar.png"
+                      alt="Property Avatar"
+                      size="sm"
+                    />
+                    {row.property}
+                  </div>
+                </TableCell>
+                <TableCell>{row.location}</TableCell>
+                <TableCell>{row.tenant}</TableCell>
+                <TableCell>
+                  <p className={getPaymentStatus(row.rentStatus)}>
+                    {row.rentStatus === "paid"
+                      ? "Paid"
+                      : row.rentStatus === "overdue"
+                        ? "Overdue"
+                        : "Due"}
+                  </p>
+                </TableCell>
+                <TableCell className="text-muted-foreground w-6 text-right">
+                  <Link href={`/super/property/${row.id}`}>
+                    <Button variant="ghost" size="icon" asChild>
+                      <span>
+                        <Icon icon="material-symbols:keyboard-arrow-right" />
+                      </span>
+                    </Button>
+                  </Link>
+                </TableCell>
+              </TableRow>
+            ))
+          ) : (
+            <TableNoData className="flex flex-col" colSpan={tableHead.length}>
+              <p>No property added.</p>
+              <p>
+                Click <span className="font-bold">“Add Property”</span> to get
+                started.
+              </p>
+            </TableNoData>
+          )}
+        </TableBody>
+      </Table>
 
-      {filteredData.length > 0 && (
+      {paginationInfo.totalItems > 0 && !isLoading && (
         <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onPageChange={handlePageChange}
-          itemsPerPage={itemsPerPage}
-          totalItems={filteredData.length}
+          currentPage={paginationInfo.currentPage}
+          totalPages={paginationInfo.totalPages}
+          onPageChange={(page) => setCurrentPage(page)}
+          itemsPerPage={paginationInfo.pageSize}
+          totalItems={paginationInfo.totalItems}
         />
       )}
     </div>

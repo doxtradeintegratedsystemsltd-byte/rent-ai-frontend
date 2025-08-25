@@ -33,20 +33,6 @@ export const useGetNotifications = (page: number = 0, size: number = 10) => {
   });
 };
 
-export const useDeleteNotification = () => {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (notificationId: string): Promise<void> => {
-      await api.delete(`/notifications/${notificationId}`);
-    },
-    onSuccess: () => {
-      // Invalidate and refetch notifications
-      queryClient.invalidateQueries({ queryKey: ["notifications"] });
-    },
-  });
-};
-
 export const useMarkNotificationAsRead = () => {
   const queryClient = useQueryClient();
 

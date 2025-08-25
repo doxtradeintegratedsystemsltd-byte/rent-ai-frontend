@@ -10,8 +10,15 @@ import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import AdminsTable from "./admins-table";
 import AddAdminForm from "./add-admin-form";
+import { useState } from "react";
 
 const AdminsTab = () => {
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
+
+  const handleAdminCreated = () => {
+    setIsSheetOpen(false);
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -22,7 +29,7 @@ const AdminsTab = () => {
           />
           <h2 className="text-lg font-bold">Admins (Property Managers)</h2>
         </div>
-        <Sheet>
+        <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>
             <Button size="sm" className="uppercase">
               <Icon icon="material-symbols:add-2-rounded" size="sm" />
@@ -50,7 +57,7 @@ const AdminsTab = () => {
               </SheetTitle>
             </SheetHeader>
             <div className="flex-1 overflow-y-auto pr-2">
-              <AddAdminForm />
+              <AddAdminForm setIsSubmitted={handleAdminCreated} />
             </div>
           </SheetContent>
         </Sheet>

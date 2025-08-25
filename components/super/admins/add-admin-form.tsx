@@ -16,6 +16,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Icon } from "@/components/ui/icon";
 import Image from "next/image";
+import { useCreateAdmin } from "@/mutations/admin";
+import { useSingleImageUpload } from "@/mutations/upload";
+import { toast } from "sonner";
 
 const FormSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
@@ -32,6 +35,10 @@ const AddAdminForm = ({
 }) => {
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const createAdminMutation = useCreateAdmin();
+  const uploadImageMutation = useSingleImageUpload();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -44,9 +51,44 @@ const AddAdminForm = ({
     },
   });
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
-    console.log("Form submitted with data:", data);
-    setIsSubmitted?.(true);
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    try {
+      setIsUploading(true);
+      let photoUrl: string | null = null;
+
+      // Upload photo if provided
+      if (data.displayPhoto) {
+        const uploadResult = await uploadImageMutation.mutateAsync(
+          data.displayPhoto,
+        );
+        photoUrl = uploadResult.data || null;
+      }
+
+      // Create admin with form data
+      const adminData = {
+        firstName: data.firstName,
+        lastName: data.lastName,
+        email: data.email,
+        phoneNumber: data.phoneNumber,
+        photoUrl,
+      };
+
+      await createAdminMutation.mutateAsync(adminData);
+
+      toast.success("Admin created successfully!");
+
+      // Reset form
+      form.reset();
+      setPhotoPreview(null);
+      setFileInputKey((prev) => prev + 1);
+
+      setIsSubmitted?.(true);
+    } catch (error) {
+      console.error("Error creating admin:", error);
+      toast.error("Failed to create admin");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handlePhotoChange = (file: File | null) => {
@@ -199,9 +241,17 @@ const AddAdminForm = ({
         />
         <Button
           type="submit"
-          className="w-full bg-black text-white uppercase hover:bg-gray-800"
+          disabled={isUploading || createAdminMutation.isPending}
+          className="w-full bg-black text-white uppercase hover:bg-gray-800 disabled:opacity-50"
         >
-          Add
+          {isUploading || createAdminMutation.isPending ? (
+            <>
+              <Icon icon="mdi:loading" className="mr-2 h-4 w-4 animate-spin" />
+              {isUploading ? "Uploading..." : "Creating..."}
+            </>
+          ) : (
+            "Add"
+          )}
         </Button>
       </form>
     </Form>

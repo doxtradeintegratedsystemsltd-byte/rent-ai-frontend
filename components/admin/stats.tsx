@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dropdown } from "../ui/dropdown";
 import StatCard from "../ui/stat-card";
 import { useDashboardStats } from "@/mutations/stats";
@@ -18,10 +18,13 @@ const periodOptions = [
   { label: "Last Year", value: "lastYear", period: "year" },
   { label: "Last 30 Days", value: "last30Days", period: "30 days" },
   { label: "Last 365 Days", value: "last365Days", period: "365 days" },
-  { label: "All Time", value: "oldestDate" },
 ];
 
-const DashboardStats = () => {
+const DashboardStats = ({
+  setDueRentsCount,
+}: {
+  setDueRentsCount: (count: number) => void;
+}) => {
   const [selectedPeriod, setSelectedPeriod] =
     useState<DashboardPeriod>("thisWeek");
 
@@ -34,6 +37,12 @@ const DashboardStats = () => {
   const handlePeriodChange = (value: string) => {
     setSelectedPeriod(value as DashboardPeriod);
   };
+
+  useEffect(() => {
+    if (statsResponse?.data) {
+      setDueRentsCount(statsResponse.data.dueProperties);
+    }
+  }, [statsResponse, setDueRentsCount]);
 
   // Get the selected period label for display
   const selectedPeriodLabel =

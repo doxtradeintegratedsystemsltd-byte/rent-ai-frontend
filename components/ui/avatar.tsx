@@ -26,7 +26,7 @@ export const Avatar: React.FC<AvatarProps> = ({
   className,
 }) => {
   const baseClasses =
-    "overflow-hidden rounded-full text-sm bg-secondary-foreground flex items-center justify-center";
+    "overflow-hidden rounded-full text-sm bg-background flex items-center justify-center";
   const sizeClass = sizeClasses[size];
 
   // Function to generate initials from a name

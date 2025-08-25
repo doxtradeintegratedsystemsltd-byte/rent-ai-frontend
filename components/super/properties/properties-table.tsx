@@ -14,15 +14,19 @@ import {
 import { getPaymentStatus } from "@/lib/status-util";
 import Avatar from "../../ui/avatar";
 import Pagination from "../../ui/pagination";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "../../ui/button";
 import { Icon } from "@/components/ui/icon";
-import { useRouter } from "next/navigation";
+import { getFilterLabel, getLocationLabel } from "@/lib/table-utils";
+import { useFetchProperties } from "@/mutations/property";
+import type { Property } from "@/types/property";
 import {
-  getFilterLabel,
-  filterTableData,
-  getPaginatedData,
-} from "@/lib/table-utils";
+  TableSkeleton,
+  TableSkeletonPresets,
+} from "@/components/ui/table-skeleton";
+import { useDebounce } from "@/hooks/useDebounce";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const filterItems = [
   { type: "label" as const, label: "Show" },
@@ -30,40 +34,31 @@ const filterItems = [
     label: "All",
     value: "all",
   },
-  { label: "Occupied", value: "occupied" },
-  { label: "Unoccupied", value: "unoccupied" },
   {
     label: "Rent Paid",
-    value: "rentPaid",
+    value: "rent-paid",
   },
   {
     label: "Rent Unpaid",
-    value: "rentUnpaid",
+    value: "rent-unpaid",
   },
 ];
 
-const sortItems = [
-  { type: "label" as const, label: "Sort By" },
+const locationItems = [
+  { type: "label" as const, label: "Arrange By" },
   {
-    label: "Property Name",
-    value: "property",
+    label: "Locations",
+    value: "all",
   },
   {
-    label: "Location",
-    value: "location",
+    label: "Downtown",
+    value: "downtown",
   },
   {
-    label: "Admin",
-    value: "admin",
+    label: "Uptown",
+    value: "uptown",
   },
-  {
-    label: "Tenant",
-    value: "tenant",
-  },
-  {
-    label: "Rent Status",
-    value: "rentStatus",
-  },
+  { label: "Suburbs", value: "suburbs" },
 ];
 
 const tableHead = [
@@ -75,137 +70,132 @@ const tableHead = [
   { label: "", className: "text-right" },
 ];
 
-const tableData = [
-  {
-    id: 1,
-    property: "Axel Home",
-    location: "Gwarimpa, Abuja",
-    tenant: "John Doe",
-    admin: "Sarah Johnson",
-    rentStatus: "paid" as const,
-  },
-  {
-    id: 2,
-    property: "Dominoes House",
-    location: "Wuse, Abuja",
-    tenant: "Jane Smith",
-    admin: "Michael Chen",
-    rentStatus: "nearDue" as const,
-  },
-  {
-    id: 3,
-    property: "Green Acres",
-    location: "Lekki, Lagos",
-    tenant: "Bob Johnson",
-    admin: "Lisa Rodriguez",
-    rentStatus: "due" as const,
-  },
-  {
-    id: 4,
-    property: "Sunny Villa",
-    location: "Victoria Island, Lagos",
-    tenant: "Alice Brown",
-    admin: "David Thompson",
-    rentStatus: "overdue" as const,
-  },
-  {
-    id: 5,
-    property: "Ocean View",
-    location: "Ikoyi, Lagos",
-    tenant: "Charlie Davis",
-    admin: "Emma Wilson",
-    rentStatus: "paid" as const,
-  },
-  {
-    id: 6,
-    property: "Castle Castle",
-    location: "Ikeja, Lagos",
-    tenant: "David Wilson",
-    admin: "James Martinez",
-    rentStatus: "nearDue" as const,
-  },
-  {
-    id: 7,
-    property: "Bull House",
-    location: "Asokoro, Abuja",
-    tenant: "Eva Martinez",
-    admin: "Rachel Green",
-    rentStatus: "paid" as const,
-  },
-  {
-    id: 8,
-    property: "Sky Tower",
-    location: "Maitama, Abuja",
-    tenant: "Frank Miller",
-    admin: "Kevin Lee",
-    rentStatus: "overdue" as const,
-  },
-  {
-    id: 9,
-    property: "Garden Heights",
-    location: "Ajah, Lagos",
-    tenant: "Grace Taylor",
-    admin: "Amanda Clark",
-    rentStatus: "due" as const,
-  },
-  {
-    id: 10,
-    property: "Royal Residence",
-    location: "Banana Island, Lagos",
-    tenant: "Henry Anderson",
-    admin: "Robert Davis",
-    rentStatus: "paid" as const,
-  },
-  {
-    id: 11,
-    property: "Modern Apartment",
-    location: "Garki, Abuja",
-    tenant: "Ivy Thompson",
-    admin: "Sophia Brown",
-    rentStatus: "nearDue" as const,
-  },
-  {
-    id: 12,
-    property: "Luxury Penthouse",
-    location: "Oniru, Lagos",
-    tenant: "Jack Robinson",
-    admin: "Mark Taylor",
-    rentStatus: "overdue" as const,
-  },
-];
-
 const PropertiesTable = () => {
   const router = useRouter();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedFilter, setSelectedFilter] = useState("all");
-  const [selectedSort, setSelectedSort] = useState("property");
-  const itemsPerPage = 10;
+  const searchParams = useSearchParams();
 
-  const filteredData = useMemo(() => {
-    const data = filterTableData(tableData, searchTerm, [
-      "property",
-      "location",
-      "admin",
-      "tenant",
-    ]);
+  // Initialize state from URL parameters
+  const [currentPage, setCurrentPage] = useState(() => {
+    const page = searchParams.get("page");
+    return page ? parseInt(page, 10) : 1;
+  });
 
-    // Sort the data
-    data.sort((a, b) => {
-      const aValue = a[selectedSort as keyof typeof a];
-      const bValue = b[selectedSort as keyof typeof b];
+  const [searchTerm, setSearchTerm] = useState(() => {
+    return searchParams.get("search") || "";
+  });
 
-      if (typeof aValue === "string" && typeof bValue === "string") {
-        return aValue.localeCompare(bValue);
+  const [selectedFilter, setSelectedFilter] = useState(() => {
+    return searchParams.get("status") || "all";
+  });
+
+  const [selectedLocation, setSelectedLocation] = useState(() => {
+    return searchParams.get("location") || "all";
+  });
+
+  const itemsPerPage = 20;
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // Function to update URL with current filter state
+  const updateURL = useCallback(
+    (params: {
+      page?: number;
+      search?: string;
+      status?: string;
+      location?: string;
+    }) => {
+      const current = new URLSearchParams(window.location.search);
+
+      // Update or remove parameters
+      if (params.page && params.page > 1) {
+        current.set("page", params.page.toString());
+      } else {
+        current.delete("page");
       }
-      return 0;
+
+      if (params.search && params.search.trim()) {
+        current.set("search", params.search);
+      } else {
+        current.delete("search");
+      }
+
+      if (params.status && params.status !== "all") {
+        current.set("status", params.status);
+      } else {
+        current.delete("status");
+      }
+
+      if (params.location && params.location !== "all") {
+        current.set("location", params.location);
+      } else {
+        current.delete("location");
+      }
+
+      // Update URL without triggering a page reload
+      const search = current.toString();
+      const query = search ? `?${search}` : "";
+      router.replace(`${window.location.pathname}${query}`, { scroll: false });
+    },
+    [router],
+  );
+
+  // Update URL when filters change
+  useEffect(() => {
+    updateURL({
+      page: currentPage,
+      search: searchTerm,
+      status: selectedFilter,
+      location: selectedLocation,
     });
+  }, [currentPage, searchTerm, selectedFilter, selectedLocation, updateURL]);
 
-    return data;
-  }, [searchTerm, selectedSort]);
+  const { data, isLoading, isError, error } = useFetchProperties({
+    page: currentPage - 1,
+    pageSize: itemsPerPage,
+    search: debouncedSearchTerm || undefined,
+    status: selectedFilter !== "all" ? selectedFilter : undefined,
+    location: selectedLocation !== "all" ? selectedLocation : undefined,
+  });
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const currentData = getPaginatedData(filteredData, currentPage, itemsPerPage);
+  const tableData = useMemo(() => {
+    const properties: Property[] = data?.data?.data || [];
+    return properties.map((property) => ({
+      id: property.id,
+      property: property.propertyName,
+      location: `${property.propertyArea}, ${property.propertyState}`,
+      admin: property.createdBy?.firstName
+        ? `${property.createdBy.firstName} ${property.createdBy.lastName || ""}`.trim()
+        : "Unknown Admin",
+      tenant: property.currentLease?.tenant?.firstName
+        ? `${property.currentLease.tenant.firstName} ${property.currentLease.tenant.lastName || ""}`.trim()
+        : "No Tenant",
+      rentStatus:
+        property.currentLease?.rentStatus === "paid"
+          ? ("paid" as const)
+          : property.currentLease?.rentStatus === "overdue"
+            ? ("overdue" as const)
+            : property.currentLease?.rentStatus === "unpaid"
+              ? ("due" as const)
+              : ("due" as const),
+    }));
+  }, [data]);
+
+  const paginationInfo = useMemo(() => {
+    return {
+      totalItems: data?.data?.totalItems || 0,
+      totalPages: data?.data?.totalPages || 0,
+      currentPage: (data?.data?.currentPage || 0) + 1,
+      pageSize: data?.data?.pageSize || itemsPerPage,
+    };
+  }, [data, itemsPerPage]);
+
+  if (isError) {
+    return (
+      <div className="py-8 text-center text-red-600">
+        <p>Error loading properties: {error?.message || "Unknown error"}</p>
+      </div>
+    );
+  }
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -221,13 +211,9 @@ const PropertiesTable = () => {
     setCurrentPage(1);
   };
 
-  const handleSortChange = (value: string) => {
-    setSelectedSort(value);
+  const handleLocationChange = (value: string) => {
+    setSelectedLocation(value);
     setCurrentPage(1);
-  };
-
-  const navigateToProperty = (propertyId: number) => {
-    router.push(`/admin/property/${propertyId}`);
   };
 
   return (
@@ -256,14 +242,14 @@ const PropertiesTable = () => {
           />
           <Dropdown
             trigger={{
-              label: getFilterLabel(sortItems, selectedSort),
+              label: getLocationLabel(locationItems, selectedLocation),
               icon: "material-symbols:format-line-spacing-rounded",
               arrowIcon: "material-symbols:keyboard-arrow-up-rounded",
               className: "bg-background",
             }}
-            items={sortItems}
-            selectedValue={selectedSort}
-            onItemSelect={handleSortChange}
+            items={locationItems}
+            selectedValue={selectedLocation}
+            onItemSelect={handleLocationChange}
             useRadioGroup={true}
             align="end"
           />
@@ -292,69 +278,82 @@ const PropertiesTable = () => {
         </div>
       )}
       <div className="h-[585px] overflow-hidden rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow className="bg-border">
-              {tableHead.map((head, index) => (
-                <TableHead key={index} className={head.className}>
-                  {head.label}
-                </TableHead>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {currentData && currentData.length > 0 ? (
-              currentData.map((row) => (
-                <TableRow key={row.id} className="bg-background">
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Avatar
-                        src="/images/property-avatar.png"
-                        alt="Property Avatar"
-                        size="sm"
-                      />
-                      {row.property}
-                    </div>
-                  </TableCell>
-                  <TableCell>{row.location}</TableCell>
-                  <TableCell>{row.admin}</TableCell>
-                  <TableCell>{row.tenant}</TableCell>
-                  <TableCell>
-                    <p className={getPaymentStatus(row.rentStatus)}>
-                      {row.rentStatus}
-                    </p>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground w-6 text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => navigateToProperty(row.id)}
-                    >
-                      <Icon icon="material-symbols:keyboard-arrow-right" />
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            ) : (
-              <TableNoData className="flex flex-col" colSpan={tableHead.length}>
-                <p>No property added.</p>
-                <p>
-                  Click <span className="font-bold">“Add Property”</span> to get
-                  started.
-                </p>
-              </TableNoData>
-            )}
-          </TableBody>
-        </Table>
+        {isLoading ? (
+          <TableSkeleton
+            {...TableSkeletonPresets.properties}
+            rows={10}
+            showFilters={false}
+            showPagination={false}
+            tableHeight="h-full"
+          />
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow className="bg-border">
+                {tableHead.map((head, index) => (
+                  <TableHead key={index} className={head.className}>
+                    {head.label}
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {tableData && tableData.length > 0 ? (
+                tableData.map((row) => (
+                  <TableRow key={row.id} className="bg-background">
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Avatar
+                          src="/images/property-avatar.png"
+                          alt="Property Avatar"
+                          size="sm"
+                        />
+                        {row.property}
+                      </div>
+                    </TableCell>
+                    <TableCell>{row.location}</TableCell>
+                    <TableCell>{row.admin}</TableCell>
+                    <TableCell>{row.tenant}</TableCell>
+                    <TableCell>
+                      <p className={getPaymentStatus(row.rentStatus)}>
+                        {row.rentStatus}
+                      </p>
+                    </TableCell>
+                    <TableCell className="text-muted-foreground w-6 text-right">
+                      <Link href={`/super/property/${row.id}`}>
+                        <Button variant="ghost" size="icon" asChild>
+                          <span>
+                            <Icon icon="material-symbols:keyboard-arrow-right" />
+                          </span>
+                        </Button>
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))
+              ) : (
+                <TableNoData
+                  className="flex flex-col"
+                  colSpan={tableHead.length}
+                >
+                  <p>No property added.</p>
+                  <p>
+                    Click <span className="font-bold">“Add Property”</span> to
+                    get started.
+                  </p>
+                </TableNoData>
+              )}
+            </TableBody>
+          </Table>
+        )}
       </div>
 
-      {filteredData.length > 0 && (
+      {paginationInfo.totalItems > 0 && (
         <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
+          currentPage={paginationInfo.currentPage}
+          totalPages={paginationInfo.totalPages}
           onPageChange={handlePageChange}
-          itemsPerPage={itemsPerPage}
-          totalItems={filteredData.length}
+          itemsPerPage={paginationInfo.pageSize}
+          totalItems={paginationInfo.totalItems}
         />
       )}
     </div>

@@ -1,5 +1,6 @@
 import { Lease } from "./lease";
 import { User } from "./user";
+import { Payment } from "./payment";
 
 export interface PropertyCreateRequest {
   propertyName: string;
@@ -9,6 +10,17 @@ export interface PropertyCreateRequest {
   propertyImage: string;
   leaseYears: number;
   rentAmount: number;
+}
+
+export interface PropertyCreateForAdminRequest {
+  propertyName: string;
+  propertyState: string;
+  propertyArea: string;
+  propertyAddress: string;
+  propertyImage: string;
+  leaseYears: number;
+  rentAmount: number;
+  adminId: string;
 }
 
 export interface PropertyCreateResponse {
@@ -34,6 +46,7 @@ export interface PropertyFetchParams {
   filter?: string;
   location?: string;
   status?: string;
+  adminId?: string;
 }
 
 export interface Property {
@@ -52,6 +65,7 @@ export interface Property {
   deletedAt: string | null;
   createdBy: User;
   currentLease: Lease | null;
+  payments: Payment[];
 }
 
 export interface PropertiesListResponse {

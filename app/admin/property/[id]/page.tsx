@@ -27,7 +27,7 @@ import { useBreadcrumb } from "@/hooks/useBreadcrumb";
 import { useFetchProperty, useDeleteProperty } from "@/mutations/property";
 import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { toast } from "sonner";
-import { formatLongDate } from "@/lib/formatters";
+import { formatCurrency, formatLongDate } from "@/lib/formatters";
 import { useRemoveTenantFromProperty } from "@/mutations/tenant";
 
 const PropertyPage = () => {
@@ -600,25 +600,47 @@ const PropertyPage = () => {
                       </SheetContent>
                     </Sheet>
                   </div>
-                  <div className="flex w-full items-center justify-between">
-                    <div className="border-accent-foreground flex flex-col gap-1 border-l-2 pl-4">
-                      <p className="text-muted-foreground text-xs font-medium">
-                        January 1, 2025
-                      </p>
-                      <p className="text-sm font-bold">₦1,000,000</p>
+                  {property?.payments && property.payments.length > 0 ? (
+                    <div className="flex flex-col gap-4">
+                      {property.payments.map((payment) => (
+                        <div
+                          key={payment.id}
+                          className="flex w-full items-center justify-between"
+                        >
+                          <div className="border-accent-foreground flex flex-col gap-1 border-l-2 pl-4">
+                            <p className="text-muted-foreground text-xs font-medium">
+                              {formatLongDate(payment.paymentDate)}
+                            </p>
+                            <p className="text-sm font-bold">
+                              {formatCurrency(payment.amount)}
+                            </p>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="text-xs font-medium uppercase"
+                            onClick={() =>
+                              payment.receiptUrl &&
+                              window.open(payment.receiptUrl, "_blank")
+                            }
+                            disabled={!payment.receiptUrl}
+                          >
+                            <Icon
+                              icon="material-symbols:download-rounded"
+                              className="mr-2"
+                            />
+                            Receipt
+                          </Button>
+                        </div>
+                      ))}
                     </div>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="text-xs font-medium uppercase"
-                    >
-                      <Icon
-                        icon="material-symbols:download-rounded"
-                        className="mr-2"
-                      />
-                      Receipt
-                    </Button>
-                  </div>
+                  ) : (
+                    <div className="flex h-16 w-full items-center justify-center">
+                      <p className="text-muted-foreground text-sm">
+                        No payment history available
+                      </p>
+                    </div>
+                  )}
                 </Card>
               </div>
             ) : (

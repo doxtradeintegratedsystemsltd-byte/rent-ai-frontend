@@ -12,9 +12,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import Notifications from "../admin/notifications/notifications";
 import { useBreadcrumbs } from "@/contexts/breadcrumb-context";
 import Logo from "../ui/logo";
+import TenantNotifications from "../tenant/tenant-notifications";
 
 export function TenantHeader() {
   const { breadcrumbs } = useBreadcrumbs();
@@ -117,7 +117,9 @@ export function TenantHeader() {
                   Notifications
                 </SheetTitle>
               </SheetHeader>
-              <Notifications />
+              <div className="overflow-y-auto">
+                <TenantNotifications />
+              </div>
             </SheetContent>
           </Sheet>
         </div>

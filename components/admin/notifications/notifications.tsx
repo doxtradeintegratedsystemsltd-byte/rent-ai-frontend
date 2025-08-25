@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import NotificationCard from "./notification-card";
 import {
   useGetNotifications,
-  useDeleteNotification,
   useMarkNotificationAsRead,
   useMarkAllNotificationsAsRead,
 } from "@/mutations/notification";
@@ -22,18 +21,8 @@ const Notifications = () => {
     error,
   } = useGetNotifications(currentPage, pageSize);
 
-  const deleteNotificationMutation = useDeleteNotification();
   const markAsReadMutation = useMarkNotificationAsRead();
   const markAllAsReadMutation = useMarkAllNotificationsAsRead();
-
-  const handleDeleteNotification = async (id: string) => {
-    try {
-      await deleteNotificationMutation.mutateAsync(id);
-    } catch (error) {
-      console.error("Failed to delete notification:", error);
-      // You could add a toast notification here
-    }
-  };
 
   const handleMarkAsRead = async (id: string) => {
     try {
@@ -156,7 +145,6 @@ const Notifications = () => {
               property={formatPropertyName(notification.property)}
               propertyId={notification.propertyId}
               isRead={notification.seen}
-              onDelete={() => handleDeleteNotification(notification.id)}
               onMarkAsRead={() => handleMarkAsRead(notification.id)}
             />
           ))}

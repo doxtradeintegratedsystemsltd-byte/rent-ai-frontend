@@ -5,6 +5,9 @@ import {
   NewPaymentResponse,
   PaymentsResponse,
   PaymentFetchParams,
+  InitiatePaymentRequest,
+  InitiatePaymentResponse,
+  PaymentReferenceStatusResponse,
 } from "@/types/payment";
 
 // Add payment mutation
@@ -38,6 +41,32 @@ export const useAddPayment = () => {
       queryClient.invalidateQueries({
         queryKey: ["payments"],
       });
+    },
+  });
+};
+
+// Initiate automated payment (e.g., get checkout URL)
+export const useInitiatePayment = () => {
+  return useMutation({
+    mutationFn: async (
+      payload: InitiatePaymentRequest,
+    ): Promise<InitiatePaymentResponse> => {
+      const response = await api.post("/leases/payment", payload);
+      return response.data;
+    },
+  });
+};
+
+// Fetch payment status by reference (POST kept consistent with other endpoints; adjust to GET if backend expects)
+export const useGetPaymentStatusByReference = () => {
+  return useMutation({
+    mutationFn: async (
+      reference: string,
+    ): Promise<PaymentReferenceStatusResponse> => {
+      const response = await api.get(
+        `/leases/payment/reference?reference=${encodeURIComponent(reference)}`,
+      );
+      return response.data;
     },
   });
 };

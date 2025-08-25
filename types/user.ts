@@ -1,3 +1,18 @@
+// Forward declaration for Tenant interface
+interface TenantInfo {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber: string;
+  levelOfEducation: string;
+  createdById: string;
+  currentLeaseId: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+}
+
 // Base User interface
 export interface User {
   id: string;
@@ -11,6 +26,7 @@ export interface User {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  tenant?: TenantInfo; // Optional tenant property for when user data includes nested tenant info
 }
 
 // User types enum
@@ -115,6 +131,7 @@ export interface AdminUser extends User {
 export interface TenantUser extends User {
   userType: "tenant";
   tenantId: string;
+  tenant: TenantInfo; // Required for tenant users
 }
 
 // User table/list interfaces

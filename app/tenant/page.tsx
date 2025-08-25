@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import Card from "@/components/ui/card";
 import { Icon } from "@/components/ui/icon";
@@ -17,86 +17,133 @@ import {
 import TenantProfile from "@/components/tenant/tenant-profile";
 import PropertyManagerProfile from "@/components/tenant/property-manager-profile";
 import PayRentContent from "@/components/tenant/pay-rent-content";
-import { useAuthActions } from "@/store/authStore";
+import { useAuthActions, useUser } from "@/store/authStore";
 import { useRouter } from "next/navigation";
+import { useFetchTenantLease } from "@/mutations/tenant";
+import { formatCurrency } from "@/lib/formatters";
+import { paymentStatus } from "@/types/status";
+import TenantNotifications from "@/components/tenant/tenant-notifications";
+import { useSearchParams } from "next/navigation";
+import { useGetPaymentStatusByReference } from "@/mutations/payment";
 
-const tenantDetails = [
-  {
-    label: "Phone",
-    value: "08123456789",
-  },
-  {
-    label: "Email",
-    value: "aadebayo@gmail.com",
-  },
-  {
-    label: "Level of Education",
-    value: "Tertiary",
-  },
-  {
-    label: "Job",
-    value: "Accountant",
-  },
-];
-
-const notificationsData = [
-  {
-    id: 1,
-    date: "JAN 1, 2025",
-    time: "10:00AM",
-    title: "Rent Due",
-    content: "",
-    isUnread: true,
-    isExpanded: false,
-  },
-  {
-    id: 2,
-    date: "JAN 1, 2024",
-    time: "10:00AM",
-    title: "Rent Paid",
-    content:
-      "You successfully paid rent of ₦1,000,000 and tenancy is extended till December 31, 2024",
-    isUnread: false,
-    isExpanded: true,
-  },
-  {
-    id: 3,
-    date: "JAN 1, 2024",
-    time: "10:00AM",
-    title: "Rent Due",
-    content: "",
-    isUnread: false,
-    isExpanded: false,
-  },
-];
+// (duplicate imports removed)
 
 const TenantHomepage = () => {
-  const [notifications, setNotifications] = useState(notificationsData);
   const [isPropertyExpanded, setIsPropertyExpanded] = useState(false);
 
   const { logout } = useAuthActions();
   const router = useRouter();
+
+  const user = useUser();
+  const {
+    data: leaseData,
+    isLoading: isLeaseLoading,
+    error: leaseError,
+  } = useFetchTenantLease();
+
+  const searchParams = useSearchParams();
+  const reference = searchParams?.get("reference") || undefined;
+  const [openPayRent, setOpenPayRent] = useState(false);
+  const [refPaymentStatus, setRefPaymentStatus] = useState<
+    "completed" | "pending" | "failed" | undefined
+  >(undefined);
+  const { mutate: fetchPaymentStatus, isPending: isCheckingStatus } =
+    useGetPaymentStatusByReference();
+
+  // Auto open Pay Rent sheet if reference present
+  useEffect(() => {
+    if (reference) {
+      setOpenPayRent(true);
+      fetchPaymentStatus(reference, {
+        onSuccess: (resp) => {
+          setRefPaymentStatus(
+            resp?.data?.status as "completed" | "pending" | "failed",
+          );
+        },
+      });
+    }
+  }, [reference, fetchPaymentStatus]);
+
+  // Prepare tenant details from user data
+  const tenantDetails = user?.tenant
+    ? [
+        {
+          label: "Phone",
+          value: user.tenant.phoneNumber || "N/A",
+        },
+        {
+          label: "Email",
+          value: user.tenant.email || "N/A",
+        },
+        {
+          label: "Level of Education",
+          value: user.tenant.levelOfEducation || "N/A",
+        },
+      ]
+    : [];
 
   const handleLogout = () => {
     logout();
     router.push("/");
   };
 
-  const toggleNotification = (id: number) => {
-    setNotifications(
-      notifications.map((notification) =>
-        notification.id === id
-          ? { ...notification, isExpanded: !notification.isExpanded }
-          : notification,
-      ),
-    );
-  };
-
   const togglePropertySection = () => {
     setIsPropertyExpanded(!isPropertyExpanded);
   };
 
+  // Helper function to calculate days until lease end
+  const calculateDaysUntilEnd = (endDate: string) => {
+    const end = new Date(endDate);
+    const now = new Date();
+    const diffTime = end.getTime() - now.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays > 0 ? diffDays : 0;
+  };
+
+  // Helper function to format date
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   useBreadcrumb([{ name: "Tenant Dashboard", href: "/tenant" }]);
+
+  // Show loading state
+  if (isLeaseLoading) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <Icon
+            icon="material-symbols:loading"
+            className="mb-4 animate-spin text-4xl"
+          />
+          <p>Loading tenant information...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state
+  if (leaseError) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="text-center">
+          <Icon
+            icon="material-symbols:error"
+            className="text-destructive mb-4 text-4xl"
+          />
+          <p>Error loading tenant information</p>
+          <p className="text-muted-foreground mt-2 text-sm">
+            Please try refreshing the page
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="flex flex-col gap-4">
@@ -108,7 +155,9 @@ const TenantHomepage = () => {
                 size="lg"
               />
             </div>
-            <p className="text-lg font-semibold">Abdul Adebayo</p>
+            <p className="text-lg font-semibold">
+              {user ? `${user.firstName} ${user.lastName}` : "Loading..."}
+            </p>
             <Sheet>
               <SheetTrigger asChild>
                 <Button
@@ -140,10 +189,13 @@ const TenantHomepage = () => {
                         size="lg"
                       />
                     </div>
-                    <p className="mt-3 font-semibold">Abdul Adebayo</p>
+                    <p className="mt-3 font-semibold">
+                      {user
+                        ? `${user.firstName} ${user.lastName}`
+                        : "Loading..."}
+                    </p>
                   </SheetTitle>
                 </SheetHeader>
-
                 <TenantProfile tenantDetails={tenantDetails} />
               </SheetContent>
             </Sheet>
@@ -178,7 +230,9 @@ const TenantHomepage = () => {
                       className="h-4 w-4 sm:h-6 sm:w-6"
                     />
                   </div>
-                  <h2 className="font-bold md:text-lg">Axel Home</h2>
+                  <h2 className="font-bold md:text-lg">
+                    {leaseData?.data?.propertyName || "Loading..."}
+                  </h2>
                 </div>
                 <Button
                   variant="ghost"
@@ -214,15 +268,22 @@ const TenantHomepage = () => {
                       />
                     </div>
                     <div className="flex flex-col gap-4">
-                      <p className="text-md font-semibold">Gwarimpa, Abuja</p>
+                      <p className="text-md font-semibold">
+                        {leaseData?.data?.propertyArea || "Loading..."},{" "}
+                        {leaseData?.data?.propertyState || ""}
+                      </p>
                       <p className="md:text-md text-xs">
-                        20, Malami Street, GRA, Gwarimpa, Abuja
+                        {leaseData?.data?.propertyAddress ||
+                          "Loading address..."}
                       </p>
                     </div>
                   </Card>
                   <div className="h-[452px] w-full overflow-hidden rounded-md">
                     <Image
-                      src="/images/full-house.png"
+                      src={
+                        leaseData?.data?.propertyImage ||
+                        "/images/full-house.png"
+                      }
                       alt="Property Image"
                       width={5290}
                       height={5540}
@@ -266,7 +327,13 @@ const TenantHomepage = () => {
                 </SheetTitle>
               </SheetHeader>
 
-              <PropertyManagerProfile />
+              <PropertyManagerProfile
+                manager={
+                  leaseData?.data?.currentLease?.createdBy ||
+                  leaseData?.data?.createdBy
+                }
+                isLoading={isLeaseLoading}
+              />
             </SheetContent>
           </Sheet>
           <Button size="sm" variant="secondary" onClick={handleLogout}>
@@ -283,35 +350,63 @@ const TenantHomepage = () => {
               <p className="text-muted-foreground text-xs font-medium uppercase">
                 Start Date
               </p>
-              <p className="text-sm font-medium">January 1, 2025</p>
+              <p className="text-sm font-medium">
+                {leaseData?.data?.currentLease?.startDate
+                  ? formatDate(leaseData.data.currentLease.startDate)
+                  : "Loading..."}
+              </p>
             </div>
             <div className="flex w-full flex-col gap-1">
               <p className="text-muted-foreground text-xs font-medium uppercase">
                 End Date
               </p>
-              <p className="text-sm font-medium">December 31, 2025</p>
+              <p className="text-sm font-medium">
+                {leaseData?.data?.currentLease?.endDate
+                  ? formatDate(leaseData.data.currentLease.endDate)
+                  : "Loading..."}
+              </p>
             </div>
           </div>
           <div className="bg-accent flex flex-col items-center justify-center gap-1 rounded-md p-2">
             <p className="text-xs font-medium uppercase">Due In</p>
-            <p className="text-lg font-bold uppercase">300 Days</p>
+            <p className="text-lg font-bold uppercase">
+              {leaseData?.data?.currentLease?.endDate
+                ? `${calculateDaysUntilEnd(leaseData.data.currentLease.endDate)} Days`
+                : "Loading..."}
+            </p>
           </div>
           <div className="flex w-full items-center gap-4">
             <div className="flex w-full flex-col gap-1">
               <p className="text-muted-foreground text-xs font-medium uppercase">
                 Rent Amount
               </p>
-              <p className="text-sm font-medium">₦1,000,000</p>
+              <p className="text-sm font-medium">
+                {leaseData?.data?.currentLease?.rentAmount
+                  ? formatCurrency(leaseData.data.currentLease.rentAmount)
+                  : "Loading..."}
+              </p>
             </div>
             <div className="flex w-full flex-col gap-1">
               <p className="text-muted-foreground text-xs font-medium uppercase">
                 Status
               </p>
-              <p className={getPaymentStatus("paid")}>Paid</p>
+              <p
+                className={getPaymentStatus(
+                  (leaseData?.data?.currentLease
+                    ?.rentStatus as paymentStatus) || "paid",
+                )}
+              >
+                {leaseData?.data?.currentLease?.rentStatus
+                  ? leaseData.data.currentLease.rentStatus
+                      .charAt(0)
+                      .toUpperCase() +
+                    leaseData.data.currentLease.rentStatus.slice(1)
+                  : "Loading..."}
+              </p>
             </div>
           </div>
         </div>
-        <Sheet>
+        <Sheet open={openPayRent} onOpenChange={setOpenPayRent}>
           <SheetTrigger asChild>
             <Button className="w-full text-xs uppercase">
               <Icon
@@ -337,24 +432,51 @@ const TenantHomepage = () => {
                 Pay Rent
               </SheetTitle>
             </SheetHeader>
-
-            <PayRentContent />
+            {isCheckingStatus && reference && (
+              <div className="text-muted-foreground mb-4 text-xs">
+                Verifying payment status...
+              </div>
+            )}
+            <PayRentContent
+              leaseData={leaseData?.data}
+              paymentStatus={refPaymentStatus}
+            />
           </SheetContent>
         </Sheet>
         <Card className="bg-background flex flex-col gap-4">
           <p className="text-xs font-semibold uppercase">Payment History</p>
-          <div className="border-accent flex items-center justify-between border-l-2 pl-4">
-            <div className="flex flex-col">
-              <p className="text-muted-foreground text-xs font-medium">
-                January 1, 2025
-              </p>
-              <p className="text-sm font-bold">₦1,000,000</p>
+          {leaseData?.data?.currentLease?.payment ? (
+            <div className="border-accent flex items-center justify-between border-l-2 pl-4">
+              <div className="flex flex-col">
+                <p className="text-muted-foreground text-xs font-medium">
+                  {formatDate(leaseData.data.currentLease.payment.paymentDate)}
+                </p>
+                <p className="text-sm font-bold">
+                  {formatCurrency(leaseData.data.currentLease.payment.amount)}
+                </p>
+              </div>
+              {leaseData.data.currentLease.payment.receiptUrl && (
+                <Button
+                  variant="ghost"
+                  className="text-xs uppercase"
+                  onClick={() =>
+                    leaseData.data.currentLease.payment.receiptUrl &&
+                    window.open(
+                      leaseData.data.currentLease.payment.receiptUrl,
+                      "_blank",
+                    )
+                  }
+                >
+                  <Icon icon="material-symbols:download-rounded" size="sm" />
+                  Receipt
+                </Button>
+              )}
             </div>
-            <Button variant="ghost" className="text-xs uppercase">
-              <Icon icon="material-symbols:download-rounded" size="sm" />
-              Receipt
-            </Button>
-          </div>
+          ) : (
+            <p className="text-muted-foreground text-sm">
+              No payment history available
+            </p>
+          )}
         </Card>
       </Card>
       <div className="flex items-center gap-4 md:hidden">
@@ -386,7 +508,13 @@ const TenantHomepage = () => {
               </SheetTitle>
             </SheetHeader>
 
-            <PropertyManagerProfile />
+            <PropertyManagerProfile
+              manager={
+                leaseData?.data?.currentLease?.createdBy ||
+                leaseData?.data?.createdBy
+              }
+              isLoading={isLeaseLoading}
+            />
           </SheetContent>
         </Sheet>
         <Button className="flex-1" size="sm" variant="secondary">
@@ -399,67 +527,7 @@ const TenantHomepage = () => {
           <Icon icon="material-symbols:notifications" className="mr-2" />
           <p className="text-lg font-bold">Notifications</p>
         </div>
-
-        {/* Notification items */}
-        <div className="flex flex-col gap-4">
-          {notifications.map((notification) => (
-            <Card key={notification.id} className="bg-background">
-              <div className="flex flex-col gap-3">
-                {/* Header with date, time and unread status */}
-                <div className="flex items-center justify-between">
-                  <div className="text-muted-foreground flex items-center gap-2 text-xs font-medium">
-                    <span>{notification.date}</span>
-                    <span>•</span>
-                    <span>{notification.time}</span>
-                  </div>
-                  {notification.isUnread && (
-                    <span className="bg-border rounded px-3 py-1 text-xs font-medium uppercase">
-                      UNREAD
-                    </span>
-                  )}
-                </div>
-
-                {/* Title and expand/collapse button */}
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="bg-muted-foreground h-2 w-2 rounded-full"></div>
-                    <span className="text-sm font-medium">
-                      {notification.title}
-                    </span>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
-                    onClick={() => toggleNotification(notification.id)}
-                  >
-                    <Icon
-                      icon={
-                        notification.isExpanded
-                          ? "material-symbols:keyboard-arrow-up"
-                          : "material-symbols:keyboard-arrow-down"
-                      }
-                      size="sm"
-                    />
-                  </Button>
-                </div>
-
-                {/* Expandable content */}
-                <div
-                  className={`overflow-hidden transition-all duration-300 ease-in-out ${
-                    notification.isExpanded && notification.content
-                      ? "max-h-32 opacity-100"
-                      : "max-h-0 opacity-0"
-                  }`}
-                >
-                  <div className="border-accent-foreground ml-0.5 border-l-2 py-2 pl-4 text-xs">
-                    {notification.content}
-                  </div>
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
+        <TenantNotifications />
       </Card>
     </div>
   );

@@ -11,7 +11,6 @@ interface NotificationCardProps {
   property: string;
   propertyId?: string;
   isRead?: boolean;
-  onDelete?: () => void;
   onMarkAsRead?: () => void;
 }
 
@@ -22,7 +21,6 @@ const NotificationCard = ({
   property,
   propertyId,
   isRead = false,
-  onDelete,
   onMarkAsRead,
 }: NotificationCardProps) => {
   return (
@@ -82,20 +80,6 @@ const NotificationCard = ({
               title="Mark as read"
             >
               <Icon icon="material-symbols:mark-email-read-outline" />
-            </Button>
-          )}
-          {onDelete && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground hover:text-foreground p-1"
-              onClick={(e) => {
-                e.stopPropagation();
-                onDelete();
-              }}
-              title="Delete notification"
-            >
-              <Icon icon="material-symbols:delete-outline-rounded" />
             </Button>
           )}
         </div>

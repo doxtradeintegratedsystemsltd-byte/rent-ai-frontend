@@ -18,6 +18,9 @@ import { formatDropdownItems } from "@/lib/formatters";
 import { useState } from "react";
 import { Icon } from "../../ui/icon";
 import Image from "next/image";
+import { usePropertyImageUpload } from "@/mutations/upload";
+import { useCreatePropertyForAdmin } from "@/mutations/property";
+import { toast } from "sonner";
 
 const FormSchema = z.object({
   propertyName: z.string().min(1, { message: "Property name is required" }),
@@ -25,13 +28,31 @@ const FormSchema = z.object({
   propertyArea: z.string().min(1, { message: "Property area is required" }),
   propertyAddress: z.string().min(1, { message: "Address is required" }),
   propertyImage: z.instanceof(File, { message: "Property image is required" }),
-  rentDuration: z.string().min(1, { message: "Rent duration is required" }),
-  rentAmount: z.string().min(1, { message: "Rent amount is required" }),
+  leaseYears: z.number().min(1, { message: "Lease duration is required" }),
+  rentAmount: z.number().min(1, { message: "Rent amount is required" }),
 });
 
-const AddPropertyForm = () => {
+interface PropertySubmissionData {
+  propertyName: string;
+  propertyState: string;
+  propertyArea: string;
+  propertyAddress: string;
+  propertyImage: string;
+  leaseYears: number;
+  rentAmount: number;
+  adminId: string;
+}
+
+interface AddPropertyFormProps {
+  adminId: string;
+}
+
+const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [fileInputKey, setFileInputKey] = useState(0);
+
+  const imageUpload = usePropertyImageUpload();
+  const createProperty = useCreatePropertyForAdmin();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -41,18 +62,51 @@ const AddPropertyForm = () => {
       propertyArea: "",
       propertyAddress: "",
       propertyImage: undefined,
-      rentDuration: "",
-      rentAmount: "",
+      leaseYears: 0,
+      rentAmount: 0,
     },
   });
 
-  const onSubmit = (data: z.infer<typeof FormSchema>) => {
-    console.log("Form submitted with data:", data);
+  const onSubmit = async (data: z.infer<typeof FormSchema>) => {
+    const imageUrl = await imageUpload.uploadImageForProperty(
+      data.propertyImage,
+    );
+
+    const propertyData: PropertySubmissionData = {
+      propertyName: data.propertyName,
+      propertyState: data.propertyState,
+      propertyArea: data.propertyArea,
+      propertyAddress: data.propertyAddress,
+      propertyImage: imageUrl,
+      leaseYears: data.leaseYears,
+      rentAmount: data.rentAmount,
+      adminId: adminId,
+    };
+
+    createProperty.mutate(propertyData, {
+      onSuccess: () => {
+        toast.success("Property created successfully.");
+        form.reset();
+        setImagePreview(null);
+        setFileInputKey((prev) => prev + 1);
+      },
+      onError: (error) => {
+        toast.error("Failed to create property. Please try again.");
+        console.error("Error submitting property:", error);
+      },
+    });
   };
 
   const states = ["Lagos", "Abuja", "Kano", "Rivers", "Ogun"];
   const areas = ["Victoria Island", "Lekki", "Ikeja", "Surulere", "Ikoyi"];
-  const rentDurations = ["1 year", "2 years", "3 years", "4 years"];
+
+  const leaseYearsOptions = [
+    { label: "1 year", value: "1" },
+    { label: "2 years", value: "2" },
+    { label: "3 years", value: "3" },
+    { label: "4 years", value: "4" },
+    { label: "5 years", value: "5" },
+  ];
 
   const handleImageChange = (file: File | null) => {
     if (file) {
@@ -72,6 +126,8 @@ const AddPropertyForm = () => {
     setFileInputKey((prev) => prev + 1); // Force re-render of input to clear file
   };
 
+  const isFormDisabled = imageUpload.isPending || createProperty.isPending;
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -80,9 +136,16 @@ const AddPropertyForm = () => {
           name="propertyName"
           render={({ field }) => (
             <FormItem>
-              <FormLabel required>Property name</FormLabel>
+              <FormLabel required className="text-sm">
+                Property name
+              </FormLabel>
               <FormControl>
-                <Input placeholder="Enter property name" {...field} />
+                <Input
+                  className="py-2"
+                  placeholder="Enter property name"
+                  disabled={isFormDisabled}
+                  {...field}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -94,17 +157,21 @@ const AddPropertyForm = () => {
             name="propertyState"
             render={({ field }) => (
               <FormItem className="w-full">
-                <FormLabel required>Property state</FormLabel>
+                <FormLabel required className="text-sm">
+                  Property state
+                </FormLabel>
                 <FormControl>
                   <Dropdown
                     trigger={{
                       label: field.value || "Select state",
                       arrowIcon: "material-symbols:keyboard-arrow-down",
-                      className: "w-full justify-between",
+                      className: `w-full justify-between ${isFormDisabled ? "opacity-50 pointer-events-none" : ""}`,
                     }}
                     items={formatDropdownItems(states)}
-                    onItemSelect={(value) => field.onChange(value)}
-                    className="w-full p-4"
+                    onItemSelect={(value) =>
+                      !isFormDisabled && field.onChange(value)
+                    }
+                    className="w-full px-4 py-2"
                   />
                 </FormControl>
                 <FormMessage />
@@ -116,17 +183,21 @@ const AddPropertyForm = () => {
             name="propertyArea"
             render={({ field }) => (
               <FormItem className="w-full">
-                <FormLabel required>Property area</FormLabel>
+                <FormLabel required className="text-sm">
+                  Property area
+                </FormLabel>
                 <FormControl>
                   <Dropdown
                     trigger={{
                       label: field.value || "Select area",
                       arrowIcon: "material-symbols:keyboard-arrow-down",
-                      className: "w-full justify-between",
+                      className: `w-full justify-between ${isFormDisabled ? "opacity-50 pointer-events-none" : ""}`,
                     }}
                     items={formatDropdownItems(areas)}
-                    onItemSelect={(value) => field.onChange(value)}
-                    className="w-full p-4"
+                    onItemSelect={(value) =>
+                      !isFormDisabled && field.onChange(value)
+                    }
+                    className="w-full px-4 py-2"
                   />
                 </FormControl>
                 <FormMessage />
@@ -139,10 +210,14 @@ const AddPropertyForm = () => {
           name="propertyAddress"
           render={({ field }) => (
             <FormItem>
-              <FormLabel required>Property address</FormLabel>
+              <FormLabel required className="text-sm">
+                Property address
+              </FormLabel>
               <FormControl>
                 <Input
+                  className="py-2"
                   placeholder="Enter full address of the property"
+                  disabled={isFormDisabled}
                   {...field}
                 />
               </FormControl>
@@ -155,7 +230,9 @@ const AddPropertyForm = () => {
           name="propertyImage"
           render={({ field }) => (
             <FormItem>
-              <FormLabel required>Property image</FormLabel>
+              <FormLabel required className="text-sm">
+                Property image
+              </FormLabel>
               <FormControl>
                 <div className="bg-muted rounded-md border text-center">
                   <input
@@ -164,6 +241,7 @@ const AddPropertyForm = () => {
                     accept="image/*"
                     className="hidden"
                     id="photo-upload"
+                    disabled={isFormDisabled}
                     onChange={(e) => {
                       if (e.target.files && e.target.files[0]) {
                         field.onChange(e.target.files[0]);
@@ -210,11 +288,23 @@ const AddPropertyForm = () => {
                       size="xs"
                       onClick={removeImage}
                       className="text-muted-foreground hover:text-foreground mt-2 h-auto p-0"
+                      disabled={isFormDisabled}
                     >
                       Remove image
                     </Button>
                   </div>
                 </div>
+              )}
+
+              {imageUpload.isPending && (
+                <p className="text-muted-foreground mt-2 text-sm">
+                  Uploading image...
+                </p>
+              )}
+              {imageUpload.isError && (
+                <p className="mt-2 text-sm text-red-600">
+                  Image upload failed. Please try again.
+                </p>
               )}
 
               <FormMessage />
@@ -225,22 +315,28 @@ const AddPropertyForm = () => {
         <div className="flex gap-4">
           <FormField
             control={form.control}
-            name="rentDuration"
+            name="leaseYears"
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormLabel required className="text-sm">
-                  Rent Duration
+                  Lease Duration
                 </FormLabel>
                 <FormControl>
                   <Dropdown
                     trigger={{
-                      label: field.value || "Select duration",
+                      label: field.value
+                        ? leaseYearsOptions.find(
+                            (opt) => opt.value === field.value.toString(),
+                          )?.label || "Select lease duration"
+                        : "Select lease duration",
                       arrowIcon: "material-symbols:keyboard-arrow-down",
-                      className: "w-full justify-between",
+                      className: `w-full justify-between ${isFormDisabled ? "opacity-50 pointer-events-none" : ""}`,
                     }}
-                    items={formatDropdownItems(rentDurations)}
-                    onItemSelect={(value) => field.onChange(value)}
-                    className="w-full p-4"
+                    items={leaseYearsOptions}
+                    onItemSelect={(value) =>
+                      !isFormDisabled && field.onChange(parseInt(value))
+                    }
+                    className="w-full px-4 py-2"
                   />
                 </FormControl>
                 <FormMessage />
@@ -253,22 +349,45 @@ const AddPropertyForm = () => {
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormLabel required className="text-sm">
-                  Rent Amount
+                  Rent Amount (₦)
                 </FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter rent amount" {...field} />
+                  <Input
+                    type="number"
+                    className="py-2"
+                    placeholder="Enter rent amount (e.g., 150000)"
+                    disabled={isFormDisabled}
+                    value={field.value || ""}
+                    onChange={(e) =>
+                      field.onChange(
+                        e.target.value ? parseInt(e.target.value) : undefined,
+                      )
+                    }
+                    min="1"
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
+
+        {createProperty.isError && (
+          <p className="mt-2 text-sm text-red-600">
+            Failed to create property. Please try again.
+          </p>
+        )}
+
         <Button
           type="submit"
           className="w-full uppercase"
-          disabled={!form.formState.isValid}
+          disabled={!form.formState.isValid || isFormDisabled}
         >
-          Add Property
+          {createProperty.isPending
+            ? "Adding Property..."
+            : imageUpload.isPending
+              ? "Uploading Image..."
+              : "Add Property"}
         </Button>
       </form>
     </Form>

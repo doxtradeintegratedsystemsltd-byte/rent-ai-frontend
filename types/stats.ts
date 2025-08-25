@@ -23,6 +23,21 @@ export interface DashboardStatsData {
   properties: StatItem;
   tenants: StatItem;
   payments: StatItem;
+  dueProperties: number;
+}
+
+export interface SuperDashboardStatsData {
+  properties: StatItem;
+  tenants: StatItem;
+  admins: StatItem;
+  payments: StatItem;
+}
+
+export interface SuperDashboardStatsResponse {
+  statusCode: number;
+  status: string;
+  message: string;
+  data: SuperDashboardStatsData;
 }
 
 export interface DashboardStatsResponse {

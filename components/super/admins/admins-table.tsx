@@ -13,15 +13,20 @@ import {
 } from "@/components/ui/table";
 import Avatar from "../../ui/avatar";
 import Pagination from "../../ui/pagination";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "../../ui/button";
 import { Icon } from "@/components/ui/icon";
 import Link from "next/link";
+import { getSortLabel } from "@/lib/table-utils";
+import { useFetchAdmins } from "@/mutations/admin";
+import type { Admin } from "@/types/admin";
 import {
-  getSortLabel,
-  filterTableData,
-  getPaginatedData,
-} from "@/lib/table-utils";
+  TableSkeleton,
+  TableSkeletonPresets,
+} from "@/components/ui/table-skeleton";
+import { useDebounce } from "@/hooks/useDebounce";
+import { useRouter, useSearchParams } from "next/navigation";
+import { formatCurrency } from "@/lib/formatters";
 
 const arrangeByOptions = [
   { type: "label" as const, label: "Arrange By" },
@@ -48,105 +53,105 @@ const tableHead = [
   { label: "", className: "text-right" },
 ];
 
-const tableData = [
-  {
-    id: 1,
-    name: "John Doe",
-    properties: 3,
-    tenants: 8,
-    rentsProcessed: "₦12,500,000",
-  },
-  {
-    id: 2,
-    name: "Jane Smith",
-    properties: 5,
-    tenants: 12,
-    rentsProcessed: "₦18,750,000",
-  },
-  {
-    id: 3,
-    name: "Bob Johnson",
-    properties: 2,
-    tenants: 6,
-    rentsProcessed: "₦8,900,000",
-  },
-  {
-    id: 4,
-    name: "Alice Brown",
-    properties: 4,
-    tenants: 10,
-    rentsProcessed: "₦15,200,000",
-  },
-  {
-    id: 5,
-    name: "Charlie Davis",
-    properties: 6,
-    tenants: 15,
-    rentsProcessed: "₦22,800,000",
-  },
-  {
-    id: 6,
-    name: "David Wilson",
-    properties: 1,
-    tenants: 3,
-    rentsProcessed: "₦4,500,000",
-  },
-  {
-    id: 7,
-    name: "Eva Martinez",
-    properties: 7,
-    tenants: 18,
-    rentsProcessed: "₦28,600,000",
-  },
-  {
-    id: 8,
-    name: "Frank Miller",
-    properties: 3,
-    tenants: 9,
-    rentsProcessed: "₦11,400,000",
-  },
-  {
-    id: 9,
-    name: "Grace Taylor",
-    properties: 2,
-    tenants: 5,
-    rentsProcessed: "₦7,300,000",
-  },
-  {
-    id: 10,
-    name: "Henry Anderson",
-    properties: 4,
-    tenants: 11,
-    rentsProcessed: "₦16,900,000",
-  },
-  {
-    id: 11,
-    name: "Ivy Thompson",
-    properties: 5,
-    tenants: 13,
-    rentsProcessed: "₦19,800,000",
-  },
-  {
-    id: 12,
-    name: "Jack Robinson",
-    properties: 8,
-    tenants: 20,
-    rentsProcessed: "₦35,200,000",
-  },
-];
-
 const AdminsTable = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [selectedSort, setSelectedSort] = useState("all");
-  const itemsPerPage = 10;
+  const router = useRouter();
+  const searchParams = useSearchParams();
 
-  const filteredData = useMemo(() => {
-    return filterTableData(tableData, searchTerm, ["name"]);
-  }, [searchTerm]);
+  // Initialize state from URL parameters
+  const [currentPage, setCurrentPage] = useState(() => {
+    const page = searchParams.get("page");
+    return page ? parseInt(page, 10) : 1;
+  });
 
-  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
-  const currentData = getPaginatedData(filteredData, currentPage, itemsPerPage);
+  const [searchTerm, setSearchTerm] = useState(() => {
+    return searchParams.get("search") || "";
+  });
+
+  const [selectedSort, setSelectedSort] = useState(() => {
+    return searchParams.get("sort") || "newest";
+  });
+
+  const itemsPerPage = 20;
+
+  const debouncedSearchTerm = useDebounce(searchTerm, 500);
+
+  // Function to update URL with current filter state
+  const updateURL = useCallback(
+    (params: { page?: number; search?: string; sort?: string }) => {
+      const current = new URLSearchParams(window.location.search);
+
+      // Update or remove parameters
+      if (params.page && params.page > 1) {
+        current.set("page", params.page.toString());
+      } else {
+        current.delete("page");
+      }
+
+      if (params.search && params.search.trim()) {
+        current.set("search", params.search);
+      } else {
+        current.delete("search");
+      }
+
+      if (params.sort && params.sort !== "newest") {
+        current.set("sort", params.sort);
+      } else {
+        current.delete("sort");
+      }
+
+      // Update URL without triggering a page reload
+      const search = current.toString();
+      const query = search ? `?${search}` : "";
+      router.replace(`${window.location.pathname}${query}`, { scroll: false });
+    },
+    [router],
+  );
+
+  // Update URL when filters change
+  useEffect(() => {
+    updateURL({
+      page: currentPage,
+      search: searchTerm,
+      sort: selectedSort,
+    });
+  }, [currentPage, searchTerm, selectedSort, updateURL]);
+
+  const { data, isLoading, isError, error } = useFetchAdmins({
+    page: currentPage - 1,
+    pageSize: itemsPerPage,
+    search: debouncedSearchTerm || undefined,
+  });
+
+  const tableData = useMemo(() => {
+    const admins: Admin[] = data?.data?.data || [];
+    return admins.map((admin) => ({
+      id: admin.id,
+      name: `${admin.firstName} ${admin.lastName}`.trim(),
+      email: admin.email,
+      photoUrl: admin.photoUrl,
+      properties: admin.properties,
+      tenants: admin.tenants,
+      rentsProcessed: formatCurrency(admin.rentProcessed),
+      createdAt: admin.createdAt,
+    }));
+  }, [data]);
+
+  const paginationInfo = useMemo(() => {
+    return {
+      totalItems: data?.data?.totalItems || 0,
+      totalPages: data?.data?.totalPages || 0,
+      currentPage: (data?.data?.currentPage || 0) + 1,
+      pageSize: data?.data?.pageSize || itemsPerPage,
+    };
+  }, [data, itemsPerPage]);
+
+  if (isError) {
+    return (
+      <div className="py-8 text-center text-red-600">
+        <p>Error loading admins: {error?.message || "Unknown error"}</p>
+      </div>
+    );
+  }
 
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
@@ -212,10 +217,18 @@ const AdminsTable = () => {
           </Button>
         </div>
       )}
-      <div className="h-[585px] overflow-hidden rounded-md border">
+      {isLoading ? (
+        <TableSkeleton
+          {...TableSkeletonPresets.users}
+          rows={10}
+          showFilters={false}
+          showPagination={false}
+          tableHeight=""
+        />
+      ) : (
         <Table>
           <TableHeader>
-            <TableRow className="bg-border">
+            <TableRow className="bg-border hover:bg-border">
               {tableHead.map((head, index) => (
                 <TableHead key={index} className={head.className}>
                   {head.label}
@@ -224,17 +237,17 @@ const AdminsTable = () => {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentData && currentData.length > 0 ? (
-              currentData.map((row) => (
+            {tableData && tableData.length > 0 ? (
+              tableData.map((row) => (
                 <TableRow key={row.id} className="bg-background">
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar
-                        src="/images/avatar.png"
+                        src={row.photoUrl || "/images/avatar.png"}
                         alt="Admin Avatar"
                         size="sm"
                       />
-                      {row.name}
+                      <p className="font-medium">{row.name}</p>
                     </div>
                   </TableCell>
                   <TableCell>{row.properties}</TableCell>
@@ -253,24 +266,24 @@ const AdminsTable = () => {
               ))
             ) : (
               <TableNoData className="flex flex-col" colSpan={tableHead.length}>
-                <p>No property added.</p>
+                <p>No property managers added.</p>
                 <p>
-                  Click <span className="font-bold">“Add Property”</span> to get
+                  Click <span className="font-bold">“Add Admin</span> to get
                   started.
                 </p>
               </TableNoData>
             )}
           </TableBody>
         </Table>
-      </div>
+      )}
 
-      {filteredData.length > 0 && (
+      {paginationInfo.totalItems > 0 && (
         <Pagination
-          currentPage={currentPage}
-          totalPages={totalPages}
+          currentPage={paginationInfo.currentPage}
+          totalPages={paginationInfo.totalPages}
           onPageChange={handlePageChange}
-          itemsPerPage={itemsPerPage}
-          totalItems={filteredData.length}
+          itemsPerPage={paginationInfo.pageSize}
+          totalItems={paginationInfo.totalItems}
         />
       )}
     </div>

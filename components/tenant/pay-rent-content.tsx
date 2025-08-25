@@ -9,46 +9,98 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useInitiatePayment } from "@/mutations/payment";
+import { LoadingSpinner } from "@/components/ui/loading-spinner";
+import { TenantPropertyInfo } from "@/types/lease";
+import { formatLongDate } from "@/lib/formatters";
+import { toast } from "sonner";
 
-const PayRentContent = () => {
+const PayRentContent = ({
+  leaseData,
+  paymentStatus,
+}: {
+  leaseData: TenantPropertyInfo | undefined;
+  paymentStatus?: "completed" | "pending" | "failed";
+}) => {
   const [selectedCycles, setSelectedCycles] = useState(1);
-  const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false);
+  const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false); // success UI toggle
   const [isPaymentFailed, setIsPaymentFailed] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const rentAmount = 1000000;
+  // Extract rent amount and lease years from lease data
+  const rentAmount = Number(leaseData?.rentAmount) || 1000000;
+  const leaseYears = leaseData?.leaseYears || 1;
   const totalAmount = rentAmount * selectedCycles;
 
-  const paymentCycles = [
-    { value: 1, label: "1 cycle (₦1,000,000)" },
-    { value: 2, label: "2 cycles (₦2,000,000)" },
-    { value: 3, label: "3 cycles (₦3,000,000)" },
-    { value: 6, label: "6 cycles (₦6,000,000)" },
-    { value: 12, label: "12 cycles (₦12,000,000)" },
-  ];
+  // Generate payment cycles dynamically based on lease years
+  const generatePaymentCycles = () => {
+    const cycles = [];
+    const maxCycles = leaseYears * 12; // Convert years to months for maximum cycles
+
+    // Common cycle options (1, 2, 3, 6, 12 months)
+    const commonCycles = [1, 2, 3, 6, 12];
+
+    for (const cycleCount of commonCycles) {
+      if (cycleCount <= maxCycles) {
+        const amount = rentAmount * cycleCount;
+        const label = `${cycleCount} cycle${cycleCount > 1 ? "s" : ""} (₦${amount.toLocaleString()})`;
+        cycles.push({ value: cycleCount, label });
+      }
+    }
+
+    return cycles;
+  };
+
+  const paymentCycles = generatePaymentCycles();
+
+  const { mutate: initiatePayment, isPending } = useInitiatePayment();
 
   const handlePayment = () => {
-    // Simulate payment processing - randomly succeed or fail for demo
-    const shouldFail = Math.random() > 0.5; // 50% chance of failure for demo
-
-    if (shouldFail) {
-      setIsPaymentFailed(true);
-    } else {
-      setIsPaymentSuccessful(true);
+    if (!leaseData?.currentLeaseId) {
+      setErrorMsg("Missing lease identifier.");
+      return;
     }
+    setErrorMsg(null);
+    initiatePayment(
+      {
+        leaseId: leaseData.currentLeaseId,
+        leaseCycles: selectedCycles,
+      },
+      {
+        onSuccess: (resp) => {
+          if (resp?.data) {
+            // Redirect tenant to checkout page (Paystack URL)
+            try {
+              window.location.href = resp.data;
+            } catch (e) {
+              // Fallback open new tab
+              console.error("Error redirecting to payment URL:", e);
+              toast.error("Error redirecting to payment gateway.");
+              window.open(resp.data, "_blank");
+            }
+          } else {
+            setErrorMsg("No checkout URL returned.");
+            setIsPaymentFailed(true);
+          }
+        },
+        onError: (err) => {
+          setIsPaymentFailed(true);
+          console.error(err);
+          setErrorMsg("Payment initiation failed.");
+        },
+      },
+    );
   };
 
   const handleGoBackHome = () => {
-    // Reset all states to go back to the payment form
     setIsPaymentSuccessful(false);
     setIsPaymentFailed(false);
   };
 
   const handleTryAgain = () => {
-    // Reset failure state to try payment again
     setIsPaymentFailed(false);
   };
 
-  // Payment Failed UI
   if (isPaymentFailed) {
     return (
       <div className="mt-8 flex flex-col items-center gap-6 text-center">
@@ -81,7 +133,9 @@ const PayRentContent = () => {
                   Property
                 </p>
                 <p className="text-sm font-medium">
-                  Bull House, Axelaxe, Abuja
+                  {leaseData?.propertyName || "N/A"},{" "}
+                  {leaseData?.propertyAddress || "N/A"},{" "}
+                  {leaseData?.propertyState || "N/A"}
                 </p>
               </div>
 
@@ -99,11 +153,19 @@ const PayRentContent = () => {
                 <p className="text-muted-foreground text-xs font-medium uppercase">
                   Due Date
                 </p>
-                <p className="text-sm font-medium">January 1, 2025</p>
+                <p className="text-sm font-medium">
+                  {leaseData?.currentLease?.endDate
+                    ? formatLongDate(leaseData.currentLease.endDate)
+                    : "N/A"}
+                </p>
               </div>
             </div>
           </div>
         </div>
+
+        {errorMsg && (
+          <p className="text-destructive text-xs font-medium">{errorMsg}</p>
+        )}
 
         {/* Action Buttons */}
         <div className="flex w-full gap-3">
@@ -122,8 +184,8 @@ const PayRentContent = () => {
     );
   }
 
-  // Payment Success UI
-  if (isPaymentSuccessful) {
+  // Payment Success UI (also if external status indicates completed)
+  if (isPaymentSuccessful || paymentStatus === "completed") {
     return (
       <div className="mt-8 flex flex-col items-center gap-6 text-center">
         {/* Success Icon */}
@@ -155,7 +217,9 @@ const PayRentContent = () => {
                   Property
                 </p>
                 <p className="text-sm font-medium">
-                  Bull House, Axelaxe, Abuja
+                  {leaseData?.propertyName || "N/A"},{" "}
+                  {leaseData?.propertyAddress || "N/A"},{" "}
+                  {leaseData?.propertyState || "N/A"}
                 </p>
               </div>
 
@@ -173,7 +237,11 @@ const PayRentContent = () => {
                 <p className="text-muted-foreground text-xs font-medium uppercase">
                   Due Date
                 </p>
-                <p className="text-sm font-medium">January 1, 2026</p>
+                <p className="text-sm font-medium">
+                  {leaseData?.currentLease?.endDate
+                    ? formatLongDate(leaseData.currentLease.endDate)
+                    : "N/A"}
+                </p>
               </div>
             </div>
           </div>
@@ -197,7 +265,7 @@ const PayRentContent = () => {
         <p className="text-muted-foreground text-xs font-medium uppercase">
           Rent Amount
         </p>
-        <p className="font-medium">₦1,000,000/Year</p>
+        <p className="font-medium">₦{rentAmount.toLocaleString()}/Year</p>
       </div>
 
       {/* Payment Duration Selector */}
@@ -233,13 +301,29 @@ const PayRentContent = () => {
       </div>
 
       {/* Proceed Button */}
-      <Button className="w-full text-sm uppercase" onClick={handlePayment}>
-        PROCEED TO PAY ₦{totalAmount.toLocaleString()}
-        <Icon
-          icon="material-symbols:arrow-right-alt"
-          className="ml-2"
-          size="sm"
-        />
+      {errorMsg && (
+        <p className="text-destructive -mt-2 text-xs font-medium">{errorMsg}</p>
+      )}
+
+      <Button
+        className="w-full text-sm uppercase"
+        onClick={handlePayment}
+        disabled={isPending || !leaseData?.id}
+      >
+        {isPending ? (
+          <span className="flex items-center gap-2">
+            <LoadingSpinner size="sm" /> Processing...
+          </span>
+        ) : (
+          <span className="flex items-center">
+            PROCEED TO PAY ₦{totalAmount.toLocaleString()}
+            <Icon
+              icon="material-symbols:arrow-right-alt"
+              className="ml-2"
+              size="sm"
+            />
+          </span>
+        )}
       </Button>
     </div>
   );

@@ -4,6 +4,7 @@ import type { ApiResponse } from "@/types/user";
 import {
   PropertiesListResponse,
   PropertyCreateRequest,
+  PropertyCreateForAdminRequest,
   PropertyCreateResponse,
   PropertyFetchParams,
   PropertySingleResponse,
@@ -22,6 +23,26 @@ export const useCreateProperty = () => {
       propertyData: PropertyCreateRequest,
     ): Promise<ApiResponse<PropertyCreateResponse>> => {
       const response = await api.post("/properties", propertyData);
+      return response.data;
+    },
+    onSuccess: () => {
+      // Invalidate and refetch properties queries
+      queryClient.invalidateQueries({ queryKey: ["properties"] });
+      // Also invalidate due rents since new properties might affect due rents
+      queryClient.invalidateQueries({ queryKey: ["properties", "due-rents"] });
+    },
+  });
+};
+
+// Property creation for admin mutation (super admin creates property for an admin)
+export const useCreatePropertyForAdmin = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (
+      propertyData: PropertyCreateForAdminRequest,
+    ): Promise<ApiResponse<PropertyCreateResponse>> => {
+      const response = await api.post("/properties/for-admin", propertyData);
       return response.data;
     },
     onSuccess: () => {
@@ -57,6 +78,9 @@ export const useFetchProperties = (params?: PropertyFetchParams) => {
       }
       if (params?.status) {
         searchParams.append("status", params.status);
+      }
+      if (params?.adminId) {
+        searchParams.append("adminId", params.adminId);
       }
 
       const url = `/properties${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
@@ -99,6 +123,9 @@ export const useFetchDueRents = (
       }
       if (dueRentsParams?.status) {
         searchParams.append("status", dueRentsParams.status);
+      }
+      if (dueRentsParams?.adminId) {
+        searchParams.append("adminId", dueRentsParams.adminId);
       }
 
       const url = `/properties${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;

@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/sheet";
 import AddPropertyForm from "./add-property-form";
 
-const PropertyManagement = () => {
+const PropertyManagement = ({ dueRentsCount }: { dueRentsCount: number }) => {
   return (
     <div className="flex items-center justify-between rounded-md bg-gradient-to-r from-[#1E1E1E] to-[#4B4B4B] p-6">
       <div className="flex w-full items-center gap-4">
@@ -27,7 +27,7 @@ const PropertyManagement = () => {
               className="text-destructive"
               size="xs"
             />
-            <p className="text-background text-lg font-bold">0</p>
+            <p className="text-background text-lg font-bold">{dueRentsCount}</p>
             <Link
               href="/admin/due-rents"
               className="text-accent hover:underline"

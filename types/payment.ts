@@ -105,3 +105,28 @@ export interface PaymentsResponse {
     pageSize: number;
   };
 }
+
+// Initiate (automated) payment - returns a checkout URL (e.g., Paystack link)
+export interface InitiatePaymentRequest {
+  leaseId: string;
+  leaseCycles: number; // number of cycles (months) tenant wants to pay for now
+}
+
+export interface InitiatePaymentResponse {
+  statusCode: number;
+  status: string; // "success" | "error" (kept broad to mirror backend contract)
+  message: string; // e.g. "Create Success"
+  data: string; // checkout URL returned by the backend
+}
+
+// Payment status lookup by reference
+export interface PaymentReferenceStatusResponse {
+  statusCode: number;
+  status: string;
+  message: string;
+  data: {
+    id: string;
+    reference: string;
+    status: "completed" | "pending" | "failed";
+  } & Record<string, any>; // allow extra backend fields without strict typing
+}

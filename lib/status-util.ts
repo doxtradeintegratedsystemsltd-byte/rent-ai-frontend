@@ -10,6 +10,7 @@ export function getPaymentStatus(status: paymentStatus) {
     nearDue: "bg-neardue-bg text-neardue-text border-neardue-border",
     due: "bg-due-bg text-due-text border-due-border",
     overdue: "bg-overdue-bg text-overdue-text border-overdue-border",
+    overDue: "bg-overdue-bg text-overdue-text border-overdue-border",
   };
 
   return `${statusClasses[status]} ${baseClasses}`;

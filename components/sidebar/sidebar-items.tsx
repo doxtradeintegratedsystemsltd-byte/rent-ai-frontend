@@ -27,10 +27,27 @@ export function SidebarItem({
   const current = normalize(pathname || "");
   const target = href ? normalize(href) : "";
 
+  // Define routes that have their own sidebar items and shouldn't highlight Dashboard
+  const sidebarRoutes = ["/payments"];
+
+  // Check if current path matches any sidebar route
+  const isCurrentPathASidebarRoute = sidebarRoutes.some((route) => {
+    const baseRoute = target.includes("/super") ? "/super" : "/admin";
+    const fullRoute = `${baseRoute}${route}`;
+    return current === fullRoute || current.startsWith(fullRoute + "/");
+  });
+
   const isActive = href
     ? exact
-      ? current === target
-      : current === target || current.startsWith(target + "/")
+      ? // When exact is true, check if it's an exact match OR
+        // if it's a dashboard route (/admin or /super) and current starts with it
+        // BUT exclude if current path is a sidebar route
+        current === target ||
+        ((target === "/admin" || target === "/super") &&
+          current.startsWith(target + "/") &&
+          !isCurrentPathASidebarRoute)
+      : // When exact is false, use prefix matching
+        current === target || current.startsWith(target + "/")
     : false;
 
   const className = cn(
