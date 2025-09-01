@@ -54,14 +54,14 @@ const AddAdminForm = ({
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
     try {
       setIsUploading(true);
-      let photoUrl: string | null = null;
+      let photoUrl: string | undefined = undefined;
 
       // Upload photo if provided
       if (data.displayPhoto) {
         const uploadResult = await uploadImageMutation.mutateAsync(
           data.displayPhoto,
         );
-        photoUrl = uploadResult.data || null;
+        photoUrl = uploadResult.data || undefined;
       }
 
       // Create admin with form data

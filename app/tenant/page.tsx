@@ -21,10 +21,10 @@ import { useAuthActions, useUser } from "@/store/authStore";
 import { useRouter } from "next/navigation";
 import { useFetchTenantLease } from "@/mutations/tenant";
 import { formatCurrency } from "@/lib/formatters";
-import { paymentStatus } from "@/types/status";
 import TenantNotifications from "@/components/tenant/tenant-notifications";
 import { useSearchParams } from "next/navigation";
 import { useGetPaymentStatusByReference } from "@/mutations/payment";
+import { RentStatus } from "@/types/lease";
 
 // (duplicate imports removed)
 
@@ -215,11 +215,11 @@ const TenantHomepage = () => {
         </div>
         <div className="flex flex-col">
           <p className="text-muted-foreground mb-1 hidden text-xs font-medium uppercase md:block">
-            Property
+            House
           </p>
           <Card className="flex flex-col gap-4">
             <p className="text-muted-foreground mb-1 block text-xs font-medium uppercase md:hidden">
-              Property
+              House
             </p>
             <div className="flex flex-col gap-4">
               <div className="flex items-center justify-between gap-2">
@@ -284,7 +284,7 @@ const TenantHomepage = () => {
                         leaseData?.data?.propertyImage ||
                         "/images/full-house.png"
                       }
-                      alt="Property Image"
+                      alt="House Image"
                       width={5290}
                       height={5540}
                       className="h-full w-full object-cover"
@@ -303,7 +303,7 @@ const TenantHomepage = () => {
                   icon="material-symbols:supervised-user-circle-outline"
                   size="sm"
                 />
-                Property Manager
+                House Manager
                 <Icon icon="material-symbols:keyboard-arrow-right" size="sm" />
               </Button>
             </SheetTrigger>
@@ -323,7 +323,7 @@ const TenantHomepage = () => {
                     icon="material-symbols:supervised-user-circle-outline"
                     className="mr-2"
                   />
-                  Property Manager
+                  House Manager
                 </SheetTitle>
               </SheetHeader>
 
@@ -392,8 +392,8 @@ const TenantHomepage = () => {
               </p>
               <p
                 className={getPaymentStatus(
-                  (leaseData?.data?.currentLease
-                    ?.rentStatus as paymentStatus) || "paid",
+                  (leaseData?.data?.currentLease?.rentStatus as RentStatus) ||
+                    "paid",
                 )}
               >
                 {leaseData?.data?.currentLease?.rentStatus
@@ -487,7 +487,7 @@ const TenantHomepage = () => {
                 icon="material-symbols:supervised-user-circle-outline"
                 size="sm"
               />
-              Property Manager
+              House Manager
               <Icon icon="material-symbols:keyboard-arrow-right" size="sm" />
             </Button>
           </SheetTrigger>
@@ -504,7 +504,7 @@ const TenantHomepage = () => {
                   icon="material-symbols:supervised-user-circle-outline"
                   className="mr-2"
                 />
-                Property Manager
+                House Manager
               </SheetTitle>
             </SheetHeader>
 

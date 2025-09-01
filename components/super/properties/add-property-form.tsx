@@ -23,11 +23,11 @@ import { useCreatePropertyForAdmin } from "@/mutations/property";
 import { toast } from "sonner";
 
 const FormSchema = z.object({
-  propertyName: z.string().min(1, { message: "Property name is required" }),
-  propertyState: z.string().min(1, { message: "Property state is required" }),
-  propertyArea: z.string().min(1, { message: "Property area is required" }),
+  propertyName: z.string().min(1, { message: "House name is required" }),
+  propertyState: z.string().min(1, { message: "House state is required" }),
+  propertyArea: z.string().min(1, { message: "House area is required" }),
   propertyAddress: z.string().min(1, { message: "Address is required" }),
-  propertyImage: z.instanceof(File, { message: "Property image is required" }),
+  propertyImage: z.instanceof(File, { message: "House image is required" }),
   leaseYears: z.number().min(1, { message: "Lease duration is required" }),
   rentAmount: z.number().min(1, { message: "Rent amount is required" }),
 });
@@ -85,13 +85,13 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
 
     createProperty.mutate(propertyData, {
       onSuccess: () => {
-        toast.success("Property created successfully.");
+        toast.success("House created successfully.");
         form.reset();
         setImagePreview(null);
         setFileInputKey((prev) => prev + 1);
       },
       onError: (error) => {
-        toast.error("Failed to create property. Please try again.");
+        toast.error("Failed to create house. Please try again.");
         console.error("Error submitting property:", error);
       },
     });
@@ -137,12 +137,12 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel required className="text-sm">
-                Property name
+                House name
               </FormLabel>
               <FormControl>
                 <Input
                   className="py-2"
-                  placeholder="Enter property name"
+                  placeholder="Enter house name"
                   disabled={isFormDisabled}
                   {...field}
                 />
@@ -158,7 +158,7 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormLabel required className="text-sm">
-                  Property state
+                  House state
                 </FormLabel>
                 <FormControl>
                   <Dropdown
@@ -184,7 +184,7 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormLabel required className="text-sm">
-                  Property area
+                  House area
                 </FormLabel>
                 <FormControl>
                   <Dropdown
@@ -211,12 +211,12 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel required className="text-sm">
-                Property address
+                House address
               </FormLabel>
               <FormControl>
                 <Input
                   className="py-2"
-                  placeholder="Enter full address of the property"
+                  placeholder="Enter full address of the house"
                   disabled={isFormDisabled}
                   {...field}
                 />
@@ -231,7 +231,7 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel required className="text-sm">
-                Property image
+                House image
               </FormLabel>
               <FormControl>
                 <div className="bg-muted rounded-md border text-center">
@@ -278,7 +278,7 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
                         width={112}
                         height={80}
                         src={imagePreview}
-                        alt="Property preview"
+                        alt="House preview"
                         className="h-full w-full object-cover"
                       />
                     </div>
@@ -374,7 +374,7 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
 
         {createProperty.isError && (
           <p className="mt-2 text-sm text-red-600">
-            Failed to create property. Please try again.
+            Failed to create house. Please try again.
           </p>
         )}
 
@@ -384,10 +384,10 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
           disabled={!form.formState.isValid || isFormDisabled}
         >
           {createProperty.isPending
-            ? "Adding Property..."
+            ? "Adding House..."
             : imageUpload.isPending
               ? "Uploading Image..."
-              : "Add Property"}
+              : "Add House"}
         </Button>
       </form>
     </Form>

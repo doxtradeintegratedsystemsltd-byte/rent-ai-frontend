@@ -6,8 +6,8 @@ const page = () => {
       <div className="">
         <h2 className="text-lg font-bold">Rent Payments</h2>
         <p className="font-sm text-muted-foreground font-medium">
-          All payments recorded automatically & manually recorded on property’s
-          page
+          All payments recorded automatically &amp; manually recorded on
+          house&rsquo;s page
         </p>
       </div>
       <PaymentsTable />

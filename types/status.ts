@@ -1,1 +1,1 @@
-export type paymentStatus = "paid" | "nearDue" | "due" | "overdue";
+export type paymentStatus = "paid" | "nearDue" | "due" | "overdue" | "none";

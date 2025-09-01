@@ -29,6 +29,27 @@ export const useFetchAdmins = (params?: AdminsFetchParams) => {
         searchParams.append("search", params.search);
       }
 
+      // Handle sort and sortOrder parameters
+      if (params?.sort) {
+        let sortField = params.sort;
+        let sortOrder = params.sortOrder || "DESC"; // Default to DESC
+
+        // Special handling for newest/oldest - these should sort by createdAt
+        if (params.sort === "newest") {
+          sortField = "createdAt";
+          sortOrder = "DESC";
+        } else if (params.sort === "oldest") {
+          sortField = "createdAt";
+          sortOrder = "ASC";
+        } else if (params.sort === "name") {
+          sortField = "firstName";
+          sortOrder = "ASC";
+        }
+
+        searchParams.append("sort", sortField);
+        searchParams.append("sortOrder", sortOrder);
+      }
+
       const url = `/users/admins${
         searchParams.toString() ? `?${searchParams.toString()}` : ""
       }`;

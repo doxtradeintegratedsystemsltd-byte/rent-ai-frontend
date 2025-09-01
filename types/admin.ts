@@ -15,6 +15,8 @@ export interface AdminsFetchParams {
   page?: number;
   pageSize?: number;
   search?: string;
+  sort?: string;
+  sortOrder?: "ASC" | "DESC";
 }
 
 export interface AdminsListResponse {

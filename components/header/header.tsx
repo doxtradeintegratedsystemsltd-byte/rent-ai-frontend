@@ -194,7 +194,7 @@ export function Header() {
                   Notifications
                 </SheetTitle>
               </SheetHeader>
-              <div className="overflow-y-auto">
+              <div className="flex-1 overflow-y-auto pr-2">
                 <Notifications />
               </div>
             </SheetContent>

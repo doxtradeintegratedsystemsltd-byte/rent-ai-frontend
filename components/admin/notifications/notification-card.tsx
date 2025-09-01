@@ -50,7 +50,7 @@ const NotificationCard = ({
 
           <div className="flex items-center gap-2">
             <span className="text-secondary-foreground rounded-lg bg-[#d7d7d7] px-3 py-1 text-[10px] font-medium uppercase">
-              PROPERTY
+              HOUSE
             </span>
             <span className="text-foreground text-xs font-semibold">
               {property}

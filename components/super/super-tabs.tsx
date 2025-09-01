@@ -11,7 +11,7 @@ const SuperTabs = () => {
         <div className="mb-4 border-b-2">
           <TabsList className="w-[400px]">
             <TabsTrigger value="admins">Admins</TabsTrigger>
-            <TabsTrigger value="properties">Properties</TabsTrigger>
+            <TabsTrigger value="properties">Houses</TabsTrigger>
             <TabsTrigger value="tenants">Tenants</TabsTrigger>
           </TabsList>
         </div>

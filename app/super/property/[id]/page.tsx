@@ -5,7 +5,6 @@ import Card from "@/components/ui/card";
 import { GoBackButton } from "@/components/ui/go-back-button";
 import { Icon } from "@/components/ui/icon";
 import { getPaymentStatus } from "@/lib/status-util";
-import { paymentStatus } from "@/types/status";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import {
@@ -29,6 +28,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { toast } from "sonner";
 import { formatLongDate, formatCurrency } from "@/lib/formatters";
 import { useRemoveTenantFromProperty } from "@/mutations/tenant";
+import { RentStatus } from "@/types/lease";
 
 const PropertyPage = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -110,7 +110,7 @@ const PropertyPage = () => {
         },
         {
           label: "Status",
-          value: property.currentLease.rentStatus || "unknown",
+          value: property.currentLease.rentStatus,
         },
       ]
     : [
@@ -171,7 +171,7 @@ const PropertyPage = () => {
     return (
       <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
         <LoadingSpinner />
-        <p className="text-muted-foreground">Loading property details...</p>
+        <p className="text-muted-foreground">Loading house details...</p>
       </div>
     );
   }
@@ -186,7 +186,7 @@ const PropertyPage = () => {
           className="text-red-600"
         />
         <div className="text-center">
-          <h2 className="text-lg font-semibold">Error loading property</h2>
+          <h2 className="text-lg font-semibold">Error loading house</h2>
           <p className="text-muted-foreground">
             {error?.message || "Something went wrong. Please try again."}
           </p>
@@ -206,9 +206,9 @@ const PropertyPage = () => {
           className="text-muted-foreground"
         />
         <div className="text-center">
-          <h2 className="text-lg font-semibold">Property not found</h2>
+          <h2 className="text-lg font-semibold">House not found</h2>
           <p className="text-muted-foreground">
-            The property you&apos;re looking for doesn&apos;t exist or has been
+            The house you&apos;re looking for doesn&apos;t exist or has been
             removed.
           </p>
         </div>
@@ -522,7 +522,7 @@ const PropertyPage = () => {
                           className={cn(
                             "text-foreground text-sm font-medium",
                             item.label === "Status" &&
-                              getPaymentStatus(item.value as paymentStatus),
+                              getPaymentStatus(item.value as RentStatus),
                           )}
                         >
                           {item.value}
@@ -664,16 +664,16 @@ const PropertyPage = () => {
         onOpenChange={showDialog ? setShowDialog : setShowTenantDialog}
         title={
           showDialog
-            ? "Are you sure you want to remove this property?"
+            ? "Are you sure you want to remove this house?"
             : "Are you sure you want to remove this tenant?"
         }
         subtitle={
           showDialog
-            ? "Property and all assigned to it will be permanently removed. This action can not be undone"
-            : "Tenant will be removed from the Property and left unassigned. This action can not be undone"
+            ? "House and all assigned to it will be permanently removed. This action can not be undone"
+            : "Tenant will be removed from the House and left unassigned. This action can not be undone"
         }
         onConfirm={showDialog ? handleDeleteProperty : handleTenantRemoval}
-        confirmText={showDialog ? "Yes, Remove Property" : "Yes, Remove Tenant"}
+        confirmText={showDialog ? "Yes, Remove House" : "Yes, Remove Tenant"}
         cancelText="No, Go Back"
         confirmLoading={showDialog ? deleteProperty.isPending : false}
         confirmVariant="destructive"

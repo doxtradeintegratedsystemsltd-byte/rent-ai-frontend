@@ -42,7 +42,7 @@ const TenantNotifications = () => {
     }
   };
   const formatProperty = (p: NotificationProperty) =>
-    p ? `${p.propertyName}, ${p.propertyArea}, ${p.propertyState}` : "Property";
+    p ? `${p.propertyName}, ${p.propertyArea}, ${p.propertyState}` : "House";
 
   if (isLoading) {
     return (

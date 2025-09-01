@@ -25,8 +25,8 @@ import {
   TableSkeletonPresets,
 } from "@/components/ui/table-skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { RentStatus } from "@/types/lease";
 
 const filterItems = [
   { type: "label" as const, label: "Show" },
@@ -62,11 +62,11 @@ const locationItems = [
 ];
 
 const tableHead = [
-  { label: "Property" },
+  { label: "S/N" },
+  { label: "House" },
   { label: "Location" },
   { label: "Tenant" },
   { label: "Rent Status" },
-  { label: "", className: "text-right" },
 ];
 
 const PropertiesTable = () => {
@@ -158,23 +158,17 @@ const PropertiesTable = () => {
 
   const tableData = useMemo(() => {
     const properties: Property[] = data?.data?.data || [];
-    return properties.map((property) => ({
+    return properties.map((property, index) => ({
       id: property.id,
+      serialNumber: (currentPage - 1) * itemsPerPage + index + 1,
       property: property.propertyName,
       location: `${property.propertyArea}, ${property.propertyState}`,
       tenant: property.currentLease?.tenant?.firstName
         ? `${property.currentLease.tenant.firstName} ${property.currentLease.tenant.lastName || ""}`.trim()
-        : "No Tenant",
-      rentStatus:
-        property.currentLease?.rentStatus === "paid"
-          ? ("paid" as const)
-          : property.currentLease?.rentStatus === "overdue"
-            ? ("overdue" as const)
-            : property.currentLease?.rentStatus === "unpaid"
-              ? ("due" as const)
-              : ("due" as const),
+        : "-",
+      rentStatus: property.currentLease?.rentStatus as RentStatus,
     }));
-  }, [data]);
+  }, [data, currentPage, itemsPerPage]);
 
   const paginationInfo = useMemo(() => {
     return {
@@ -188,7 +182,7 @@ const PropertiesTable = () => {
   if (isError) {
     return (
       <div className="py-8 text-center text-red-600">
-        <p>Error loading properties: {error?.message || "Unknown error"}</p>
+        <p>Error loading houses: {error?.message || "Unknown error"}</p>
       </div>
     );
   }
@@ -216,7 +210,7 @@ const PropertiesTable = () => {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <p className="text-muted-foreground uppercase">Properties</p>
+          <p className="text-muted-foreground uppercase">Houses</p>
           <Dropdown
             trigger={{
               label: getFilterLabel(filterItems, selectedFilter),
@@ -285,21 +279,26 @@ const PropertiesTable = () => {
           <TableHeader>
             <TableRow>
               {tableHead.map((head, index) => (
-                <TableHead key={index} className={head.className}>
-                  {head.label}
-                </TableHead>
+                <TableHead key={index}>{head.label}</TableHead>
               ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {tableData && tableData.length > 0 ? (
               tableData.map((row) => (
-                <TableRow key={row.id}>
+                <TableRow
+                  key={row.id}
+                  className="hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => router.push(`/admin/property/${row.id}`)}
+                >
+                  <TableCell className="text-muted-foreground">
+                    {row.serialNumber}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar
                         src="/images/property-avatar.png"
-                        alt="Property Avatar"
+                        alt="House Avatar"
                         size="sm"
                       />
                       {row.property}
@@ -312,22 +311,13 @@ const PropertiesTable = () => {
                       {row.rentStatus}
                     </p>
                   </TableCell>
-                  <TableCell className="text-muted-foreground w-6 text-right">
-                    <Link href={`/admin/property/${row.id}`}>
-                      <Button variant="ghost" size="icon" asChild>
-                        <span>
-                          <Icon icon="material-symbols:keyboard-arrow-right" />
-                        </span>
-                      </Button>
-                    </Link>
-                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableNoData className="flex flex-col" colSpan={tableHead.length}>
-                <p>No property added.</p>
+                <p>No house added.</p>
                 <p>
-                  Click <span className="font-bold">“Add Property”</span> to get
+                  Click <span className="font-bold">“Add House”</span> to get
                   started.
                 </p>
               </TableNoData>

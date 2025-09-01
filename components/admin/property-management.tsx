@@ -17,7 +17,7 @@ const PropertyManagement = ({ dueRentsCount }: { dueRentsCount: number }) => {
     <div className="flex items-center justify-between rounded-md bg-gradient-to-r from-[#1E1E1E] to-[#4B4B4B] p-6">
       <div className="flex w-full items-center gap-4">
         <p className="text-background w-full text-lg font-bold">
-          Property Management
+          House Management
         </p>
         <div className="border-x-accent-foreground flex w-full flex-col items-center gap-2 border-x-2 p-4">
           <p className="text-accent text-sm font-medium uppercase">DUE RENTS</p>
@@ -45,7 +45,7 @@ const PropertyManagement = ({ dueRentsCount }: { dueRentsCount: number }) => {
                   className="mr-2"
                   size="lg"
                 />
-                Add Property
+                Add House
               </Button>
             </SheetTrigger>
             <SheetContent
@@ -65,7 +65,7 @@ const PropertyManagement = ({ dueRentsCount }: { dueRentsCount: number }) => {
                     className="mr-2"
                     size="lg"
                   />
-                  Add Property
+                  Add House
                 </SheetTitle>
               </SheetHeader>
               <div className="flex-1 overflow-y-auto pr-2">

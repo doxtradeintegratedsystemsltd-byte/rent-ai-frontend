@@ -27,7 +27,8 @@ import {
 } from "@/components/ui/table-skeleton";
 
 const tableHead = [
-  { label: "Property" },
+  { label: "S/N" },
+  { label: "House" },
   { label: "Tenant" },
   { label: "Amount" },
   { label: "Date" },
@@ -96,14 +97,15 @@ const PaymentsTable = () => {
 
   const tableData = useMemo(() => {
     const payments: Payment[] = data?.data?.data || [];
-    return payments.map((payment) => ({
+    return payments.map((payment, index) => ({
       ...payment,
+      serialNumber: (currentPage - 1) * itemsPerPage + index + 1,
       propertyName: payment.lease.property.propertyName,
       tenantName: `${payment.lease.tenant.firstName} ${payment.lease.tenant.lastName}`,
       formattedAmount: formatCurrency(payment.amount),
       formattedDate: formatDate(payment.paymentDate),
     }));
-  }, [data]);
+  }, [data, currentPage, itemsPerPage]);
 
   const paginationInfo = useMemo(() => {
     return {
@@ -152,7 +154,7 @@ const PaymentsTable = () => {
       <div className="flex items-center justify-between">
         <div className="flex gap-2">
           <SearchInput
-            placeholder="Search property, tenant, amount, or date"
+            placeholder="Search house, tenant, amount, or date"
             className="bg-background"
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
@@ -187,68 +189,65 @@ const PaymentsTable = () => {
           rows={10}
           showFilters={false}
           showPagination={false}
-          tableHeight="h-[585px]"
         />
       ) : (
-        <div className="h-[585px] overflow-hidden rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                {tableHead.map((head, index) => (
-                  <TableHead key={index} className={head.className}>
-                    {head.label}
-                  </TableHead>
-                ))}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tableData && tableData.length > 0 ? (
-                tableData.map((payment) => (
-                  <TableRow key={payment.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Avatar
-                          src={
-                            payment.lease.property.propertyImage ||
-                            "/images/property-avatar.png"
-                          }
-                          alt="Property Avatar"
-                          size="sm"
-                        />
-                        {payment.propertyName}
-                      </div>
-                    </TableCell>
-                    <TableCell>{payment.tenantName}</TableCell>
-                    <TableCell>{payment.formattedAmount}</TableCell>
-                    <TableCell>{payment.formattedDate}</TableCell>
-                    <TableCell className="w-6 text-right">
-                      <Button
-                        variant="outline"
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {tableHead.map((head, index) => (
+                <TableHead key={index} className={head.className}>
+                  {head.label}
+                </TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {tableData && tableData.length > 0 ? (
+              tableData.map((payment) => (
+                <TableRow key={payment.id}>
+                  <TableCell className="text-muted-foreground">
+                    {payment.serialNumber}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Avatar
+                        src={
+                          payment.lease.property.propertyImage ||
+                          "/images/property-avatar.png"
+                        }
+                        alt="House Avatar"
                         size="sm"
-                        onClick={() => handlePrintReceipt(payment)}
-                        className="uppercase"
-                      >
-                        <Icon icon="material-symbols:print" />
-                        Receipt
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : (
-                <TableNoData
-                  className="flex flex-col"
-                  colSpan={tableHead.length}
-                >
-                  <p>
-                    No rent payment history yet. Payment will be recorded
-                    automatically when tenant pays or you manually record a
-                    payment on a property’s page.
-                  </p>
-                </TableNoData>
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                      />
+                      {payment.propertyName}
+                    </div>
+                  </TableCell>
+                  <TableCell>{payment.tenantName}</TableCell>
+                  <TableCell>{payment.formattedAmount}</TableCell>
+                  <TableCell>{payment.formattedDate}</TableCell>
+                  <TableCell className="w-6 text-right">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handlePrintReceipt(payment)}
+                      className="uppercase"
+                    >
+                      <Icon icon="material-symbols:print" />
+                      Receipt
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableNoData className="flex flex-col" colSpan={tableHead.length}>
+                <p>
+                  No rent payment history yet. Payment will be recorded
+                  automatically when tenant pays or you manually record a
+                  payment on a property’s page.
+                </p>
+              </TableNoData>
+            )}
+          </TableBody>
+        </Table>
       )}
 
       {paginationInfo.totalItems > 0 && (

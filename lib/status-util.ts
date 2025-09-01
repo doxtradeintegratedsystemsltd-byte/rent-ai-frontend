@@ -1,16 +1,18 @@
+import { RentStatus } from "@/types/lease";
 import { Property } from "@/types/property";
-import { paymentStatus } from "@/types/status";
 
-export function getPaymentStatus(status: paymentStatus) {
+export function getPaymentStatus(status: RentStatus | "none") {
   const baseClasses =
     "border uppercase font-medium text-[10px] px-2 py-0.5 rounded-xl w-20 text-center";
 
   const statusClasses = {
-    paid: "bg-paid-bg text-paid-text border-paid-border",
-    nearDue: "bg-neardue-bg text-neardue-text border-neardue-border",
-    due: "bg-due-bg text-due-text border-due-border",
-    overdue: "bg-overdue-bg text-overdue-text border-overdue-border",
-    overDue: "bg-overdue-bg text-overdue-text border-overdue-border",
+    [RentStatus.Paid]: "bg-paid-bg text-paid-text border-paid-border",
+    [RentStatus.NearDue]:
+      "bg-neardue-bg text-neardue-text border-neardue-border",
+    [RentStatus.Due]: "bg-due-bg text-due-text border-due-border",
+    [RentStatus.OverDue]:
+      "bg-overdue-bg text-overdue-text border-overdue-border",
+    none: "bg-gray-200 text-gray-800 border-gray-300",
   };
 
   return `${statusClasses[status]} ${baseClasses}`;

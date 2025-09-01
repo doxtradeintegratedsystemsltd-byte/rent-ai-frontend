@@ -54,6 +54,14 @@ export const useFetchTenants = (params?: TenantFetchParams) => {
         searchParams.append("adminId", params.adminId);
       }
 
+      // Handle sort and sortOrder parameters
+      if (params?.sort) {
+        const sortOrder = params.sortOrder || "ASC"; // Default to ASC
+
+        searchParams.append("sort", params.sort);
+        searchParams.append("sortOrder", sortOrder);
+      }
+
       const url = `/tenants${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
       const response = await api.get(url);
       return response.data;

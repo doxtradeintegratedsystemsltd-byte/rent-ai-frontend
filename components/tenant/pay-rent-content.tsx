@@ -130,7 +130,7 @@ const PayRentContent = ({
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
                 <p className="text-muted-foreground text-xs font-medium uppercase">
-                  Property
+                  House
                 </p>
                 <p className="text-sm font-medium">
                   {leaseData?.propertyName || "N/A"},{" "}
@@ -214,7 +214,7 @@ const PayRentContent = ({
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
                 <p className="text-muted-foreground text-xs font-medium uppercase">
-                  Property
+                  House
                 </p>
                 <p className="text-sm font-medium">
                   {leaseData?.propertyName || "N/A"},{" "}

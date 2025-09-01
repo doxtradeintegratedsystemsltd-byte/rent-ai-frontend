@@ -27,7 +27,6 @@ import { Button } from "../../ui/button";
 import { Icon } from "@/components/ui/icon";
 import { getFilterLabel, getLocationLabel } from "@/lib/table-utils";
 import AddPropertyForm from "../properties/add-property-form";
-import Link from "next/link";
 import { useFetchProperties } from "@/mutations/property";
 import type { Property } from "@/types/property";
 import { useDebounce } from "@/hooks/useDebounce";
@@ -71,11 +70,11 @@ const locationItems = [
 ];
 
 const tableHead = [
-  { label: "Property" },
+  { label: "S/N" },
+  { label: "House" },
   { label: "Location" },
   { label: "Tenant" },
   { label: "Rent Status" },
-  { label: "", className: "text-right" },
 ];
 
 const AdminPropertiesTable = () => {
@@ -167,26 +166,22 @@ const AdminPropertiesTable = () => {
     location: selectedLocation !== "all" ? selectedLocation : undefined,
     adminId: adminId, // Always include adminId to filter by this admin
   });
+  console.log(data);
 
   const tableData = useMemo(() => {
     const properties: Property[] = data?.data?.data || [];
-    return properties.map((property) => ({
+    return properties.map((property, index) => ({
       id: property.id,
+      serialNumber: (currentPage - 1) * itemsPerPage + index + 1,
       property: property.propertyName,
+      propertyImage: property.propertyImage,
       location: `${property.propertyArea}, ${property.propertyState}`,
       tenant: property.currentLease?.tenant?.firstName
         ? `${property.currentLease.tenant.firstName} ${property.currentLease.tenant.lastName || ""}`.trim()
-        : "No Tenant",
-      rentStatus:
-        property.currentLease?.rentStatus === "paid"
-          ? ("paid" as const)
-          : property.currentLease?.rentStatus === "overdue"
-            ? ("overdue" as const)
-            : property.currentLease?.rentStatus === "unpaid"
-              ? ("due" as const)
-              : ("due" as const),
+        : " - ",
+      rentStatus: property.currentLease?.rentStatus || ("none" as const),
     }));
-  }, [data]);
+  }, [data, currentPage, itemsPerPage]);
 
   const paginationInfo = useMemo(() => {
     return {
@@ -200,7 +195,7 @@ const AdminPropertiesTable = () => {
   if (isError) {
     return (
       <div className="py-8 text-center text-red-600">
-        <p>Error loading properties: {error?.message || "Unknown error"}</p>
+        <p>Error loading houses: {error?.message || "Unknown error"}</p>
       </div>
     );
   }
@@ -223,7 +218,7 @@ const AdminPropertiesTable = () => {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <p className="text-muted-foreground text-sm uppercase">Properties</p>
+          <p className="text-muted-foreground text-sm uppercase">Houses</p>
           <Sheet>
             <SheetTrigger asChild>
               <Button size="sm" className="uppercase">
@@ -232,7 +227,7 @@ const AdminPropertiesTable = () => {
                   className="mr-2"
                   size="sm"
                 />
-                Add Property
+                Add House
               </Button>
             </SheetTrigger>
             <SheetContent
@@ -252,10 +247,12 @@ const AdminPropertiesTable = () => {
                     className="mr-2"
                     size="lg"
                   />
-                  Add Property
+                  Add House
                 </SheetTitle>
               </SheetHeader>
-              <AddPropertyForm adminId={adminId} />
+              <div className="flex-1 overflow-y-auto pr-2">
+                <AddPropertyForm adminId={adminId} />
+              </div>
             </SheetContent>
           </Sheet>
         </div>
@@ -315,71 +312,65 @@ const AdminPropertiesTable = () => {
           </Button>
         </div>
       )}
-      <Table>
-        <TableHeader>
-          <TableRow className="bg-border">
-            {tableHead.map((head, index) => (
-              <TableHead key={index} className={head.className}>
-                {head.label}
-              </TableHead>
-            ))}
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {isLoading ? (
-            <TableSkeleton
-              {...TableSkeletonPresets.properties}
-              rows={10}
-              showFilters={false}
-              showPagination={false}
-              tableHeight="h-full"
-            />
-          ) : tableData && tableData.length > 0 ? (
-            tableData.map((row) => (
-              <TableRow key={row.id} className="bg-background">
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    <Avatar
-                      src="/images/property-avatar.png"
-                      alt="Property Avatar"
-                      size="sm"
-                    />
-                    {row.property}
-                  </div>
-                </TableCell>
-                <TableCell>{row.location}</TableCell>
-                <TableCell>{row.tenant}</TableCell>
-                <TableCell>
-                  <p className={getPaymentStatus(row.rentStatus)}>
-                    {row.rentStatus === "paid"
-                      ? "Paid"
-                      : row.rentStatus === "overdue"
-                        ? "Overdue"
-                        : "Due"}
-                  </p>
-                </TableCell>
-                <TableCell className="text-muted-foreground w-6 text-right">
-                  <Link href={`/super/property/${row.id}`}>
-                    <Button variant="ghost" size="icon" asChild>
-                      <span>
-                        <Icon icon="material-symbols:keyboard-arrow-right" />
-                      </span>
-                    </Button>
-                  </Link>
-                </TableCell>
-              </TableRow>
-            ))
-          ) : (
-            <TableNoData className="flex flex-col" colSpan={tableHead.length}>
-              <p>No property added.</p>
-              <p>
-                Click <span className="font-bold">“Add Property”</span> to get
-                started.
-              </p>
-            </TableNoData>
-          )}
-        </TableBody>
-      </Table>
+      {isLoading ? (
+        <TableSkeleton
+          {...TableSkeletonPresets.properties}
+          rows={10}
+          showFilters={false}
+          showPagination={false}
+          tableHeight="h-full"
+        />
+      ) : (
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-border">
+              {tableHead.map((head, index) => (
+                <TableHead key={index}>{head.label}</TableHead>
+              ))}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {tableData && tableData.length > 0 ? (
+              tableData.map((row) => (
+                <TableRow
+                  key={row.id}
+                  className="bg-background hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => router.push(`/super/property/${row.id}`)}
+                >
+                  <TableCell className="text-muted-foreground">
+                    {row.serialNumber}
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <Avatar
+                        src={row.propertyImage || undefined}
+                        alt="House Avatar"
+                        size="sm"
+                      />
+                      {row.property}
+                    </div>
+                  </TableCell>
+                  <TableCell>{row.location}</TableCell>
+                  <TableCell>{row.tenant}</TableCell>
+                  <TableCell>
+                    <p className={getPaymentStatus(row.rentStatus)}>
+                      {row.rentStatus}
+                    </p>
+                  </TableCell>
+                </TableRow>
+              ))
+            ) : (
+              <TableNoData className="flex flex-col" colSpan={tableHead.length}>
+                <p>No house added.</p>
+                <p>
+                  Click <span className="font-bold">“Add House”</span> to get
+                  started.
+                </p>
+              </TableNoData>
+            )}
+          </TableBody>
+        </Table>
+      )}
 
       {paginationInfo.totalItems > 0 && !isLoading && (
         <Pagination

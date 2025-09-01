@@ -24,9 +24,9 @@ import { toast } from "sonner";
 import { Property } from "@/types/property";
 
 const FormSchema = z.object({
-  propertyName: z.string().min(1, { message: "Property name is required" }),
-  propertyState: z.string().min(1, { message: "Property state is required" }),
-  propertyArea: z.string().min(1, { message: "Property area is required" }),
+  propertyName: z.string().min(1, { message: "House name is required" }),
+  propertyState: z.string().min(1, { message: "House state is required" }),
+  propertyArea: z.string().min(1, { message: "House area is required" }),
   propertyAddress: z.string().min(1, { message: "Address is required" }),
   propertyImage: z.union([
     z.instanceof(File),
@@ -116,11 +116,11 @@ const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
         propertyData: submissionData,
       });
 
-      toast.success("Property updated successfully!");
+      toast.success("House updated successfully!");
       onSuccess?.();
     } catch (error) {
-      console.error("Error updating property:", error);
-      toast.error("Failed to update property. Please try again.");
+      console.error("Error updating house:", error);
+      toast.error("Failed to update house. Please try again.");
     }
   };
 
@@ -157,12 +157,12 @@ const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel required className="text-sm">
-                Property name
+                House name
               </FormLabel>
               <FormControl>
                 <Input
                   className="py-2"
-                  placeholder="Enter property name"
+                  placeholder="Enter house name"
                   {...field}
                 />
               </FormControl>
@@ -177,7 +177,7 @@ const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormLabel required className="text-sm">
-                  Property state
+                  House state
                 </FormLabel>
                 <FormControl>
                   <Dropdown
@@ -201,7 +201,7 @@ const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
             render={({ field }) => (
               <FormItem className="w-full">
                 <FormLabel required className="text-sm">
-                  Property area
+                  House area
                 </FormLabel>
                 <FormControl>
                   <Dropdown
@@ -226,12 +226,12 @@ const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel required className="text-sm">
-                Property address
+                House address
               </FormLabel>
               <FormControl>
                 <Input
                   className="py-2"
-                  placeholder="Enter full address of the property"
+                  placeholder="Enter full address of the house"
                   {...field}
                 />
               </FormControl>
@@ -291,7 +291,7 @@ const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
           render={({ field }) => (
             <FormItem>
               <FormLabel required className="text-sm">
-                Property image
+                House image
               </FormLabel>
               <FormControl>
                 <div className="bg-muted rounded-md border text-center">
@@ -334,7 +334,7 @@ const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
                         width={112}
                         height={80}
                         src={imagePreview}
-                        alt="Property preview"
+                        alt="House preview"
                         className="h-full w-full object-cover"
                       />
                     </div>
@@ -373,7 +373,7 @@ const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
               {imageUpload.isPending ? "Uploading..." : "Updating..."}
             </>
           ) : (
-            "Update Property"
+            "Update House"
           )}
         </Button>
       </form>

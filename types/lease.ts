@@ -2,6 +2,13 @@ import { Tenant } from "./tenant";
 import { Property } from "./property";
 import { User } from "./user";
 
+export enum RentStatus {
+  Paid = "paid",
+  OverDue = "overDue",
+  NearDue = "nearDue",
+  Due = "due",
+}
+
 export interface Lease {
   id: string;
   tenantId: string;
@@ -12,7 +19,7 @@ export interface Lease {
   leaseYears: number;
   leaseCycles: number;
   rentAmount: number;
-  rentStatus: "paid" | "unpaid" | "overdue" | "overDue";
+  rentStatus: RentStatus; // include "overDue" variant and "none"
   createdById: string;
   paymentId: string;
   nextLeaseId: string | null;

@@ -16,7 +16,6 @@ import Card from "@/components/ui/card";
 import { GoBackButton } from "@/components/ui/go-back-button";
 import { Icon } from "@/components/ui/icon";
 import { getPaymentStatus } from "@/lib/status-util";
-import { paymentStatus } from "@/types/status";
 import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -27,6 +26,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { formatLongDate, formatCurrency, formatAmount } from "@/lib/formatters";
 import { useCreateNotification } from "@/mutations/notification";
 import { toast } from "sonner";
+import { RentStatus } from "@/types/lease";
 
 const FormSchema = z.object({
   messageTitle: z.string().min(1, { message: "Message title is required" }),
@@ -92,7 +92,7 @@ const NotificationPage = () => {
         },
         {
           label: "Status",
-          value: property.currentLease.rentStatus || "unknown",
+          value: property.currentLease.rentStatus,
         },
       ]
     : [
@@ -111,7 +111,7 @@ const NotificationPage = () => {
       ];
 
   useBreadcrumb([
-    { name: "Properties", href: "/admin" },
+    { name: "Houses", href: "/admin" },
     {
       name: property?.propertyName || "Property",
       href: `/admin/property/${propertyId}`,
@@ -165,7 +165,7 @@ const NotificationPage = () => {
     return (
       <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
         <LoadingSpinner />
-        <p className="text-muted-foreground">Loading property details...</p>
+        <p className="text-muted-foreground">Loading house details...</p>
       </div>
     );
   }
@@ -180,7 +180,7 @@ const NotificationPage = () => {
           className="text-red-600"
         />
         <div className="text-center">
-          <h2 className="text-lg font-semibold">Error loading property</h2>
+          <h2 className="text-lg font-semibold">Error loading house</h2>
           <p className="text-muted-foreground">
             {error?.message || "Something went wrong. Please try again."}
           </p>
@@ -200,9 +200,9 @@ const NotificationPage = () => {
           className="text-muted-foreground"
         />
         <div className="text-center">
-          <h2 className="text-lg font-semibold">Property not found</h2>
+          <h2 className="text-lg font-semibold">House not found</h2>
           <p className="text-muted-foreground">
-            The property you&apos;re looking for doesn&apos;t exist or has been
+            The house you&apos;re looking for doesn&apos;t exist or has been
             removed.
           </p>
         </div>
@@ -223,8 +223,8 @@ const NotificationPage = () => {
         <div className="text-center">
           <h2 className="text-lg font-semibold">No tenant assigned</h2>
           <p className="text-muted-foreground">
-            This property doesn&apos;t have a tenant assigned. You can only send
-            notifications to properties with active tenants.
+            This house doesn&apos;t have a tenant assigned. You can only send
+            notifications to houses with active tenants.
           </p>
         </div>
         <Button onClick={() => router.back()}>Go Back</Button>
@@ -382,7 +382,7 @@ const NotificationPage = () => {
                         className={cn(
                           "text-foreground text-sm font-medium",
                           item.label === "Status" &&
-                            getPaymentStatus(item.value as paymentStatus),
+                            getPaymentStatus(item.value as RentStatus),
                         )}
                       >
                         {item.value}

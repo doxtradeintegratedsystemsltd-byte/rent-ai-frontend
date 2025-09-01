@@ -5,7 +5,6 @@ import Card from "@/components/ui/card";
 import { GoBackButton } from "@/components/ui/go-back-button";
 import { Icon } from "@/components/ui/icon";
 import { getPaymentStatus } from "@/lib/status-util";
-import { paymentStatus } from "@/types/status";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import {
@@ -29,6 +28,7 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { toast } from "sonner";
 import { formatCurrency, formatLongDate } from "@/lib/formatters";
 import { useRemoveTenantFromProperty } from "@/mutations/tenant";
+import { RentStatus } from "@/types/lease";
 
 const PropertyPage = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -110,7 +110,7 @@ const PropertyPage = () => {
         },
         {
           label: "Status",
-          value: property.currentLease.rentStatus || "unknown",
+          value: property.currentLease.rentStatus || ("none" as const),
         },
       ]
     : [
@@ -130,7 +130,7 @@ const PropertyPage = () => {
 
   useBreadcrumb([
     { name: "Dashboard", href: "/admin" },
-    { name: property?.propertyName || "Property", href: "#" },
+    { name: property?.propertyName || "House", href: "#" },
   ]);
 
   const tenant = !!property?.currentLease?.tenant;
@@ -138,7 +138,7 @@ const PropertyPage = () => {
   const handleDeleteProperty = async () => {
     try {
       await deleteProperty.mutateAsync(propertyId);
-      toast.success("Property deleted successfully!");
+      toast.success("House deleted successfully!");
 
       // Close the dialog
       setShowDialog(false);
@@ -171,7 +171,7 @@ const PropertyPage = () => {
     return (
       <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
         <LoadingSpinner />
-        <p className="text-muted-foreground">Loading property details...</p>
+        <p className="text-muted-foreground">Loading house details...</p>
       </div>
     );
   }
@@ -368,7 +368,7 @@ const PropertyPage = () => {
                         className="mr-2"
                         size="lg"
                       />
-                      Edit Property
+                      Edit House
                     </SheetTitle>
                   </SheetHeader>
                   <div className="flex-1 overflow-y-auto pr-2">
@@ -401,7 +401,7 @@ const PropertyPage = () => {
                       icon="material-symbols:bookmark-remove-outline-rounded"
                       className="mr-2"
                     />
-                    Remove Property
+                    Remove House
                   </>
                 )}
               </Button>
@@ -522,7 +522,7 @@ const PropertyPage = () => {
                           className={cn(
                             "text-foreground text-sm font-medium",
                             item.label === "Status" &&
-                              getPaymentStatus(item.value as paymentStatus),
+                              getPaymentStatus(item.value as RentStatus),
                           )}
                         >
                           {item.value}
@@ -664,16 +664,16 @@ const PropertyPage = () => {
         onOpenChange={showDialog ? setShowDialog : setShowTenantDialog}
         title={
           showDialog
-            ? "Are you sure you want to remove this property?"
+            ? "Are you sure you want to remove this house?"
             : "Are you sure you want to remove this tenant?"
         }
         subtitle={
           showDialog
-            ? "Property and all assigned to it will be permanently removed. This action can not be undone"
-            : "Tenant will be removed from the Property and left unassigned. This action can not be undone"
+            ? "House and all assigned to it will be permanently removed. This action can not be undone"
+            : "Tenant will be removed from the House and left unassigned. This action can not be undone"
         }
         onConfirm={showDialog ? handleDeleteProperty : handleTenantRemoval}
-        confirmText={showDialog ? "Yes, Remove Property" : "Yes, Remove Tenant"}
+        confirmText={showDialog ? "Yes, Remove House" : "Yes, Remove Tenant"}
         cancelText="No, Go Back"
         confirmLoading={showDialog ? deleteProperty.isPending : false}
         confirmVariant="destructive"

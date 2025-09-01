@@ -89,7 +89,7 @@ const SuperDashboardStats = () => {
           ),
         },
         {
-          title: "Properties",
+          title: "Houses",
           value: statsResponse.data.properties.all,
           subtitle: calculatePercentageChange(
             statsResponse.data.properties.current,
@@ -121,7 +121,7 @@ const SuperDashboardStats = () => {
           subtitle: "-",
         },
         {
-          title: "Properties",
+          title: "Houses",
           value: 0,
           subtitle: "-",
         },

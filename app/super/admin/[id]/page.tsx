@@ -129,7 +129,7 @@ const AdminPage = () => {
   const statsData = analytics
     ? [
         {
-          title: "Properties",
+          title: "Houses",
           value: analytics.properties.all,
           subtitle: calculatePercentageChange(
             analytics.properties.current,
@@ -156,7 +156,7 @@ const AdminPage = () => {
       ]
     : [
         {
-          title: "Properties",
+          title: "Houses",
           value: 0,
           subtitle: "-",
         },
@@ -323,7 +323,7 @@ const AdminPage = () => {
         open={open}
         onOpenChange={handleOpenChange}
         title="Are you sure you want to remove this admin?"
-        subtitle="Admin and all properties related will be removed. This action can not be undone"
+        subtitle="Admin and all houses related will be removed. This action can not be undone"
         onConfirm={handleConfirm}
         confirmText={
           deleteAdminMutation.isPending ? "Deleting..." : "Yes, Remove Admin"

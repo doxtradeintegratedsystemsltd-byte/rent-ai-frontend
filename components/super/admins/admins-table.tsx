@@ -16,7 +16,6 @@ import Pagination from "../../ui/pagination";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "../../ui/button";
 import { Icon } from "@/components/ui/icon";
-import Link from "next/link";
 import { getSortLabel } from "@/lib/table-utils";
 import { useFetchAdmins } from "@/mutations/admin";
 import type { Admin } from "@/types/admin";
@@ -42,15 +41,15 @@ const arrangeByOptions = [
     label: "Name",
     value: "name",
   },
-  { label: "Rents Processed", value: "rentsProcessed" },
+  { label: "Rents Processed", value: "rentProcessed" },
 ];
 
 const tableHead = [
+  { label: "S/N" },
   { label: "Admin" },
-  { label: "Properties" },
+  { label: "Houses" },
   { label: "Tenants" },
   { label: "Rent Processed" },
-  { label: "", className: "text-right" },
 ];
 
 const AdminsTable = () => {
@@ -120,12 +119,14 @@ const AdminsTable = () => {
     page: currentPage - 1,
     pageSize: itemsPerPage,
     search: debouncedSearchTerm || undefined,
+    sort: selectedSort,
   });
 
   const tableData = useMemo(() => {
     const admins: Admin[] = data?.data?.data || [];
-    return admins.map((admin) => ({
+    return admins.map((admin, index) => ({
       id: admin.id,
+      serialNumber: (currentPage - 1) * itemsPerPage + index + 1,
       name: `${admin.firstName} ${admin.lastName}`.trim(),
       email: admin.email,
       photoUrl: admin.photoUrl,
@@ -134,7 +135,7 @@ const AdminsTable = () => {
       rentsProcessed: formatCurrency(admin.rentProcessed),
       createdAt: admin.createdAt,
     }));
-  }, [data]);
+  }, [data, currentPage, itemsPerPage]);
 
   const paginationInfo = useMemo(() => {
     return {
@@ -230,16 +231,21 @@ const AdminsTable = () => {
           <TableHeader>
             <TableRow className="bg-border hover:bg-border">
               {tableHead.map((head, index) => (
-                <TableHead key={index} className={head.className}>
-                  {head.label}
-                </TableHead>
+                <TableHead key={index}>{head.label}</TableHead>
               ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {tableData && tableData.length > 0 ? (
               tableData.map((row) => (
-                <TableRow key={row.id} className="bg-background">
+                <TableRow
+                  key={row.id}
+                  className="bg-background hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => router.push(`/super/admin/${row.id}`)}
+                >
+                  <TableCell className="text-muted-foreground">
+                    {row.serialNumber}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar
@@ -253,20 +259,11 @@ const AdminsTable = () => {
                   <TableCell>{row.properties}</TableCell>
                   <TableCell>{row.tenants}</TableCell>
                   <TableCell>{row.rentsProcessed}</TableCell>
-                  <TableCell className="text-muted-foreground w-6 text-right">
-                    <Link href={`/super/admin/${row.id}`}>
-                      <Button variant="ghost" size="icon" asChild>
-                        <span>
-                          <Icon icon="material-symbols:keyboard-arrow-right" />
-                        </span>
-                      </Button>
-                    </Link>
-                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableNoData className="flex flex-col" colSpan={tableHead.length}>
-                <p>No property managers added.</p>
+                <p>No house managers added.</p>
                 <p>
                   Click <span className="font-bold">“Add Admin</span> to get
                   started.

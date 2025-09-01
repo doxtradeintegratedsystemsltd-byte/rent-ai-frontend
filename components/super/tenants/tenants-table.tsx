@@ -25,7 +25,6 @@ import {
   TableSkeletonPresets,
 } from "@/components/ui/table-skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
-import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 
 const filterItems = [
@@ -35,11 +34,11 @@ const filterItems = [
     value: "all",
   },
   {
-    label: "With Property",
+    label: "With House",
     value: "with-property",
   },
   {
-    label: "Without Property",
+    label: "Without House",
     value: "without-property",
   },
   {
@@ -56,10 +55,10 @@ const sortItems = [
   { type: "label" as const, label: "Sort By" },
   {
     label: "Tenant Name",
-    value: "tenant",
+    value: "name",
   },
   {
-    label: "Property",
+    label: "House",
     value: "property",
   },
   {
@@ -72,17 +71,17 @@ const sortItems = [
   },
   {
     label: "Rent Status",
-    value: "rentStatus",
+    value: "rent-status",
   },
 ];
 
 const tableHead = [
+  { label: "S/N" },
   { label: "Tenant" },
-  { label: "Property" },
+  { label: "House" },
   { label: "Location" },
   { label: "Admin" },
   { label: "Rent Status" },
-  { label: "", className: "text-right" },
 ];
 
 const TenantsTable = () => {
@@ -104,7 +103,7 @@ const TenantsTable = () => {
   });
 
   const [selectedSort, setSelectedSort] = useState(() => {
-    return searchParams.get("sort") || "tenant";
+    return searchParams.get("sort") || "name";
   });
 
   const itemsPerPage = 20;
@@ -140,7 +139,7 @@ const TenantsTable = () => {
         current.delete("status");
       }
 
-      if (params.sort && params.sort !== "tenant") {
+      if (params.sort && params.sort !== "name") {
         current.set("sort", params.sort);
       } else {
         current.delete("sort");
@@ -169,47 +168,26 @@ const TenantsTable = () => {
     pageSize: itemsPerPage,
     search: debouncedSearchTerm || undefined,
     status: selectedFilter !== "all" ? selectedFilter : undefined,
+    sort: selectedSort,
   });
 
   const tableData = useMemo(() => {
     const tenants: Tenant[] = data?.data?.data || [];
-    const mappedData = tenants.map((tenant) => ({
+    return tenants.map((tenant, index) => ({
       id: tenant.id,
+      serialNumber: (currentPage - 1) * itemsPerPage + index + 1,
       propertyId: tenant.currentLease?.property?.id || null,
       tenant: `${tenant.firstName} ${tenant.lastName}`,
-      property: tenant.currentLease?.property?.propertyName || "No Property",
+      property: tenant.currentLease?.property?.propertyName || "No House",
       location: tenant.currentLease?.property
         ? `${tenant.currentLease.property.propertyArea}, ${tenant.currentLease.property.propertyState}`
         : "N/A",
       admin: tenant.createdBy?.firstName
         ? `${tenant.createdBy.firstName} ${tenant.createdBy.lastName || ""}`.trim()
         : "Unknown Admin",
-      rentStatus:
-        tenant.currentLease?.rentStatus === "paid"
-          ? ("paid" as const)
-          : tenant.currentLease?.rentStatus === "overdue" ||
-              tenant.currentLease?.rentStatus === "overDue"
-            ? ("overdue" as const)
-            : tenant.currentLease?.rentStatus === "unpaid"
-              ? ("due" as const)
-              : ("due" as const),
+      rentStatus: tenant.currentLease?.rentStatus || ("none" as const),
     }));
-
-    // Apply client-side sorting
-    if (selectedSort && selectedSort !== "tenant") {
-      mappedData.sort((a, b) => {
-        const aValue = a[selectedSort as keyof typeof a];
-        const bValue = b[selectedSort as keyof typeof b];
-
-        if (typeof aValue === "string" && typeof bValue === "string") {
-          return aValue.localeCompare(bValue);
-        }
-        return 0;
-      });
-    }
-
-    return mappedData;
-  }, [data, selectedSort]);
+  }, [data, currentPage, itemsPerPage]);
 
   const paginationInfo = useMemo(() => {
     return {
@@ -321,16 +299,25 @@ const TenantsTable = () => {
           <TableHeader>
             <TableRow className="bg-border">
               {tableHead.map((head, index) => (
-                <TableHead key={index} className={head.className}>
-                  {head.label}
-                </TableHead>
+                <TableHead key={index}>{head.label}</TableHead>
               ))}
             </TableRow>
           </TableHeader>
           <TableBody>
             {tableData && tableData.length > 0 ? (
               tableData.map((row) => (
-                <TableRow key={row.id} className="bg-background">
+                <TableRow
+                  key={row.id}
+                  className="bg-background hover:bg-muted/50 cursor-pointer transition-colors"
+                  onClick={() => {
+                    if (row.propertyId) {
+                      router.push(`/super/property/${row.propertyId}`);
+                    }
+                  }}
+                >
+                  <TableCell className="text-muted-foreground">
+                    {row.serialNumber}
+                  </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar name={row.tenant} alt="Tenant Avatar" size="sm" />
@@ -344,21 +331,6 @@ const TenantsTable = () => {
                     <p className={getPaymentStatus(row.rentStatus)}>
                       {row.rentStatus}
                     </p>
-                  </TableCell>
-                  <TableCell className="text-muted-foreground w-6 text-right">
-                    {row.propertyId ? (
-                      <Link href={`/super/property/${row.propertyId}`}>
-                        <Button variant="ghost" size="icon" asChild>
-                          <span>
-                            <Icon icon="material-symbols:keyboard-arrow-right" />
-                          </span>
-                        </Button>
-                      </Link>
-                    ) : (
-                      <Button variant="ghost" size="icon" disabled>
-                        <Icon icon="material-symbols:keyboard-arrow-right" />
-                      </Button>
-                    )}
                   </TableCell>
                 </TableRow>
               ))

@@ -117,7 +117,7 @@ export function TenantHeader() {
                   Notifications
                 </SheetTitle>
               </SheetHeader>
-              <div className="overflow-y-auto">
+              <div className="flex-1 overflow-y-auto pr-2">
                 <TenantNotifications />
               </div>
             </SheetContent>

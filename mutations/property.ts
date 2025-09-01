@@ -42,7 +42,7 @@ export const useCreatePropertyForAdmin = () => {
     mutationFn: async (
       propertyData: PropertyCreateForAdminRequest,
     ): Promise<ApiResponse<PropertyCreateResponse>> => {
-      const response = await api.post("/properties/for-admin", propertyData);
+      const response = await api.post("/properties", propertyData);
       return response.data;
     },
     onSuccess: () => {

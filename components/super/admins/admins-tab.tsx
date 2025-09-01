@@ -27,7 +27,7 @@ const AdminsTab = () => {
             icon="material-symbols:supervised-user-circle-outline"
             size="lg"
           />
-          <h2 className="text-lg font-bold">Admins (Property Managers)</h2>
+          <h2 className="text-lg font-bold">Admins (House Managers)</h2>
         </div>
         <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
           <SheetTrigger asChild>

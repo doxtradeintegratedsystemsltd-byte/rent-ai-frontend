@@ -91,7 +91,7 @@ const DashboardStats = ({
   const statsData = statsResponse?.data
     ? [
         {
-          title: "Properties",
+          title: "Houses",
           value: statsResponse.data.properties.all,
           subtitle: calculatePercentageChange(
             statsResponse.data.properties.current,
@@ -118,7 +118,7 @@ const DashboardStats = ({
       ]
     : [
         {
-          title: "Properties",
+          title: "Houses",
           value: 0,
           subtitle: "-",
         },

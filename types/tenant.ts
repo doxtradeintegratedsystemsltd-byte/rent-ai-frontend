@@ -25,6 +25,8 @@ export interface TenantFetchParams {
   location?: string;
   status?: string;
   adminId?: string;
+  sort?: string;
+  sortOrder?: "ASC" | "DESC";
 }
 
 export interface TenantsListResponse {
