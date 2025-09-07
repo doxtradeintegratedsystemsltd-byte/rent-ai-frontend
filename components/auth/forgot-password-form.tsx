@@ -13,15 +13,16 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Icon } from "@/components/ui/icon";
-import { useRouter } from "next/navigation";
+import { useForgotPassword } from "@/mutations/login";
+import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/error";
 
 const FormSchema = z.object({
   email: z.string().email({ message: "Invalid email address" }),
 });
 
 export function ForgotPasswordForm() {
-  const router = useRouter();
+  const { mutateAsync, isPending } = useForgotPassword();
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -30,8 +31,15 @@ export function ForgotPasswordForm() {
     },
   });
 
-  function onSubmit() {
-    router.push("/update-password");
+  async function onSubmit(values: z.infer<typeof FormSchema>) {
+    try {
+      const res = await mutateAsync({ email: values.email });
+      toast.success(
+        res.message || "If email exists, a password reset link has been sent",
+      );
+    } catch (error) {
+      toast.error(getApiErrorMessage(error, "Failed to send reset link"));
+    }
   }
 
   return (
@@ -41,8 +49,9 @@ export function ForgotPasswordForm() {
         className="bg-background flex flex-col gap-6 rounded-md px-10 py-8 md:w-[500px]"
       >
         <h1 className="text-center text-2xl font-extrabold md:text-4xl">
-          Update password
+          Forgot password?
         </h1>
+        <p>Enter your email address to receive a password reset link.</p>
 
         <FormField
           control={form.control}
@@ -58,13 +67,8 @@ export function ForgotPasswordForm() {
           )}
         />
 
-        <Button type="submit" className="w-full">
-          Next
-          <Icon
-            icon="material-symbols:east-rounded"
-            className="ml-2"
-            size="lg"
-          />
+        <Button type="submit" className="w-full" disabled={isPending}>
+          {isPending ? "Sending..." : "Submit"}
         </Button>
       </form>
     </Form>

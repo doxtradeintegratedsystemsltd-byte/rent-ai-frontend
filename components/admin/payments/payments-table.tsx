@@ -100,10 +100,22 @@ const PaymentsTable = () => {
     return payments.map((payment, index) => ({
       ...payment,
       serialNumber: (currentPage - 1) * itemsPerPage + index + 1,
-      propertyName: payment.lease.property.propertyName,
-      tenantName: `${payment.lease.tenant.firstName} ${payment.lease.tenant.lastName}`,
-      formattedAmount: formatCurrency(payment.amount),
-      formattedDate: formatDate(payment.paymentDate),
+      propertyName: payment.lease?.property?.propertyName?.toString() ?? "—",
+      // expose image at top-level for easy safe access
+      propertyImage: payment.lease?.property?.propertyImage,
+      tenantName:
+        `${payment.lease?.tenant?.firstName ?? ""} ${
+          payment.lease?.tenant?.lastName ?? ""
+        }`.trim() || "—",
+      formattedAmount:
+        typeof payment.amount === "number"
+          ? formatCurrency(payment.amount)
+          : "—",
+      formattedDate: payment.paymentDate
+        ? formatDate(payment.paymentDate)
+        : payment.createdAt
+          ? formatDate(payment.createdAt)
+          : "—",
     }));
   }, [data, currentPage, itemsPerPage]);
 
@@ -126,8 +138,19 @@ const PaymentsTable = () => {
 
   if (isError) {
     return (
-      <div className="py-8 text-center text-red-600">
-        <p>Error loading payments: {error?.message || "Unknown error"}</p>
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <Icon
+          icon="material-symbols:error-outline"
+          size="xl"
+          className="text-red-600"
+        />
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">Error loading payments</h2>
+          <p className="text-muted-foreground">
+            {error?.message || "Something went wrong. Please try again."}
+          </p>
+        </div>
+        <Button onClick={() => router.back()}>Go Back</Button>
       </div>
     );
   }
@@ -212,8 +235,7 @@ const PaymentsTable = () => {
                     <div className="flex items-center gap-2">
                       <Avatar
                         src={
-                          payment.lease.property.propertyImage ||
-                          "/images/property-avatar.png"
+                          payment.propertyImage || "/images/property-avatar.png"
                         }
                         alt="House Avatar"
                         size="sm"
@@ -293,10 +315,16 @@ const PaymentReceipt = ({ payment }: { payment: Payment }) => {
             Property
           </p>
           <p className="text-xl font-bold">
-            {payment.lease.property.propertyName},{" "}
-            {payment.lease.property.propertyAddress},{" "}
-            {payment.lease.property.propertyArea},{" "}
-            {payment.lease.property.propertyState}
+            {payment.lease?.property?.propertyName ?? "—"}
+            {payment.lease?.property?.propertyAddress
+              ? `, ${payment.lease.property.propertyAddress}`
+              : ""}
+            {payment.lease?.property?.propertyArea
+              ? `, ${payment.lease.property.propertyArea}`
+              : ""}
+            {payment.lease?.property?.propertyState
+              ? `, ${payment.lease.property.propertyState}`
+              : ""}
           </p>
         </div>
         <div className="">
@@ -304,21 +332,30 @@ const PaymentReceipt = ({ payment }: { payment: Payment }) => {
             Tenant
           </p>
           <p className="text-xl font-bold">
-            {payment.lease.tenant.firstName} {payment.lease.tenant.lastName}
+            {(payment.lease?.tenant?.firstName ?? "").toString()}{" "}
+            {(payment.lease?.tenant?.lastName ?? "").toString()}
           </p>
         </div>
         <div className="">
           <p className="text-muted-foreground text-lg font-medium uppercase">
             Amount Paid
           </p>
-          <p className="text-xl font-bold">{formatCurrency(payment.amount)}</p>
+          <p className="text-xl font-bold">
+            {typeof payment.amount === "number"
+              ? formatCurrency(payment.amount)
+              : "—"}
+          </p>
         </div>
         <div className="">
           <p className="text-muted-foreground text-lg font-medium uppercase">
             Date Paid
           </p>
           <p className="text-xl font-bold">
-            {formatLongDate(payment.createdAt)}
+            {payment.createdAt
+              ? formatLongDate(payment.createdAt)
+              : payment.paymentDate
+                ? formatLongDate(payment.paymentDate)
+                : "—"}
           </p>
         </div>
         <div className="">
@@ -326,7 +363,8 @@ const PaymentReceipt = ({ payment }: { payment: Payment }) => {
             Received By
           </p>
           <p className="text-xl font-bold">
-            {payment.createdBy.firstName} {payment.createdBy.lastName}
+            {(payment.createdBy?.firstName ?? "").toString()}{" "}
+            {(payment.createdBy?.lastName ?? "").toString()}
           </p>
         </div>
       </div>

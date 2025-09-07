@@ -56,6 +56,8 @@ const PropertyPage = () => {
 
   const property = propertyResponse?.data;
 
+  const disableAddPayment = !!property?.currentLease?.nextLeaseId;
+
   // Dynamic tenant details grid
   const tenantDetailsGrid = property?.currentLease?.tenant
     ? [
@@ -559,12 +561,15 @@ const PropertyPage = () => {
                           variant="outline"
                           size="sm"
                           className="text-xs font-medium uppercase"
+                          disabled={disableAddPayment}
                         >
                           <Icon
                             icon="material-symbols:add-2-rounded"
                             className="mr-2"
                           />
-                          Add Payment
+                          {disableAddPayment
+                            ? "Next Lease Paid"
+                            : "Add Payment"}
                         </Button>
                       </SheetTrigger>
                       <SheetContent

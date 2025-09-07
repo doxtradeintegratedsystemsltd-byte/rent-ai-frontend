@@ -21,6 +21,7 @@ import { formatCurrency } from "@/lib/formatters";
 import { Dropdown } from "@/components/ui/dropdown";
 import { useAddPayment } from "@/mutations/payment";
 import { useSingleImageUpload } from "@/mutations/upload";
+import { getApiErrorMessage } from "@/lib/error";
 
 const FormSchema = z.object({
   paymentDate: z.string().min(1, { message: "Payment date is required" }),
@@ -128,16 +129,9 @@ const AddPaymentForm = ({
     } catch (error: unknown) {
       console.error("Error adding payment:", error);
 
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to add payment. Please try again.";
-
-      if (errorMessage === "Next lease rent is already paid") {
-        toast.error("Next lease rent is already paid!");
-      } else {
-        toast.error("Failed to add payment. Please try again.");
-      }
+      toast.error(
+        getApiErrorMessage(error, "Failed to add payment. Please try again."),
+      );
     }
   };
 

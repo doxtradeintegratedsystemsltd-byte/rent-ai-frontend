@@ -19,6 +19,7 @@ import { Dropdown } from "@/components/ui/dropdown";
 import { formatDropdownItems } from "@/lib/formatters";
 import { useEditTenant } from "@/mutations/tenant";
 import { Tenant } from "@/types/tenant";
+import { getApiErrorMessage } from "@/lib/error";
 
 const FormSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
@@ -95,7 +96,9 @@ const EditTenantForm = ({ tenant, onSuccess }: EditTenantFormProps) => {
       }
     } catch (error) {
       console.error("Error updating tenant:", error);
-      toast.error("Failed to update tenant. Please try again.");
+      toast.error(
+        getApiErrorMessage(error, "Failed to update tenant. Please try again."),
+      );
     }
   };
 

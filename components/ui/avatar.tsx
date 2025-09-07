@@ -26,8 +26,15 @@ export const Avatar: React.FC<AvatarProps> = ({
   className,
 }) => {
   const baseClasses =
-    "overflow-hidden rounded-full text-sm bg-background flex items-center justify-center";
+    "overflow-hidden rounded-full flex items-center justify-center";
   const sizeClass = sizeClasses[size];
+  const hasImage = Boolean(src);
+  const containerClasses = cn(
+    baseClasses,
+    sizeClass,
+    hasImage ? "bg-background" : "bg-muted ring-1 ring-border text-foreground",
+    className,
+  );
 
   // Function to generate initials from a name
   const getInitials = (fullName: string): string => {
@@ -65,13 +72,11 @@ export const Avatar: React.FC<AvatarProps> = ({
       displayText = letter.charAt(0).toUpperCase();
     }
 
-    return (
-      <span className="text-muted font-bold uppercase">{displayText}</span>
-    );
+    return <span className="font-semibold uppercase">{displayText}</span>;
   };
 
   return (
-    <div className={cn(baseClasses, sizeClass, className)}>
+    <div className={containerClasses} aria-label={name || letter || alt}>
       {getDisplayContent()}
     </div>
   );

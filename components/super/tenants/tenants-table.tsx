@@ -200,8 +200,19 @@ const TenantsTable = () => {
 
   if (isError) {
     return (
-      <div className="py-8 text-center text-red-600">
-        <p>Error loading tenants: {error?.message || "Unknown error"}</p>
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <Icon
+          icon="material-symbols:error-outline"
+          size="xl"
+          className="text-red-600"
+        />
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">Error loading tenants</h2>
+          <p className="text-muted-foreground">
+            {error?.message || "Something went wrong. Please try again."}
+          </p>
+        </div>
+        <Button onClick={() => router.back()}>Go Back</Button>
       </div>
     );
   }
@@ -297,7 +308,7 @@ const TenantsTable = () => {
       ) : (
         <Table>
           <TableHeader>
-            <TableRow className="bg-border">
+            <TableRow className="bg-border hover:bg-border">
               {tableHead.map((head, index) => (
                 <TableHead key={index}>{head.label}</TableHead>
               ))}
@@ -319,7 +330,7 @@ const TenantsTable = () => {
                     {row.serialNumber}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 capitalize">
                       <Avatar name={row.tenant} alt="Tenant Avatar" size="sm" />
                       {row.tenant}
                     </div>

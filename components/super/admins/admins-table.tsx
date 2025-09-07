@@ -148,8 +148,21 @@ const AdminsTable = () => {
 
   if (isError) {
     return (
-      <div className="py-8 text-center text-red-600">
-        <p>Error loading admins: {error?.message || "Unknown error"}</p>
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <Icon
+          icon="material-symbols:error-outline"
+          size="xl"
+          className="text-red-600"
+        />
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">
+            Error loading house managers
+          </h2>
+          <p className="text-muted-foreground">
+            {error?.message || "Something went wrong. Please try again."}
+          </p>
+        </div>
+        <Button onClick={() => router.back()}>Go Back</Button>
       </div>
     );
   }

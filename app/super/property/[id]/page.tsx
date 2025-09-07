@@ -29,6 +29,7 @@ import { toast } from "sonner";
 import { formatLongDate, formatCurrency } from "@/lib/formatters";
 import { useRemoveTenantFromProperty } from "@/mutations/tenant";
 import { RentStatus } from "@/types/lease";
+import { getApiErrorMessage } from "@/lib/error";
 
 const PropertyPage = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -55,6 +56,8 @@ const PropertyPage = () => {
   const removeTenant = useRemoveTenantFromProperty();
 
   const property = propertyResponse?.data;
+  // Disable adding payment if a next lease already exists (business rule)
+  const disableAddPayment = !!property?.currentLease?.nextLeaseId;
 
   // Dynamic tenant details grid
   const tenantDetailsGrid = property?.currentLease?.tenant
@@ -139,15 +142,16 @@ const PropertyPage = () => {
     try {
       await deleteProperty.mutateAsync(propertyId);
       toast.success("Property deleted successfully!");
-
-      // Close the dialog
       setShowDialog(false);
-
-      // Navigate back to properties list
       router.push("/admin");
     } catch (error) {
       console.error("Error deleting property:", error);
-      toast.error("Failed to delete property. Please try again.");
+      toast.error(
+        getApiErrorMessage(
+          error,
+          "Failed to delete property. Please try again.",
+        ),
+      );
     }
   };
 
@@ -162,7 +166,9 @@ const PropertyPage = () => {
       setShowTenantDialog(false);
     } catch (error) {
       console.error("Error removing tenant:", error);
-      toast.error("Failed to remove tenant. Please try again.");
+      toast.error(
+        getApiErrorMessage(error, "Failed to remove tenant. Please try again."),
+      );
     }
   };
 
@@ -559,12 +565,15 @@ const PropertyPage = () => {
                           variant="outline"
                           size="sm"
                           className="text-xs font-medium uppercase"
+                          disabled={disableAddPayment}
                         >
                           <Icon
                             icon="material-symbols:add-2-rounded"
                             className="mr-2"
                           />
-                          Add Payment
+                          {disableAddPayment
+                            ? "Next Lease Paid"
+                            : "Add Payment"}
                         </Button>
                       </SheetTrigger>
                       <SheetContent

@@ -22,6 +22,7 @@ import { usePropertyImageUpload } from "@/mutations/upload";
 import { useUpdateProperty } from "@/mutations/property";
 import { toast } from "sonner";
 import { Property } from "@/types/property";
+import { getApiErrorMessage } from "@/lib/error";
 
 const FormSchema = z.object({
   propertyName: z.string().min(1, { message: "House name is required" }),
@@ -120,7 +121,9 @@ const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
       onSuccess?.();
     } catch (error) {
       console.error("Error updating house:", error);
-      toast.error("Failed to update house. Please try again.");
+      toast.error(
+        getApiErrorMessage(error, "Failed to update house. Please try again."),
+      );
     }
   };
 

@@ -150,16 +150,6 @@ const NotificationPage = () => {
     }
   };
 
-  const handleSendWhatsApp = () => {
-    const data = form.getValues();
-    if (form.formState.isValid) {
-      console.log("Sending WhatsApp message with data:", data);
-      // Handle WhatsApp sending logic here
-    } else {
-      form.trigger(); // Trigger validation to show errors
-    }
-  };
-
   // Loading state
   if (isLoading) {
     return (
@@ -293,20 +283,6 @@ const NotificationPage = () => {
                   {createNotification.isPending
                     ? "Sending..."
                     : "Send Notification"}
-                </Button>
-                <Button
-                  type="button"
-                  className="text-xs uppercase"
-                  variant="outline"
-                  size="md"
-                  onClick={handleSendWhatsApp}
-                  disabled={!form.formState.isValid}
-                >
-                  <Icon
-                    icon="ic:baseline-whatsapp"
-                    className="text-[#25D366]"
-                  />
-                  Send On WhatsApp
                 </Button>
               </div>
             </form>

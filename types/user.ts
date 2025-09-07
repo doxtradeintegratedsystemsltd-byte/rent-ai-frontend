@@ -99,8 +99,27 @@ export interface ForgotPasswordRequest {
 
 export interface ResetPasswordRequest {
   token: string;
-  newPassword: string;
-  confirmPassword: string;
+  userId: string;
+  password: string;
+}
+
+export interface VerifyPasswordResetLinkRequest {
+  token: string;
+  userId: string;
+}
+
+export interface VerifyPasswordResetLinkResponse {
+  statusCode: number;
+  status: "success" | "error";
+  message: string;
+  data?: {
+    authId: string;
+    userId: string;
+    email: string;
+    firstName: string;
+    createdAt: string;
+    updatedAt: string;
+  };
 }
 
 // User profile interface (with computed properties)

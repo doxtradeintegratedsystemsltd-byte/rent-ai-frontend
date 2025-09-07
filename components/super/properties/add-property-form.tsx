@@ -21,6 +21,7 @@ import Image from "next/image";
 import { usePropertyImageUpload } from "@/mutations/upload";
 import { useCreatePropertyForAdmin } from "@/mutations/property";
 import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/error";
 
 const FormSchema = z.object({
   propertyName: z.string().min(1, { message: "House name is required" }),
@@ -91,7 +92,12 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
         setFileInputKey((prev) => prev + 1);
       },
       onError: (error) => {
-        toast.error("Failed to create house. Please try again.");
+        toast.error(
+          getApiErrorMessage(
+            error,
+            "Failed to create property. Please try again.",
+          ),
+        );
         console.error("Error submitting property:", error);
       },
     });

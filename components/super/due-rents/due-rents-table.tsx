@@ -1,6 +1,5 @@
 "use client";
 
-import { Dropdown } from "@/components/ui/dropdown";
 import { SearchInput } from "@/components/ui/search-input";
 import {
   Table,
@@ -12,13 +11,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { getPaymentStatus } from "@/lib/status-util";
-import Avatar from "../ui/avatar";
-import Pagination from "../ui/pagination";
+import Avatar from "../../ui/avatar";
+import Pagination from "../../ui/pagination";
 import { useState, useMemo, useEffect, useCallback } from "react";
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 import { Icon } from "@/components/ui/icon";
-import { getFilterLabel } from "@/lib/table-utils";
-import { useFetchProperties } from "@/mutations/property";
+import { useFetchDueRents } from "@/mutations/property";
 import type { Property } from "@/types/property";
 import {
   TableSkeleton,
@@ -28,22 +26,6 @@ import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RentStatus } from "@/types/lease";
 
-const filterItems = [
-  { type: "label" as const, label: "Show" },
-  {
-    label: "All",
-    value: "all",
-  },
-  {
-    label: "Rent Paid",
-    value: "rent-paid",
-  },
-  {
-    label: "Rent Unpaid",
-    value: "rent-unpaid",
-  },
-];
-
 const tableHead = [
   { label: "S/N" },
   { label: "House" },
@@ -52,7 +34,7 @@ const tableHead = [
   { label: "Rent Status" },
 ];
 
-const PropertiesTable = () => {
+const DueRentsTable = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -66,22 +48,13 @@ const PropertiesTable = () => {
     return searchParams.get("search") || "";
   });
 
-  const [selectedFilter, setSelectedFilter] = useState(() => {
-    return searchParams.get("status") || "all";
-  });
-
   const itemsPerPage = 20;
 
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
   // Function to update URL with current filter state
   const updateURL = useCallback(
-    (params: {
-      page?: number;
-      search?: string;
-      status?: string;
-      location?: string;
-    }) => {
+    (params: { page?: number; search?: string; location?: string }) => {
       const current = new URLSearchParams(window.location.search);
 
       // Update or remove parameters
@@ -95,12 +68,6 @@ const PropertiesTable = () => {
         current.set("search", params.search);
       } else {
         current.delete("search");
-      }
-
-      if (params.status && params.status !== "all") {
-        current.set("status", params.status);
-      } else {
-        current.delete("status");
       }
 
       if (params.location && params.location !== "all") {
@@ -122,15 +89,13 @@ const PropertiesTable = () => {
     updateURL({
       page: currentPage,
       search: searchTerm,
-      status: selectedFilter,
     });
-  }, [currentPage, searchTerm, selectedFilter, updateURL]);
+  }, [currentPage, searchTerm, updateURL]);
 
-  const { data, isLoading, isError, error } = useFetchProperties({
+  const { data, isLoading, isError, error } = useFetchDueRents({
     page: currentPage - 1,
     pageSize: itemsPerPage,
     search: debouncedSearchTerm || undefined,
-    status: selectedFilter !== "all" ? selectedFilter : undefined,
   });
 
   const tableData = useMemo(() => {
@@ -158,8 +123,19 @@ const PropertiesTable = () => {
 
   if (isError) {
     return (
-      <div className="py-8 text-center text-red-600">
-        <p>Error loading houses: {error?.message || "Unknown error"}</p>
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <Icon
+          icon="material-symbols:error-outline"
+          size="xl"
+          className="text-red-600"
+        />
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">Error loading due rents</h2>
+          <p className="text-muted-foreground">
+            {error?.message || "Something went wrong. Please try again."}
+          </p>
+        </div>
+        <Button onClick={() => router.back()}>Go Back</Button>
       </div>
     );
   }
@@ -173,27 +149,14 @@ const PropertiesTable = () => {
     setCurrentPage(page);
   };
 
-  const handleFilterChange = (value: string) => {
-    setSelectedFilter(value);
-    setCurrentPage(1);
-  };
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <p className="text-muted-foreground uppercase">Houses</p>
-          <Dropdown
-            trigger={{
-              label: getFilterLabel(filterItems, selectedFilter),
-              icon: "material-symbols:filter-list-rounded",
-              arrowIcon: "material-symbols:keyboard-arrow-down-rounded",
-            }}
-            items={filterItems}
-            selectedValue={selectedFilter}
-            onItemSelect={handleFilterChange}
-            useRadioGroup={true}
-          />
+          <div className="flex items-center gap-2">
+            <Icon icon="material-symbols:dangerous-outline-rounded" size="lg" />
+            <h2 className="text-lg font-bold">Due Rents</h2>
+          </div>
         </div>
         <div className="flex gap-2">
           <SearchInput
@@ -299,4 +262,4 @@ const PropertiesTable = () => {
   );
 };
 
-export default PropertiesTable;
+export default DueRentsTable;

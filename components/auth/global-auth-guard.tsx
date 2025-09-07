@@ -20,7 +20,7 @@ interface GlobalAuthGuardProps {
 const PUBLIC_ROUTES = new Set([
   "/",
   "/forgot-password",
-  "/update-password",
+  "/reset-password",
   "/unauthorized",
 ]);
 

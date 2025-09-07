@@ -19,6 +19,7 @@ import Image from "next/image";
 import { useCreateAdmin } from "@/mutations/admin";
 import { useSingleImageUpload } from "@/mutations/upload";
 import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/error";
 
 const FormSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
@@ -85,7 +86,9 @@ const AddAdminForm = ({
       setIsSubmitted?.(true);
     } catch (error) {
       console.error("Error creating admin:", error);
-      toast.error("Failed to create admin");
+      toast.error(
+        getApiErrorMessage(error, "Failed to create admin. Please try again."),
+      );
     } finally {
       setIsUploading(false);
     }

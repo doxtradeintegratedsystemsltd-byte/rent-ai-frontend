@@ -87,17 +87,30 @@ export const useAddTenantToProperty = () => {
       queryClient.setQueryData(
         ["property", variables.propertyId],
         (oldData: ApiResponse<PropertySingleResponse> | undefined) => {
-          if (oldData && oldData.data && data.data) {
-            return {
-              ...oldData,
-              data: {
-                ...oldData.data,
-                currentLease: data.data.lease,
-                currentLeaseId: data.data.lease.id,
-              },
-            };
-          }
-          return oldData;
+          if (!oldData || !oldData.data || !data.data) return oldData;
+
+          const existingPayments = oldData.data.payments || [];
+          const newPayment = data.data.payment;
+          const mergedPayments = newPayment
+            ? // Avoid duplicates
+              existingPayments.some((p) => p.id === newPayment.id)
+              ? existingPayments
+              : [newPayment, ...existingPayments]
+            : existingPayments;
+
+          return {
+            ...oldData,
+            data: {
+              ...oldData.data,
+              currentLease: {
+                ...data.data.lease,
+                // Attach tenant so UI can read currentLease.tenant.* immediately
+                tenant: data.data.tenant,
+              } as any,
+              currentLeaseId: data.data.lease.id,
+              payments: mergedPayments,
+            },
+          };
         },
       );
 
@@ -212,6 +225,14 @@ export const useRemoveTenantFromProperty = () => {
       // Invalidate due rents since removing a tenant affects lease and rent status
       queryClient.invalidateQueries({
         queryKey: ["properties", "due-rents"],
+      });
+
+      // Optimistically update the specific property to remove current lease
+      queryClient.setQueryData(["property"], (oldUnknown: any) => oldUnknown);
+      // We need propertyId but only have leaseId here; optionally a broader invalidate for all properties
+      queryClient.invalidateQueries({
+        queryKey: ["property"],
+        refetchType: "none",
       });
     },
   });

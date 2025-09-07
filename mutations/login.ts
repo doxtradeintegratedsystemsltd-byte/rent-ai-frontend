@@ -1,7 +1,16 @@
 import { useMutation } from "@tanstack/react-query";
 import api from "@/service/api";
 import { useAuthStore } from "@/store/authStore";
-import type { LoginRequest, AuthResponse, WhoAmIResponse } from "@/types/user";
+import type {
+  LoginRequest,
+  AuthResponse,
+  WhoAmIResponse,
+  ForgotPasswordRequest,
+  ApiResponse,
+  ResetPasswordRequest,
+  VerifyPasswordResetLinkRequest,
+  VerifyPasswordResetLinkResponse,
+} from "@/types/user";
 
 export const useLogin = () => {
   const login = useAuthStore((state) => state.login);
@@ -32,6 +41,43 @@ export const useLogin = () => {
     },
     onError: (error) => {
       console.error("Login error:", error);
+    },
+  });
+};
+
+// Forgot Password mutation
+export const useForgotPassword = () => {
+  return useMutation({
+    mutationFn: async (
+      payload: ForgotPasswordRequest,
+    ): Promise<ApiResponse> => {
+      const response = await api.post("/auth/forgot-password", payload);
+      return response.data;
+    },
+  });
+};
+
+// Reset Password mutation
+export const useResetPassword = () => {
+  return useMutation({
+    mutationFn: async (payload: ResetPasswordRequest): Promise<ApiResponse> => {
+      const response = await api.post("/auth/reset-password", payload);
+      return response.data;
+    },
+  });
+};
+
+// Verify Password Reset Link
+export const useVerifyPasswordResetLink = () => {
+  return useMutation({
+    mutationFn: async (
+      payload: VerifyPasswordResetLinkRequest,
+    ): Promise<VerifyPasswordResetLinkResponse> => {
+      const response = await api.post(
+        "/auth/verify-password-reset-link",
+        payload,
+      );
+      return response.data;
     },
   });
 };

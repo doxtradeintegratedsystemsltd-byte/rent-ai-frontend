@@ -29,8 +29,8 @@ export function Header() {
 
   const user = useUser();
   const { data: countData } = useGetUnreadNotificationsCount();
-
-  const count = countData?.count;
+  // Normalize to a number to avoid rendering a literal 0 via short-circuit
+  const count = Number(countData?.count ?? 0);
 
   // Fallback breadcrumb generation for pages that don't set custom breadcrumbs
   const getFallbackBreadcrumbs = (path: string) => {
@@ -101,7 +101,12 @@ export function Header() {
           <Sheet>
             <SheetTrigger asChild>
               <div className="flex cursor-pointer items-center space-x-2">
-                <Avatar src={user?.photoUrl} alt="Admin Avatar" size="md" />
+                <Avatar
+                  src={user?.photoUrl}
+                  name={user?.firstName + " " + user?.lastName}
+                  alt="Admin Avatar"
+                  size="md"
+                />
                 <div className="flex flex-col">
                   <span className="text-foreground text-xs font-bold">
                     {user?.firstName} {user?.lastName}
@@ -168,7 +173,7 @@ export function Header() {
                   icon="material-symbols:notifications"
                   className="text-foreground"
                 />
-                {count && count > 0 && (
+                {count > 0 && (
                   <span className="bg-destructive text-background absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full text-xs font-semibold">
                     {count > 9 ? "9+" : count}
                   </span>

@@ -17,7 +17,7 @@ import Pagination from "../../ui/pagination";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "../../ui/button";
 import { Icon } from "@/components/ui/icon";
-import { getFilterLabel, getLocationLabel } from "@/lib/table-utils";
+import { getFilterLabel } from "@/lib/table-utils";
 import { useFetchProperties } from "@/mutations/property";
 import type { Property } from "@/types/property";
 import {
@@ -41,23 +41,6 @@ const filterItems = [
     label: "Rent Unpaid",
     value: "rent-unpaid",
   },
-];
-
-const locationItems = [
-  { type: "label" as const, label: "Arrange By" },
-  {
-    label: "Locations",
-    value: "all",
-  },
-  {
-    label: "Downtown",
-    value: "downtown",
-  },
-  {
-    label: "Uptown",
-    value: "uptown",
-  },
-  { label: "Suburbs", value: "suburbs" },
 ];
 
 const tableHead = [
@@ -85,10 +68,6 @@ const PropertiesTable = () => {
 
   const [selectedFilter, setSelectedFilter] = useState(() => {
     return searchParams.get("status") || "all";
-  });
-
-  const [selectedLocation, setSelectedLocation] = useState(() => {
-    return searchParams.get("location") || "all";
   });
 
   const itemsPerPage = 20;
@@ -144,16 +123,14 @@ const PropertiesTable = () => {
       page: currentPage,
       search: searchTerm,
       status: selectedFilter,
-      location: selectedLocation,
     });
-  }, [currentPage, searchTerm, selectedFilter, selectedLocation, updateURL]);
+  }, [currentPage, searchTerm, selectedFilter, updateURL]);
 
   const { data, isLoading, isError, error } = useFetchProperties({
     page: currentPage - 1,
     pageSize: itemsPerPage,
     search: debouncedSearchTerm || undefined,
     status: selectedFilter !== "all" ? selectedFilter : undefined,
-    location: selectedLocation !== "all" ? selectedLocation : undefined,
   });
 
   const tableData = useMemo(() => {
@@ -185,8 +162,19 @@ const PropertiesTable = () => {
 
   if (isError) {
     return (
-      <div className="py-8 text-center text-red-600">
-        <p>Error loading houses: {error?.message || "Unknown error"}</p>
+      <div className="flex min-h-[400px] flex-col items-center justify-center gap-4">
+        <Icon
+          icon="material-symbols:error-outline"
+          size="xl"
+          className="text-red-600"
+        />
+        <div className="text-center">
+          <h2 className="text-lg font-semibold">Error loading houses</h2>
+          <p className="text-muted-foreground">
+            {error?.message || "Something went wrong. Please try again."}
+          </p>
+        </div>
+        <Button onClick={() => router.back()}>Go Back</Button>
       </div>
     );
   }
@@ -202,11 +190,6 @@ const PropertiesTable = () => {
 
   const handleFilterChange = (value: string) => {
     setSelectedFilter(value);
-    setCurrentPage(1);
-  };
-
-  const handleLocationChange = (value: string) => {
-    setSelectedLocation(value);
     setCurrentPage(1);
   };
 
@@ -233,19 +216,6 @@ const PropertiesTable = () => {
             className="bg-background"
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
-          />
-          <Dropdown
-            trigger={{
-              label: getLocationLabel(locationItems, selectedLocation),
-              icon: "material-symbols:format-line-spacing-rounded",
-              arrowIcon: "material-symbols:keyboard-arrow-up-rounded",
-              className: "bg-background",
-            }}
-            items={locationItems}
-            selectedValue={selectedLocation}
-            onItemSelect={handleLocationChange}
-            useRadioGroup={true}
-            align="end"
           />
         </div>
       </div>
@@ -282,7 +252,7 @@ const PropertiesTable = () => {
       ) : (
         <Table>
           <TableHeader>
-            <TableRow className="bg-border">
+            <TableRow className="bg-border hover:bg-border">
               {tableHead.map((head, index) => (
                 <TableHead key={index}>{head.label}</TableHead>
               ))}

@@ -20,6 +20,7 @@ import { useUpdateAdmin } from "@/mutations/admin";
 import { useSingleImageUpload } from "@/mutations/upload";
 import { toast } from "sonner";
 import type { AdminDetails } from "@/types/admin";
+import { getApiErrorMessage } from "@/lib/error";
 
 const FormSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
@@ -145,7 +146,12 @@ const EditAdminForm: React.FC<EditAdminFormProps> = ({ adminData }) => {
       setSelectedFile(null);
     } catch (error) {
       console.error("Failed to update admin profile:", error);
-      toast.error("Failed to update admin profile. Please try again.");
+      toast.error(
+        getApiErrorMessage(
+          error,
+          "Failed to update admin profile. Please try again.",
+        ),
+      );
     }
   };
 

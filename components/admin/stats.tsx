@@ -9,15 +9,8 @@ import Card from "../ui/card";
 const periodOptions = [
   { label: "Today", value: "today", period: "day" },
   { label: "This Week", value: "thisWeek", period: "week" },
-  { label: "Last Week", value: "lastWeek", period: "week" },
   { label: "This Month", value: "thisMonth", period: "month" },
-  { label: "Last Month", value: "lastMonth", period: "month" },
-  { label: "This Quarter", value: "thisQuarter", period: "quarter" },
-  { label: "Last Quarter", value: "lastQuarter", period: "quarter" },
   { label: "This Year", value: "thisYear", period: "year" },
-  { label: "Last Year", value: "lastYear", period: "year" },
-  { label: "Last 30 Days", value: "last30Days", period: "30 days" },
-  { label: "Last 365 Days", value: "last365Days", period: "365 days" },
 ];
 
 const DashboardStats = ({
@@ -148,7 +141,7 @@ const DashboardStats = ({
             label: selectedPeriodLabel,
             icon: "material-symbols:calendar-month",
             arrowIcon: "material-symbols:keyboard-arrow-down",
-            className: "w-[180px] uppercase text-xs font-medium",
+            className: "uppercase text-xs font-medium",
           }}
           items={periodOptions}
           onItemSelect={handlePeriodChange}

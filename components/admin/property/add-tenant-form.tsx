@@ -22,6 +22,7 @@ import Image from "next/image";
 import { useAddTenantToProperty } from "@/mutations/tenant";
 import { useSingleImageUpload } from "@/mutations/upload";
 import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/error";
 
 const FormSchema = z.object({
   firstName: z.string().min(1, { message: "First name is required" }),
@@ -140,16 +141,15 @@ const AddTenantForm = ({
       }
     } catch (error: unknown) {
       console.error("Error adding tenant:", error);
-
-      const errorMessage =
-        error instanceof Error
-          ? error.message
-          : "Failed to add payment. Please try again.";
+      const errorMessage = getApiErrorMessage(
+        error,
+        "Failed to add tenant. Please try again.",
+      );
 
       if (errorMessage === "Next lease rent is already paid") {
         toast.error("Next lease rent is already paid!");
       } else {
-        toast.error("Failed to add payment. Please try again.");
+        toast.error(errorMessage);
       }
     }
   };

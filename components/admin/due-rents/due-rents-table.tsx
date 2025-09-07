@@ -1,6 +1,5 @@
 "use client";
 
-import { Dropdown } from "@/components/ui/dropdown";
 import { SearchInput } from "@/components/ui/search-input";
 import {
   Table,
@@ -17,7 +16,6 @@ import Pagination from "../../ui/pagination";
 import { useState, useMemo, useEffect, useCallback } from "react";
 import { Button } from "../../ui/button";
 import { Icon } from "@/components/ui/icon";
-import { getLocationLabel } from "@/lib/table-utils";
 import { useFetchDueRents } from "@/mutations/property";
 import type { Property } from "@/types/property";
 import {
@@ -27,23 +25,6 @@ import {
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter, useSearchParams } from "next/navigation";
 import { RentStatus } from "@/types/lease";
-
-const locationItems = [
-  { type: "label" as const, label: "Arrange By" },
-  {
-    label: "Locations",
-    value: "all",
-  },
-  {
-    label: "Downtown",
-    value: "downtown",
-  },
-  {
-    label: "Uptown",
-    value: "uptown",
-  },
-  { label: "Suburbs", value: "suburbs" },
-];
 
 const tableHead = [
   { label: "S/N" },
@@ -65,10 +46,6 @@ const DueRentsTable = () => {
 
   const [searchTerm, setSearchTerm] = useState(() => {
     return searchParams.get("search") || "";
-  });
-
-  const [selectedLocation, setSelectedLocation] = useState(() => {
-    return searchParams.get("location") || "all";
   });
 
   const itemsPerPage = 20;
@@ -112,15 +89,13 @@ const DueRentsTable = () => {
     updateURL({
       page: currentPage,
       search: searchTerm,
-      location: selectedLocation,
     });
-  }, [currentPage, searchTerm, selectedLocation, updateURL]);
+  }, [currentPage, searchTerm, updateURL]);
 
   const { data, isLoading, isError, error } = useFetchDueRents({
     page: currentPage - 1,
     pageSize: itemsPerPage,
     search: debouncedSearchTerm || undefined,
-    location: selectedLocation !== "all" ? selectedLocation : undefined,
   });
 
   const tableData = useMemo(() => {
@@ -163,11 +138,6 @@ const DueRentsTable = () => {
     setCurrentPage(page);
   };
 
-  const handleLocationChange = (value: string) => {
-    setSelectedLocation(value);
-    setCurrentPage(1);
-  };
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -180,18 +150,6 @@ const DueRentsTable = () => {
             className="bg-background"
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
-          />
-          <Dropdown
-            trigger={{
-              label: getLocationLabel(locationItems, selectedLocation),
-              icon: "material-symbols:format-line-spacing-rounded",
-              arrowIcon: "material-symbols:keyboard-arrow-up-rounded",
-            }}
-            items={locationItems}
-            selectedValue={selectedLocation}
-            onItemSelect={handleLocationChange}
-            useRadioGroup={true}
-            align="end"
           />
         </div>
       </div>
