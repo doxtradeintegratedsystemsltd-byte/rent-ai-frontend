@@ -67,7 +67,7 @@ export interface AdminDetailsResponse {
 
 export interface AdminDetailsFetchParams {
   id: string;
-  period?: "thisWeek" | "thisMonth" | "thisYear";
+  period?: "today" | "thisWeek" | "thisMonth" | "thisYear" | "oldestDate";
 }
 
 export interface AdminUpdateRequest {

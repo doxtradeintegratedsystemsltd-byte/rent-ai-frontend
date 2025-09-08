@@ -142,6 +142,7 @@ export const useAddTenantToProperty = () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admins"] });
     },
   });
 };
@@ -191,6 +192,7 @@ export const useEditTenant = () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admins"] });
     },
   });
 };
@@ -249,6 +251,7 @@ export const useRemoveTenantFromProperty = () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admins"] });
     },
   });
 };

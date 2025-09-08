@@ -27,6 +27,7 @@ import { toast } from "sonner";
 
 // Period options for the dropdown
 const periodOptions = [
+  { label: "All", value: "oldestDate", period: "all time" },
   { label: "Today", value: "today", period: "day" },
   { label: "This Week", value: "thisWeek", period: "week" },
   { label: "This Month", value: "thisMonth", period: "month" },
@@ -39,7 +40,7 @@ const AdminPage = () => {
   const adminId = params.id as string;
 
   const [selectedPeriod, setSelectedPeriod] =
-    useState<AdminDetailsFetchParams["period"]>("thisWeek");
+    useState<AdminDetailsFetchParams["period"]>("oldestDate");
   const [open, setOpen] = useState(false);
 
   // Fetch admin details with the selected period
@@ -111,11 +112,11 @@ const AdminPage = () => {
   // Get the selected period label for display
   const selectedPeriodLabel =
     periodOptions.find((option) => option.value === selectedPeriod)?.label ||
-    "This Week";
+    "All";
 
   const selectedPeriodName =
     periodOptions.find((option) => option.value === selectedPeriod)?.period ||
-    "week";
+    "all time";
 
   // Format the stats data
   const statsData = analytics

@@ -56,6 +56,7 @@ export const useCreatePropertyForAdmin = () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admins"] });
     },
   });
 };
@@ -257,6 +258,7 @@ export const useDeleteProperty = () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["admins"] });
     },
   });
 };

@@ -7,6 +7,7 @@ import Card from "../ui/card";
 
 // Period options for the dropdown
 const periodOptions = [
+  { label: "All", value: "oldestDate", period: "all time" },
   { label: "Today", value: "today", period: "day" },
   { label: "This Week", value: "thisWeek", period: "week" },
   { label: "This Month", value: "thisMonth", period: "month" },
@@ -15,7 +16,7 @@ const periodOptions = [
 
 const SuperDashboardStats = () => {
   const [selectedPeriod, setSelectedPeriod] =
-    useState<DashboardPeriod>("thisWeek");
+    useState<DashboardPeriod>("oldestDate");
 
   const {
     data: statsResponse,
@@ -30,11 +31,11 @@ const SuperDashboardStats = () => {
   // Get the selected period label for display
   const selectedPeriodLabel =
     periodOptions.find((option) => option.value === selectedPeriod)?.label ||
-    "This Week";
+    "All";
 
   const selectedPeriodName =
     periodOptions.find((option) => option.value === selectedPeriod)?.period ||
-    "week";
+    "all time";
 
   // Helper function to calculate percentage change and format with color
   const calculatePercentageChange = (
