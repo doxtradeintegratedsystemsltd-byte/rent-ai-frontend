@@ -193,8 +193,8 @@ const PropertyPage = () => {
         try {
           window.open(payment.receiptUrl, "_blank");
           return;
-        } catch (_) {
-          // fall through to print if popup blocked
+        } catch (e) {
+          console.warn(e, "Failed to open receipt URL, falling back to print.");
         }
       }
       handlePrintReceipt(payment);

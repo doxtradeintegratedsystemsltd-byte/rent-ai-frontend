@@ -3,7 +3,7 @@
 import PaymentsTable from "@/components/admin/payments/payments-table";
 import { useBreadcrumb } from "@/hooks/useBreadcrumb";
 
-const page = () => {
+const PaymentsPage = () => {
   useBreadcrumb([
     { name: "Dashboard", href: "/super" },
     { name: "Payments", href: "/super/payments" },
@@ -22,4 +22,4 @@ const page = () => {
   );
 };
 
-export default page;
+export default PaymentsPage;

@@ -122,7 +122,7 @@ const AdminPage = () => {
     ? [
         {
           title: "Houses",
-          value: analytics.properties.all,
+          value: analytics.properties.current,
           subtitle: calculatePercentageChange(
             analytics.properties.current,
             analytics.properties.previous,
@@ -130,7 +130,7 @@ const AdminPage = () => {
         },
         {
           title: "Tenants",
-          value: analytics.tenants.all,
+          value: analytics.tenants.current,
           subtitle: calculatePercentageChange(
             analytics.tenants.current,
             analytics.tenants.previous,
@@ -138,7 +138,7 @@ const AdminPage = () => {
         },
         {
           title: "Rent Processed",
-          value: `₦${analytics.payments.all.toLocaleString()}`,
+          value: `₦${analytics.payments.current.toLocaleString()}`,
           subtitle: calculatePercentageChange(
             analytics.payments.current,
             analytics.payments.previous,

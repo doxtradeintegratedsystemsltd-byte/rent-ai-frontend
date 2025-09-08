@@ -182,6 +182,7 @@ const PaymentsTable = () => {
           return;
         } catch (e) {
           // fall back to print if popup blocked or invalid URL
+          console.warn(e, "Failed to open receipt URL, falling back to print.");
         }
       }
       // no receiptUrl available – print a standardized receipt

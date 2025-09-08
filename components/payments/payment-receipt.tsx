@@ -23,7 +23,7 @@ const PaymentReceipt = ({ payment }: { payment: Payment }) => {
       <div className="flex flex-col gap-6 p-8">
         <div className="">
           <p className="text-muted-foreground text-lg font-medium uppercase">
-            Property
+            House
           </p>
           <p className="text-xl font-bold">
             {payment.lease?.property?.propertyName ?? "—"}

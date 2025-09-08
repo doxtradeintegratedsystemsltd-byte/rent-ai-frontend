@@ -210,7 +210,7 @@ const TenantHomepage = () => {
     // Construct a Payment-like object minimally for the receipt
     const paymentLike: Payment = {
       id: p.id,
-      type: (p.type as any) || "automated",
+      type: (p.type as Payment["type"]) || "automated",
       amount: Number(p.amount) || 0,
       reference: p.reference ?? null,
       status: normalizedStatus,
@@ -243,7 +243,10 @@ const TenantHomepage = () => {
           p.paymentDate ||
           new Date().toISOString(),
         leaseStatus:
-          (leaseData?.data?.currentLease?.leaseStatus as any) || "active",
+          (leaseData?.data?.currentLease?.leaseStatus as
+            | "active"
+            | "in-active"
+            | "expired") || "active",
         leaseYears:
           leaseData?.data?.currentLease?.leaseYears ||
           leaseData?.data?.leaseYears ||
@@ -252,7 +255,10 @@ const TenantHomepage = () => {
         rentAmount:
           leaseData?.data?.currentLease?.rentAmount || Number(p.amount) || 0,
         rentStatus:
-          (leaseData?.data?.currentLease?.rentStatus as any) || "paid",
+          (leaseData?.data?.currentLease?.rentStatus as
+            | "paid"
+            | "unpaid"
+            | "overdue") || "paid",
         createdById:
           leaseData?.data?.currentLease?.createdById ||
           p.createdById ||
@@ -681,7 +687,7 @@ const TenantHomepage = () => {
                             try {
                               if (p.receiptUrl)
                                 window.open(p.receiptUrl, "_blank");
-                            } catch (_) {
+                            } catch {
                               /* no-op */
                             }
                           }}
