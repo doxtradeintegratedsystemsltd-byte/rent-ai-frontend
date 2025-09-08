@@ -141,6 +141,7 @@ export const useAddTenantToProperty = () => {
       // Invalidate dashboard stats so UI reflects new tenant
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["admin"] });
     },
   });
 };
@@ -189,6 +190,7 @@ export const useEditTenant = () => {
       // Invalidate dashboard stats to reflect tenant changes
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["admin"] });
     },
   });
 };
@@ -246,6 +248,7 @@ export const useRemoveTenantFromProperty = () => {
       // Invalidate dashboard stats to reflect tenant removal
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["admin"] });
     },
   });
 };

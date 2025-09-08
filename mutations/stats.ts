@@ -8,7 +8,7 @@ import type {
 } from "@/types/stats";
 
 // Query for fetching dashboard stats
-export const useDashboardStats = (period: DashboardPeriod = "thisWeek") => {
+export const useDashboardStats = (period: DashboardPeriod = "oldestDate") => {
   return useQuery({
     queryKey: ["dashboard-stats", period],
     queryFn: async (): Promise<DashboardStatsResponse> => {
@@ -23,7 +23,7 @@ export const useDashboardStats = (period: DashboardPeriod = "thisWeek") => {
 
 // Query for fetching super admin dashboard stats
 export const useSuperDashboardStats = (
-  period: DashboardPeriod = "thisWeek",
+  period: DashboardPeriod = "oldestDate",
 ) => {
   return useQuery({
     queryKey: ["super-dashboard-stats", period],
