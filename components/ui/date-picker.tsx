@@ -22,6 +22,7 @@ interface DatePickerProps {
   className?: string;
   disabled?: boolean;
   buttonVariant?: "default" | "outline" | "ghost" | "secondary";
+  disableFuture?: boolean;
 }
 
 // Year Picker Component
@@ -156,6 +157,7 @@ export function DatePicker({
   placeholder = "Pick a date",
   className,
   disabled = false,
+  disableFuture = false,
   buttonVariant = "outline",
 }: DatePickerProps) {
   return (
@@ -175,7 +177,12 @@ export function DatePicker({
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-0">
-        <Calendar mode="single" selected={date} onSelect={onDateSelect} />
+        <Calendar
+          disableFuture={disableFuture}
+          mode="single"
+          selected={date}
+          onSelect={onDateSelect}
+        />
       </PopoverContent>
     </Popover>
   );

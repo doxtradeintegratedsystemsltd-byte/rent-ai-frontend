@@ -308,6 +308,7 @@ const AddTenantForm = ({
                       }}
                       placeholder="Select payment date"
                       className="w-full text-sm"
+                      disableFuture
                     />
                   </FormControl>
                   <FormMessage />
