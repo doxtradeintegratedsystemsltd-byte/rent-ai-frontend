@@ -30,6 +30,8 @@ export const useCreateProperty = () => {
       queryClient.invalidateQueries({ queryKey: ["properties"] });
       // Also invalidate due rents since new properties might affect due rents
       queryClient.invalidateQueries({ queryKey: ["properties", "due-rents"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
     },
   });
 };
@@ -50,6 +52,8 @@ export const useCreatePropertyForAdmin = () => {
       queryClient.invalidateQueries({ queryKey: ["properties"] });
       // Also invalidate due rents since new properties might affect due rents
       queryClient.invalidateQueries({ queryKey: ["properties", "due-rents"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
     },
   });
 };
@@ -248,6 +252,8 @@ export const useDeleteProperty = () => {
         queryKey: ["properties", "due-rents"],
         refetchType: "none",
       });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
     },
   });
 };

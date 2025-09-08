@@ -118,6 +118,8 @@ export const useDeleteAdmin = () => {
     onSuccess: () => {
       // Invalidate admins list query to refresh the table
       queryClient.invalidateQueries({ queryKey: ["admins"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
     },
   });
 };
@@ -136,6 +138,8 @@ export const useCreateAdmin = () => {
     onSuccess: () => {
       // Invalidate admins list query to refresh the table
       queryClient.invalidateQueries({ queryKey: ["admins"] });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
     },
   });
 };

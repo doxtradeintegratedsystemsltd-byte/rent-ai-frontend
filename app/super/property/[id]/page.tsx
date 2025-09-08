@@ -16,7 +16,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import EditPropertyForm from "@/components/admin/edit-property-form";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { ConfirmationDialog } from "@/components/ui/confirmation-dialog";
 import AddTenantForm from "@/components/admin/property/add-tenant-form";
 import EditTenantForm from "@/components/admin/property/edit-tenant-form";
@@ -30,6 +30,9 @@ import { formatLongDate, formatCurrency } from "@/lib/formatters";
 import { useRemoveTenantFromProperty } from "@/mutations/tenant";
 import { RentStatus } from "@/types/lease";
 import { getApiErrorMessage } from "@/lib/error";
+import { Payment } from "@/types/payment";
+import PaymentReceipt from "@/components/payments/payment-receipt";
+import usePrint, { PrintStyles } from "@/hooks/usePrint";
 
 const PropertyPage = () => {
   const [showDialog, setShowDialog] = useState(false);
@@ -170,6 +173,34 @@ const PropertyPage = () => {
         getApiErrorMessage(error, "Failed to remove tenant. Please try again."),
       );
     }
+  };
+
+  // Print setup for receipts
+  const receiptRef = useRef<HTMLDivElement>(null);
+  const handlePrint = usePrint(receiptRef, {
+    documentTitle: "Payment Receipt",
+    additionalClass: PrintStyles.receipt,
+    pageMargin: "10mm",
+  });
+  const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const handlePrintReceipt = (payment: Payment) => {
+    setSelectedPayment(payment);
+    setTimeout(() => handlePrint(), 100);
+  };
+  const handleReceiptAction = (payment: Payment) => {
+    if (payment.type === "manual") {
+      if (payment.receiptUrl) {
+        try {
+          window.open(payment.receiptUrl, "_blank");
+          return;
+        } catch (_) {
+          // fall through to print if popup blocked
+        }
+      }
+      handlePrintReceipt(payment);
+      return;
+    }
+    handlePrintReceipt(payment);
   };
 
   // Loading state
@@ -628,14 +659,14 @@ const PropertyPage = () => {
                             variant="ghost"
                             size="sm"
                             className="text-xs font-medium uppercase"
-                            onClick={() =>
-                              payment.receiptUrl &&
-                              window.open(payment.receiptUrl, "_blank")
-                            }
-                            disabled={!payment.receiptUrl}
+                            onClick={() => handleReceiptAction(payment)}
                           >
                             <Icon
-                              icon="material-symbols:download-rounded"
+                              icon={
+                                payment.type === "manual" && payment.receiptUrl
+                                  ? "material-symbols:download-rounded"
+                                  : "material-symbols:print"
+                              }
                               className="mr-2"
                             />
                             Receipt
@@ -665,6 +696,15 @@ const PropertyPage = () => {
             )}
           </Card>
         </Card>
+      </div>
+
+      {/* Hidden Receipt Component for Printing */}
+      <div className="hidden">
+        {selectedPayment && (
+          <div ref={receiptRef}>
+            <PaymentReceipt payment={selectedPayment} />
+          </div>
+        )}
       </div>
 
       {/* Confirmation dialog depending on the action */}

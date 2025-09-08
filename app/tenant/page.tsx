@@ -22,11 +22,32 @@ import { useRouter } from "next/navigation";
 import { useFetchTenantLease } from "@/mutations/tenant";
 import { formatCurrency } from "@/lib/formatters";
 import TenantNotifications from "@/components/tenant/tenant-notifications";
+import { Payment } from "@/types/payment";
+import PaymentReceipt from "@/components/payments/payment-receipt";
+import usePrint, { PrintStyles } from "@/hooks/usePrint";
+import { useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useGetPaymentStatusByReference } from "@/mutations/payment";
 import { RentStatus } from "@/types/lease";
 
 // (duplicate imports removed)
+
+// Narrow payment history entries returned alongside tenant lease data
+type PaymentHistoryItem = {
+  id: string;
+  amount: number | string;
+  paymentDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  type?: "manual" | "paystack" | "automated" | string;
+  receiptUrl?: string | null;
+  leaseId?: string;
+  createdById?: string;
+  reference?: string | null;
+  status?: "completed" | "pending" | "failed" | string;
+  lease?: Payment["lease"];
+  createdBy?: Payment["createdBy"];
+};
 
 const TenantHomepage = () => {
   const [isPropertyExpanded, setIsPropertyExpanded] = useState(false);
@@ -63,6 +84,14 @@ const TenantHomepage = () => {
       });
     }
   }, [reference, fetchPaymentStatus]);
+
+  // Payments list (from API response) for history rendering
+  const rawData = leaseData?.data as unknown;
+  const payments: PaymentHistoryItem[] | undefined = Array.isArray(
+    (rawData as { payments?: unknown })?.payments,
+  )
+    ? ((rawData as { payments: unknown }).payments as PaymentHistoryItem[])
+    : undefined;
 
   // Prepare tenant details from user data
   const tenantDetails = user?.tenant
@@ -110,6 +139,170 @@ const TenantHomepage = () => {
   };
 
   useBreadcrumb([{ name: "Tenant Dashboard", href: "/tenant" }]);
+
+  // Print setup for tenant payment receipt (for paystack entries without receiptUrl)
+  const tenantReceiptRef = useRef<HTMLDivElement>(null);
+  const tenantPrint = usePrint(tenantReceiptRef, {
+    documentTitle: "Payment Receipt",
+    additionalClass: PrintStyles.receipt,
+    pageMargin: "10mm",
+  });
+  const [selectedHistoryPayment, setSelectedHistoryPayment] =
+    useState<Payment | null>(null);
+  const handleTenantPrintReceipt = (p: PaymentHistoryItem) => {
+    const nowIso = new Date().toISOString();
+
+    // best-effort createdBy
+    const createdByUser =
+      p.createdBy ||
+      leaseData?.data?.currentLease?.createdBy ||
+      leaseData?.data?.createdBy;
+    const fallbackCreatedBy: Payment["createdBy"] = {
+      id: "",
+      firstName: "",
+      lastName: "",
+      email: "",
+      userType: "admin",
+      photoUrl: null,
+      phoneNumber: null,
+      tenantId: null,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+      deletedAt: null,
+    };
+
+    // best-effort tenant
+    const fallbackTenant: Payment["lease"]["tenant"] = user?.tenant
+      ? {
+          id: user.tenant.id,
+          firstName: user.tenant.firstName,
+          lastName: user.tenant.lastName,
+          email: user.tenant.email,
+          phoneNumber: user.tenant.phoneNumber,
+          levelOfEducation: user.tenant.levelOfEducation,
+          createdById: user.tenant.createdById,
+          currentLeaseId: user.tenant.currentLeaseId ?? null,
+          createdAt: user.tenant.createdAt,
+          updatedAt: user.tenant.updatedAt,
+          deletedAt: user.tenant.deletedAt,
+        }
+      : {
+          id: "",
+          firstName: "",
+          lastName: "",
+          email: "",
+          phoneNumber: "",
+          levelOfEducation: "",
+          createdById: "",
+          currentLeaseId: null,
+          createdAt: nowIso,
+          updatedAt: nowIso,
+          deletedAt: null,
+        };
+    // normalize status to match Payment type
+    const normalizedStatus: Payment["status"] =
+      p.status === "completed" ||
+      p.status === "pending" ||
+      p.status === "failed"
+        ? p.status
+        : "completed";
+
+    // Construct a Payment-like object minimally for the receipt
+    const paymentLike: Payment = {
+      id: p.id,
+      type: (p.type as any) || "automated",
+      amount: Number(p.amount) || 0,
+      reference: p.reference ?? null,
+      status: normalizedStatus,
+      receiptUrl: p.receiptUrl ?? null,
+      leaseId:
+        p.leaseId ||
+        leaseData?.data?.currentLease?.id ||
+        leaseData?.data?.id ||
+        "",
+      createdById:
+        p.createdById ||
+        (createdByUser as Payment["createdBy"])?.id ||
+        leaseData?.data?.currentLease?.createdById ||
+        "",
+      paymentDate: p.paymentDate || p.createdAt || new Date().toISOString(),
+      createdAt: p.createdAt ?? p.paymentDate ?? new Date().toISOString(),
+      updatedAt: p.updatedAt ?? p.paymentDate ?? new Date().toISOString(),
+      deletedAt: null,
+      createdBy: (createdByUser as Payment["createdBy"]) || fallbackCreatedBy,
+      lease: {
+        id: leaseData?.data?.currentLease?.id || p.leaseId || "",
+        tenantId: leaseData?.data?.currentLease?.tenantId || "",
+        propertyId: leaseData?.data?.id || "",
+        startDate:
+          leaseData?.data?.currentLease?.startDate ||
+          p.paymentDate ||
+          new Date().toISOString(),
+        endDate:
+          leaseData?.data?.currentLease?.endDate ||
+          p.paymentDate ||
+          new Date().toISOString(),
+        leaseStatus:
+          (leaseData?.data?.currentLease?.leaseStatus as any) || "active",
+        leaseYears:
+          leaseData?.data?.currentLease?.leaseYears ||
+          leaseData?.data?.leaseYears ||
+          1,
+        leaseCycles: leaseData?.data?.currentLease?.leaseCycles || 1,
+        rentAmount:
+          leaseData?.data?.currentLease?.rentAmount || Number(p.amount) || 0,
+        rentStatus:
+          (leaseData?.data?.currentLease?.rentStatus as any) || "paid",
+        createdById:
+          leaseData?.data?.currentLease?.createdById ||
+          p.createdById ||
+          (createdByUser as Payment["createdBy"])?.id ||
+          "",
+        paymentId: leaseData?.data?.currentLease?.paymentId || p.id,
+        nextLeaseId: leaseData?.data?.currentLease?.nextLeaseId || null,
+        previousLeaseId: leaseData?.data?.currentLease?.previousLeaseId || null,
+        createdAt:
+          leaseData?.data?.currentLease?.createdAt ||
+          p.createdAt ||
+          p.paymentDate ||
+          new Date().toISOString(),
+        updatedAt:
+          leaseData?.data?.currentLease?.updatedAt ||
+          p.updatedAt ||
+          p.paymentDate ||
+          new Date().toISOString(),
+        deletedAt: null,
+        property: {
+          id: leaseData?.data?.id || "",
+          propertyName: leaseData?.data?.propertyName || "—",
+          propertyState: leaseData?.data?.propertyState || "",
+          propertyArea: leaseData?.data?.propertyArea || "",
+          propertyAddress: leaseData?.data?.propertyAddress || "",
+          propertyImage: leaseData?.data?.propertyImage || "",
+          createdById: leaseData?.data?.createdById || "",
+          rentAmount:
+            leaseData?.data?.rentAmount?.toString?.() ||
+            String(Number(p.amount) || 0),
+          leaseYears: leaseData?.data?.leaseYears || 1,
+          currentLeaseId: leaseData?.data?.currentLeaseId || null,
+          createdAt:
+            leaseData?.data?.createdAt ||
+            p.createdAt ||
+            p.paymentDate ||
+            new Date().toISOString(),
+          updatedAt:
+            leaseData?.data?.updatedAt ||
+            p.updatedAt ||
+            p.paymentDate ||
+            new Date().toISOString(),
+          deletedAt: null,
+        },
+        tenant: leaseData?.data?.currentLease?.tenant || fallbackTenant,
+      },
+    };
+    setSelectedHistoryPayment(paymentLike);
+    setTimeout(() => tenantPrint(), 100);
+  };
 
   // Show loading state
   if (isLeaseLoading) {
@@ -445,32 +638,82 @@ const TenantHomepage = () => {
         </Sheet>
         <Card className="bg-background flex flex-col gap-4">
           <p className="text-xs font-semibold uppercase">Payment History</p>
-          {leaseData?.data?.currentLease?.payment ? (
-            <div className="border-accent flex items-center justify-between border-l-2 pl-4">
-              <div className="flex flex-col">
-                <p className="text-muted-foreground text-xs font-medium">
-                  {formatDate(leaseData.data.currentLease.payment.paymentDate)}
-                </p>
-                <p className="text-sm font-bold">
-                  {formatCurrency(leaseData.data.currentLease.payment.amount)}
-                </p>
-              </div>
-              {leaseData.data.currentLease.payment.receiptUrl && (
-                <Button
-                  variant="ghost"
-                  className="text-xs uppercase"
-                  onClick={() =>
-                    leaseData.data.currentLease.payment.receiptUrl &&
-                    window.open(
-                      leaseData.data.currentLease.payment.receiptUrl,
-                      "_blank",
-                    )
-                  }
-                >
-                  <Icon icon="material-symbols:download-rounded" size="sm" />
-                  Receipt
-                </Button>
-              )}
+          {Array.isArray(payments) && payments.length > 0 ? (
+            <div className="flex flex-col gap-3">
+              {payments
+                .slice()
+                .sort((a, b) => {
+                  const timeA = a?.paymentDate
+                    ? new Date(a.paymentDate).getTime()
+                    : a?.createdAt
+                      ? new Date(a.createdAt).getTime()
+                      : 0;
+                  const timeB = b?.paymentDate
+                    ? new Date(b.paymentDate).getTime()
+                    : b?.createdAt
+                      ? new Date(b.createdAt).getTime()
+                      : 0;
+                  return timeB - timeA;
+                })
+                .map((p) => (
+                  <div
+                    key={p.id}
+                    className="border-accent flex items-center justify-between border-l-2 pl-4"
+                  >
+                    <div className="flex flex-col">
+                      <p className="text-muted-foreground text-xs font-medium">
+                        {p?.paymentDate || p?.createdAt
+                          ? formatDate((p.paymentDate ?? p.createdAt) as string)
+                          : "—"}
+                      </p>
+                      <p className="text-sm font-bold">
+                        {Number.isFinite(Number(p.amount))
+                          ? formatCurrency(Number(p.amount))
+                          : "—"}
+                      </p>
+                    </div>
+                    {p?.type === "manual" ? (
+                      p?.receiptUrl ? (
+                        <Button
+                          variant="ghost"
+                          className="text-xs uppercase"
+                          onClick={() => {
+                            try {
+                              if (p.receiptUrl)
+                                window.open(p.receiptUrl, "_blank");
+                            } catch (_) {
+                              /* no-op */
+                            }
+                          }}
+                        >
+                          <Icon
+                            icon="material-symbols:download-rounded"
+                            size="sm"
+                          />
+                          Receipt
+                        </Button>
+                      ) : (
+                        <Button
+                          variant="ghost"
+                          className="text-xs uppercase"
+                          onClick={() => handleTenantPrintReceipt(p)}
+                        >
+                          <Icon icon="material-symbols:print" size="sm" />
+                          Receipt
+                        </Button>
+                      )
+                    ) : (
+                      <Button
+                        variant="ghost"
+                        className="text-xs uppercase"
+                        onClick={() => handleTenantPrintReceipt(p)}
+                      >
+                        <Icon icon="material-symbols:print" size="sm" />
+                        Receipt
+                      </Button>
+                    )}
+                  </div>
+                ))}
             </div>
           ) : (
             <p className="text-muted-foreground text-sm">
@@ -478,6 +721,14 @@ const TenantHomepage = () => {
             </p>
           )}
         </Card>
+        {/* Hidden Receipt Component for Printing (Tenant) */}
+        <div className="hidden">
+          {selectedHistoryPayment && (
+            <div ref={tenantReceiptRef}>
+              <PaymentReceipt payment={selectedHistoryPayment} />
+            </div>
+          )}
+        </div>
       </Card>
       <div className="flex items-center gap-4 md:hidden">
         <Sheet>

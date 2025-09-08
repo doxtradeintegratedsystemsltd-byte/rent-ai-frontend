@@ -1,6 +1,13 @@
+"use client";
+
 import PaymentsTable from "@/components/admin/payments/payments-table";
+import { useBreadcrumb } from "@/hooks/useBreadcrumb";
 
 const page = () => {
+  useBreadcrumb([
+    { name: "Dashboard", href: "/super" },
+    { name: "Payments", href: "/super/payments" },
+  ]);
   return (
     <div className="flex flex-col gap-4">
       <div className="">

@@ -75,7 +75,7 @@ const SuperDashboardStats = () => {
     ? [
         {
           title: "Admins",
-          value: statsResponse.data.admins.all,
+          value: statsResponse.data.admins.current,
           subtitle: calculatePercentageChange(
             statsResponse.data.admins.current,
             statsResponse.data.admins.previous,
@@ -83,7 +83,7 @@ const SuperDashboardStats = () => {
         },
         {
           title: "Houses",
-          value: statsResponse.data.properties.all,
+          value: statsResponse.data.properties.current,
           subtitle: calculatePercentageChange(
             statsResponse.data.properties.current,
             statsResponse.data.properties.previous,
@@ -91,7 +91,7 @@ const SuperDashboardStats = () => {
         },
         {
           title: "Tenants",
-          value: statsResponse.data.tenants.all,
+          value: statsResponse.data.tenants.current,
           subtitle: calculatePercentageChange(
             statsResponse.data.tenants.current,
             statsResponse.data.tenants.previous,
@@ -99,7 +99,7 @@ const SuperDashboardStats = () => {
         },
         {
           title: "Rent Processed",
-          value: `₦${statsResponse.data.payments.all.toLocaleString()}`,
+          value: `₦${statsResponse.data.payments.current.toLocaleString()}`,
           subtitle: calculatePercentageChange(
             statsResponse.data.payments.current,
             statsResponse.data.payments.previous,

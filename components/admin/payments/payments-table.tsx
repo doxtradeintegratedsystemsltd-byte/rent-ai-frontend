@@ -17,7 +17,8 @@ import { Button } from "../../ui/button";
 import { Icon } from "@/components/ui/icon";
 import { useGetPayments } from "@/mutations/payment";
 import { Payment } from "@/types/payment";
-import { formatCurrency, formatDate, formatLongDate } from "@/lib/formatters";
+import { formatCurrency, formatDate } from "@/lib/formatters";
+import PaymentReceipt from "@/components/payments/payment-receipt";
 import usePrint, { PrintStyles } from "@/hooks/usePrint";
 import { useDebounce } from "@/hooks/useDebounce";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -26,7 +27,7 @@ import {
   TableSkeletonPresets,
 } from "@/components/ui/table-skeleton";
 
-const tableHead = [
+const tableHead: { label: string; className?: string }[] = [
   { label: "S/N" },
   { label: "House" },
   { label: "Tenant" },
@@ -172,6 +173,25 @@ const PaymentsTable = () => {
     }, 100);
   };
 
+  // Open uploaded image for manual payments; otherwise print a generated receipt
+  const handleReceiptAction = (payment: Payment) => {
+    if (payment.type === "manual") {
+      if (payment.receiptUrl) {
+        try {
+          window.open(payment.receiptUrl, "_blank");
+          return;
+        } catch (e) {
+          // fall back to print if popup blocked or invalid URL
+        }
+      }
+      // no receiptUrl available – print a standardized receipt
+      handlePrintReceipt(payment);
+      return;
+    }
+    // automated/paystack or others – print standardized receipt
+    handlePrintReceipt(payment);
+  };
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
@@ -250,10 +270,16 @@ const PaymentsTable = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handlePrintReceipt(payment)}
+                      onClick={() => handleReceiptAction(payment)}
                       className="uppercase"
                     >
-                      <Icon icon="material-symbols:print" />
+                      <Icon
+                        icon={
+                          payment.type === "manual" && payment.receiptUrl
+                            ? "material-symbols:download-rounded"
+                            : "material-symbols:print"
+                        }
+                      />
                       Receipt
                     </Button>
                   </TableCell>
@@ -295,79 +321,3 @@ const PaymentsTable = () => {
 };
 
 export default PaymentsTable;
-
-// Receipt Component for Printing
-const PaymentReceipt = ({ payment }: { payment: Payment }) => {
-  return (
-    <div className="flex w-full flex-col items-center">
-      <div className="bg-muted flex w-full items-center justify-between p-8">
-        <div className="w-full">
-          <Icon icon="material-symbols:material-symbols:contract-outline-rounded" />
-          <h2 className="text-2xl font-bold">Rent Payment</h2>
-        </div>
-        <p className="text-background bg-secondary-foreground rounded-md px-2 py-1 text-lg font-semibold uppercase">
-          Receipt
-        </p>
-      </div>
-      <div className="flex flex-col gap-6 p-8">
-        <div className="">
-          <p className="text-muted-foreground text-lg font-medium uppercase">
-            Property
-          </p>
-          <p className="text-xl font-bold">
-            {payment.lease?.property?.propertyName ?? "—"}
-            {payment.lease?.property?.propertyAddress
-              ? `, ${payment.lease.property.propertyAddress}`
-              : ""}
-            {payment.lease?.property?.propertyArea
-              ? `, ${payment.lease.property.propertyArea}`
-              : ""}
-            {payment.lease?.property?.propertyState
-              ? `, ${payment.lease.property.propertyState}`
-              : ""}
-          </p>
-        </div>
-        <div className="">
-          <p className="text-muted-foreground text-lg font-medium uppercase">
-            Tenant
-          </p>
-          <p className="text-xl font-bold">
-            {(payment.lease?.tenant?.firstName ?? "").toString()}{" "}
-            {(payment.lease?.tenant?.lastName ?? "").toString()}
-          </p>
-        </div>
-        <div className="">
-          <p className="text-muted-foreground text-lg font-medium uppercase">
-            Amount Paid
-          </p>
-          <p className="text-xl font-bold">
-            {typeof payment.amount === "number"
-              ? formatCurrency(payment.amount)
-              : "—"}
-          </p>
-        </div>
-        <div className="">
-          <p className="text-muted-foreground text-lg font-medium uppercase">
-            Date Paid
-          </p>
-          <p className="text-xl font-bold">
-            {payment.createdAt
-              ? formatLongDate(payment.createdAt)
-              : payment.paymentDate
-                ? formatLongDate(payment.paymentDate)
-                : "—"}
-          </p>
-        </div>
-        <div className="">
-          <p className="text-muted-foreground text-lg font-medium uppercase">
-            Received By
-          </p>
-          <p className="text-xl font-bold">
-            {(payment.createdBy?.firstName ?? "").toString()}{" "}
-            {(payment.createdBy?.lastName ?? "").toString()}
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};

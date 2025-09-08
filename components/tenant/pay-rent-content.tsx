@@ -14,6 +14,8 @@ import { LoadingSpinner } from "@/components/ui/loading-spinner";
 import { TenantPropertyInfo } from "@/types/lease";
 import { formatLongDate } from "@/lib/formatters";
 import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/error";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
 const PayRentContent = ({
   leaseData,
@@ -26,6 +28,10 @@ const PayRentContent = ({
   const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false); // success UI toggle
   const [isPaymentFailed, setIsPaymentFailed] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   // Extract rent amount and lease years from lease data
   const rentAmount = Number(leaseData?.rentAmount) || 1000000;
@@ -75,7 +81,12 @@ const PayRentContent = ({
             } catch (e) {
               // Fallback open new tab
               console.error("Error redirecting to payment URL:", e);
-              toast.error("Error redirecting to payment gateway.");
+              toast.error(
+                getApiErrorMessage(
+                  e,
+                  "Failed to redirect to payment URL. Please try again.",
+                ),
+              );
               window.open(resp.data, "_blank");
             }
           } else {
@@ -86,7 +97,18 @@ const PayRentContent = ({
         onError: (err) => {
           setIsPaymentFailed(true);
           console.error(err);
-          setErrorMsg("Payment initiation failed.");
+          setErrorMsg(
+            getApiErrorMessage(
+              err,
+              "Failed to initiate payment. Please try again.",
+            ),
+          );
+          toast.error(
+            getApiErrorMessage(
+              err,
+              "Failed to initiate payment. Please try again.",
+            ),
+          );
         },
       },
     );
@@ -95,6 +117,20 @@ const PayRentContent = ({
   const handleGoBackHome = () => {
     setIsPaymentSuccessful(false);
     setIsPaymentFailed(false);
+  };
+
+  // On success, also clear the `reference` query param from the URL
+  const handleGoBackHomeSuccess = () => {
+    setIsPaymentSuccessful(false);
+    setIsPaymentFailed(false);
+
+    const params = new URLSearchParams(searchParams?.toString());
+    if (params.has("reference")) {
+      params.delete("reference");
+      const newUrl = `${pathname}${params.toString() ? `?${params.toString()}` : ""}`;
+      // Replace so we don't add an extra history entry
+      router.replace(newUrl);
+    }
   };
 
   const handleTryAgain = () => {
@@ -250,7 +286,7 @@ const PayRentContent = ({
         {/* Go Back Home Button */}
         <Button
           className="bg-foreground text-background hover:bg-foreground/90 w-full"
-          onClick={handleGoBackHome}
+          onClick={handleGoBackHomeSuccess}
         >
           GO BACK HOME
         </Button>
