@@ -343,6 +343,29 @@ const TenantHomepage = () => {
     );
   }
 
+  // Show fallback for removed tenant (when lease data is null)
+  if (!isLeaseLoading && leaseData?.data === null) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center">
+        <div className="mx-auto max-w-md px-4 text-center">
+          <Icon
+            icon="material-symbols:block"
+            className="text-destructive mb-4 text-4xl"
+          />
+          <p className="mb-2 text-lg font-semibold">Access Restricted</p>
+          <p className="text-muted-foreground">
+            Unfortunately you can&apos;t access your dashboard, please contact
+            your house manager
+          </p>
+          <Button className="mt-4" variant="outline" onClick={handleLogout}>
+            <Icon icon="material-symbols:logout" className="mr-2" />
+            Logout
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
       <div className="flex flex-col gap-4">
