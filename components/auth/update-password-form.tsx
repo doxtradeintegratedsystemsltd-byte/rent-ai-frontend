@@ -18,7 +18,7 @@ import { Icon } from "@/components/ui/icon";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
   useResetPassword,
-  useVerifyPasswordResetLink,
+  useVerifyPasswordResetLinkQuery,
 } from "@/mutations/login";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/error";
@@ -48,7 +48,11 @@ export function UpdatePasswordForm() {
   const [isValidating, setIsValidating] = useState(true);
   const [isInvalidLink, setIsInvalidLink] = useState(false);
   const [targetEmail, setTargetEmail] = useState<string | null>(null);
-  const verifyMutation = useVerifyPasswordResetLink();
+  const {
+    data: verifyData,
+    isLoading: isVerifying,
+    isError: verifyError,
+  } = useVerifyPasswordResetLinkQuery(token, userId);
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
@@ -59,38 +63,35 @@ export function UpdatePasswordForm() {
   });
 
   useEffect(() => {
-    let ignore = false;
-    const verify = async () => {
-      // Require both params
-      if (!token || !userId) {
-        if (!ignore) {
-          setIsInvalidLink(true);
-          setIsValidating(false);
-        }
-        return;
+    // Early param validation
+    if (!token || !userId) {
+      setIsInvalidLink(true);
+      setIsValidating(false);
+      return;
+    }
+    // React-query manages loading; map its states to local UI flags once
+    if (isVerifying) {
+      setIsValidating(true);
+      return;
+    }
+
+    // Completed state
+    if (verifyError) {
+      setIsInvalidLink(true);
+      setIsValidating(false);
+      return;
+    }
+
+    if (verifyData) {
+      if (verifyData.status === "success") {
+        setTargetEmail(verifyData.data?.email ?? null);
+        setIsInvalidLink(false);
+      } else {
+        setIsInvalidLink(true);
       }
-      try {
-        const res = await verifyMutation.mutateAsync({ token, userId });
-        if (!ignore) {
-          if (res.status === "success") {
-            setTargetEmail(res.data?.email ?? null);
-            setIsInvalidLink(false);
-          } else {
-            setIsInvalidLink(true);
-          }
-        }
-      } catch (error) {
-        if (!ignore) setIsInvalidLink(true);
-        console.error("Error verifying password reset link:", error);
-      } finally {
-        if (!ignore) setIsValidating(false);
-      }
-    };
-    verify();
-    return () => {
-      ignore = true;
-    };
-  }, [token, userId, verifyMutation]);
+      setIsValidating(false);
+    }
+  }, [token, userId, isVerifying, verifyError, verifyData]);
 
   async function onSubmit(values: z.infer<typeof FormSchema>) {
     if (!token || !userId) {
@@ -205,8 +206,16 @@ export function UpdatePasswordForm() {
               )}
             />
 
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending ? "Updating..." : "Update Password"}
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={isPending || isValidating || isVerifying}
+            >
+              {isPending
+                ? "Updating..."
+                : isVerifying
+                  ? "Verifying..."
+                  : "Update Password"}
             </Button>
           </form>
         </Form>

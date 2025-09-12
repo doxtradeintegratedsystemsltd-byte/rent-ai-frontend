@@ -212,7 +212,7 @@ const DueRentsTable = () => {
                 <TableRow
                   key={row.id}
                   className="hover:bg-muted/50 cursor-pointer transition-colors"
-                  onClick={() => router.push(`/admin/property/${row.id}`)}
+                  onClick={() => router.push(`/super/property/${row.id}`)}
                 >
                   <TableCell className="text-muted-foreground">
                     {row.serialNumber}

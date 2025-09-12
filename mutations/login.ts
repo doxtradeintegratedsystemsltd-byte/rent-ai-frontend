@@ -1,4 +1,4 @@
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import api from "@/service/api";
 import { useAuthStore } from "@/store/authStore";
 import type {
@@ -79,5 +79,24 @@ export const useVerifyPasswordResetLink = () => {
       );
       return response.data;
     },
+  });
+};
+
+// Query variant (preferred) for verifying password reset link
+export const useVerifyPasswordResetLinkQuery = (
+  token?: string,
+  userId?: string,
+) => {
+  return useQuery({
+    queryKey: ["verify-password-reset-link", token, userId],
+    queryFn: async () => {
+      const response = await api.post("/auth/verify-password-reset-link", {
+        token,
+        userId,
+      } as VerifyPasswordResetLinkRequest);
+      return response.data as VerifyPasswordResetLinkResponse;
+    },
+    enabled: Boolean(token && userId),
+    retry: false, // Don't retry invalid/expired links automatically
   });
 };
