@@ -198,7 +198,8 @@ const TenantHomepage = () => {
   useBreadcrumb([{ name: "Tenant Dashboard", href: "/tenant" }]);
 
   // Disable Pay Rent if a next lease already exists (business rule aligned with admin view)
-  const disablePayRent = !!leaseData?.data?.currentLease?.nextLeaseId;
+  const disablePayRent =
+    leaseData?.data?.currentLease?.nextLease?.rentStatus === "paid";
 
   // Print setup for tenant payment receipt (for paystack entries without receiptUrl)
   const tenantReceiptRef = useRef<HTMLDivElement>(null);

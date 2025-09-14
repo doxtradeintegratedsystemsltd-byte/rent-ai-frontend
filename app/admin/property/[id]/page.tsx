@@ -59,7 +59,8 @@ const PropertyPage = () => {
 
   const property = propertyResponse?.data;
 
-  const disableAddPayment = !!property?.currentLease?.nextLeaseId;
+  const disableAddPayment =
+    property?.currentLease?.nextLease?.rentStatus === "paid";
 
   // Dynamic tenant details grid
   const tenantDetailsGrid = property?.currentLease?.tenant

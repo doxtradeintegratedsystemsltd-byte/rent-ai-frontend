@@ -60,7 +60,8 @@ const PropertyPage = () => {
 
   const property = propertyResponse?.data;
   // Disable adding payment if a next lease already exists (business rule)
-  const disableAddPayment = !!property?.currentLease?.nextLeaseId;
+  const disableAddPayment =
+    property?.currentLease?.nextLease?.rentStatus === "paid";
 
   // Dynamic tenant details grid
   const tenantDetailsGrid = property?.currentLease?.tenant

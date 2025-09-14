@@ -29,6 +29,7 @@ export interface Lease {
   deletedAt: string | null;
   tenant?: Tenant;
   property?: Property;
+  nextLease?: Lease | null; // embedded next lease object (self-referential)
 }
 
 // Tenant lease payment information
