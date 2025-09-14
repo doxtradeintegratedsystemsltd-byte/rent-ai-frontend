@@ -7,12 +7,47 @@ import { Icon } from "@/components/ui/icon";
 import { useUserRole, useAuthActions } from "@/store/authStore";
 import { Button } from "../ui/button";
 import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export function Sidebar() {
   const userRole = useUserRole();
   const { logout } = useAuthActions();
   const router = useRouter();
   const sidebarLinks = getSidebarLinks(userRole);
+
+  // Live date/time state (updates at the start of each minute)
+  const [now, setNow] = useState<Date>(() => new Date());
+
+  useEffect(() => {
+    // Calculate ms until next minute to align updates cleanly
+    const updateNow = () => setNow(new Date());
+    const msToNextMinute = 60000 - (Date.now() % 60000);
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const timeout = setTimeout(() => {
+      updateNow();
+      interval = setInterval(updateNow, 60000);
+    }, msToNextMinute);
+    return () => {
+      clearTimeout(timeout);
+      if (interval) clearInterval(interval);
+    };
+  }, []);
+
+  const timeString = (() => {
+    const raw = now.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }); // e.g. "2:10 PM"
+    return raw.replace("AM", "A.M.").replace("PM", "P.M.");
+  })();
+
+  const dateString = now.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 
   const handleLogout = () => {
     logout();
@@ -38,8 +73,8 @@ export function Sidebar() {
 
       <div className="border-border bg-muted flex flex-col gap-4 rounded-md border px-4 py-2">
         <div className="text-muted-foreground border-l-2 border-[#9B9B9B] p-2.5 text-xs font-medium">
-          <p>2:10 P.M.</p>
-          <p>Tuesday, February 5, 2025</p>
+          <p>{timeString}</p>
+          <p>{dateString}</p>
         </div>
         <Button
           onClick={handleLogout}

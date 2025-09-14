@@ -28,6 +28,7 @@ import usePrint, { PrintStyles } from "@/hooks/usePrint";
 import { useRef } from "react";
 import { useSearchParams } from "next/navigation";
 import { useGetPaymentStatusByReference } from "@/mutations/payment";
+import { getApiErrorMessage } from "@/lib/error";
 import { RentStatus } from "@/types/lease";
 
 // (duplicate imports removed)
@@ -68,6 +69,7 @@ const TenantHomepage = () => {
   const [refPaymentStatus, setRefPaymentStatus] = useState<
     "completed" | "pending" | "failed" | undefined
   >(undefined);
+  const [refPaymentError, setRefPaymentError] = useState<string | null>(null);
   const { mutate: fetchPaymentStatus, isPending: isCheckingStatus } =
     useGetPaymentStatusByReference();
 
@@ -75,15 +77,63 @@ const TenantHomepage = () => {
   useEffect(() => {
     if (reference) {
       setOpenPayRent(true);
+      setRefPaymentError(null);
       fetchPaymentStatus(reference, {
         onSuccess: (resp) => {
           setRefPaymentStatus(
             resp?.data?.status as "completed" | "pending" | "failed",
           );
+          setRefPaymentError(null);
+        },
+        onError: (err) => {
+          setRefPaymentStatus(undefined);
+          setRefPaymentError(
+            getApiErrorMessage(
+              err,
+              "We could not find a payment for this reference. It may be invalid or expired.",
+            ),
+          );
         },
       });
+    } else {
+      setRefPaymentError(null);
+      setRefPaymentStatus(undefined);
     }
   }, [reference, fetchPaymentStatus]);
+
+  // Clear reference from URL
+  const clearReferenceParam = () => {
+    if (!reference) return;
+    const params = new URLSearchParams(searchParams?.toString());
+    params.delete("reference");
+    const newUrl = `/tenant${params.toString() ? `?${params.toString()}` : ""}`;
+    router.replace(newUrl);
+    setRefPaymentError(null);
+    setRefPaymentStatus(undefined);
+  };
+
+  // Retry fetching payment status
+  const retryFetchPaymentStatus = () => {
+    if (!reference) return;
+    setRefPaymentError(null);
+    fetchPaymentStatus(reference, {
+      onSuccess: (resp) => {
+        setRefPaymentStatus(
+          resp?.data?.status as "completed" | "pending" | "failed",
+        );
+        setRefPaymentError(null);
+      },
+      onError: (err) => {
+        setRefPaymentStatus(undefined);
+        setRefPaymentError(
+          getApiErrorMessage(
+            err,
+            "We could not find a payment for this reference. It may be invalid or expired.",
+          ),
+        );
+      },
+    });
+  };
 
   // Payments list (from API response) for history rendering
   const rawData = leaseData?.data as unknown;
@@ -139,6 +189,9 @@ const TenantHomepage = () => {
   };
 
   useBreadcrumb([{ name: "Tenant Dashboard", href: "/tenant" }]);
+
+  // Disable Pay Rent if a next lease already exists (business rule aligned with admin view)
+  const disablePayRent = !!leaseData?.data?.currentLease?.nextLeaseId;
 
   // Print setup for tenant payment receipt (for paystack entries without receiptUrl)
   const tenantReceiptRef = useRef<HTMLDivElement>(null);
@@ -630,12 +683,15 @@ const TenantHomepage = () => {
         </div>
         <Sheet open={openPayRent} onOpenChange={setOpenPayRent}>
           <SheetTrigger asChild>
-            <Button className="w-full text-xs uppercase">
+            <Button
+              className="w-full text-xs uppercase"
+              disabled={disablePayRent}
+            >
               <Icon
                 icon="material-symbols:account-balance-outline-rounded"
                 size="sm"
               />
-              Pay Rent
+              {disablePayRent ? "Next Lease Paid" : "Pay Rent"}
             </Button>
           </SheetTrigger>
           <SheetContent className="w-full max-w-full min-w-full md:w-[600px] md:max-w-[600px] md:min-w-[600px] [&>button]:hidden">
@@ -654,15 +710,53 @@ const TenantHomepage = () => {
                 Pay Rent
               </SheetTitle>
             </SheetHeader>
-            {isCheckingStatus && reference && (
-              <div className="text-muted-foreground mb-4 text-xs">
-                Verifying payment status...
+            {reference && refPaymentError ? (
+              <div className="flex h-full flex-col items-center justify-center py-12 text-center">
+                <div className="bg-destructive/10 mb-6 flex h-16 w-16 items-center justify-center rounded-full">
+                  <Icon
+                    icon="material-symbols:error-outline-rounded"
+                    className="text-destructive h-8 w-8"
+                  />
+                </div>
+                <h3 className="text-destructive mb-2 text-lg font-semibold">
+                  Invalid Payment Reference
+                </h3>
+                <p className="text-muted-foreground mx-auto mb-6 max-w-sm text-sm leading-relaxed">
+                  {refPaymentError}
+                </p>
+                <div className="flex flex-col items-center gap-3 sm:flex-row">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="text-[11px] uppercase"
+                    onClick={clearReferenceParam}
+                  >
+                    Start New Payment
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="text-[11px] uppercase"
+                    disabled={isCheckingStatus}
+                    onClick={retryFetchPaymentStatus}
+                  >
+                    Retry Lookup
+                  </Button>
+                </div>
               </div>
+            ) : (
+              <>
+                {isCheckingStatus && reference && (
+                  <div className="text-muted-foreground mb-4 text-xs">
+                    Verifying payment status...
+                  </div>
+                )}
+                <PayRentContent
+                  leaseData={leaseData?.data}
+                  paymentStatus={refPaymentStatus}
+                  onClose={() => setOpenPayRent(false)}
+                />
+              </>
             )}
-            <PayRentContent
-              leaseData={leaseData?.data}
-              paymentStatus={refPaymentStatus}
-            />
           </SheetContent>
         </Sheet>
         <Card className="bg-background flex flex-col gap-4">

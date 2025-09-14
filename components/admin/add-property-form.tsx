@@ -15,13 +15,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Dropdown } from "@/components/ui/dropdown";
 import { formatDropdownItems } from "@/lib/formatters";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Icon } from "../ui/icon";
 import Image from "next/image";
 import { usePropertyImageUpload } from "@/mutations/upload";
 import { useCreateProperty } from "@/mutations/property";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/error";
+import nigeriaStates from "@/lib/states.json";
 
 const FormSchema = z.object({
   propertyName: z.string().min(1, { message: "House name is required" }),
@@ -97,8 +98,17 @@ const AddPropertyForm = () => {
     });
   };
 
-  const states = ["Lagos", "Abuja", "Kano", "Rivers", "Ogun"];
-  const areas = ["Victoria Island", "Lekki", "Ikeja", "Surulere", "Ikoyi"];
+  // Derive states list from JSON keys
+  const states = useMemo(() => Object.keys(nigeriaStates), []);
+  // Watch currently selected state to derive its LGAs
+  const selectedState = form.watch("propertyState");
+  const areas = useMemo(
+    () =>
+      selectedState && selectedState in nigeriaStates
+        ? (nigeriaStates as Record<string, string[]>)[selectedState]
+        : [],
+    [selectedState],
+  );
 
   const leaseYearsOptions = [
     { label: "1 year", value: "1" },
@@ -183,28 +193,34 @@ const AddPropertyForm = () => {
           <FormField
             control={form.control}
             name="propertyArea"
-            render={({ field }) => (
-              <FormItem className="w-full">
-                <FormLabel required className="text-sm">
-                  House area
-                </FormLabel>
-                <FormControl>
-                  <Dropdown
-                    trigger={{
-                      label: field.value || "Select area",
-                      arrowIcon: "material-symbols:keyboard-arrow-down",
-                      className: `w-full justify-between ${isFormDisabled ? "opacity-50 pointer-events-none" : ""}`,
-                    }}
-                    items={formatDropdownItems(areas)}
-                    onItemSelect={(value) =>
-                      !isFormDisabled && field.onChange(value)
-                    }
-                    className="w-full px-4 py-2"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
+            render={({ field }) => {
+              const disabled =
+                !selectedState || areas.length === 0 || isFormDisabled;
+              return (
+                <FormItem className="w-full">
+                  <FormLabel required className="text-sm">
+                    House area
+                  </FormLabel>
+                  <FormControl>
+                    <Dropdown
+                      trigger={{
+                        label:
+                          field.value ||
+                          (disabled ? "Select state first" : "Select area"),
+                        arrowIcon: "material-symbols:keyboard-arrow-down",
+                        className: `w-full justify-between ${disabled ? "opacity-50 pointer-events-none" : ""}`,
+                      }}
+                      items={formatDropdownItems(areas)}
+                      onItemSelect={(value) =>
+                        !disabled && field.onChange(value)
+                      }
+                      className="w-full px-4 py-2"
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              );
+            }}
           />
         </div>
 

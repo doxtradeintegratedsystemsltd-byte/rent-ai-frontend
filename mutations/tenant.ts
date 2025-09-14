@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import api from "@/service/api";
 import type { ApiResponse } from "@/types/user";
@@ -9,7 +10,7 @@ import {
   TenantFetchParams,
   TenantsListResponse,
 } from "@/types/tenant";
-import { PropertySingleResponse } from "@/types/property";
+import { PropertySingleResponse } from "@/types/property"; // Corrected import path
 import { TenantLeaseResponse } from "@/types/lease";
 
 // Fetch tenant lease information query
@@ -90,12 +91,74 @@ export const useAddTenantToProperty = () => {
           if (!oldData || !oldData.data || !data.data) return oldData;
 
           const existingPayments = oldData.data.payments || [];
-          const newPayment = data.data.payment;
-          const mergedPayments = newPayment
-            ? // Avoid duplicates
-              existingPayments.some((p) => p.id === newPayment.id)
+          // Backend tenant-create response structure may include payment info inline (data.payment) or only paymentId inside lease
+          const responsePayment: any = (data as any).data.payment;
+
+          // Construct a Payment-like object if we have minimal payment fields; else skip
+          let constructedPayment = undefined as any;
+          if (responsePayment) {
+            // If backend already returns payment object with needed fields
+            constructedPayment = {
+              id: responsePayment.id,
+              type: "manual" as const,
+              amount: parseFloat(responsePayment.amount?.toString() || "0"),
+              reference: null,
+              status: "completed" as const,
+              receiptUrl:
+                responsePayment.paymentReceipt ||
+                responsePayment.receiptUrl ||
+                null,
+              leaseId: responsePayment.leaseId || data.data.lease.id,
+              // createdById not present on partial lease shape returned here, fallback to property creator
+              createdById: oldData.data.createdById,
+              paymentDate:
+                responsePayment.paymentDate || new Date().toISOString(),
+              createdAt: responsePayment.createdAt || new Date().toISOString(),
+              updatedAt: responsePayment.updatedAt || new Date().toISOString(),
+              deletedAt: null,
+              createdBy: oldData.data.createdBy, // reuse property creator (best effort)
+              lease: {
+                ...data.data.lease,
+                rentAmount: data.data.lease.rentAmount,
+                tenant: data.data.tenant,
+                property: {
+                  ...oldData.data,
+                },
+              },
+            };
+          } else if ((data.data.lease as any)?.paymentId) {
+            // Fallback: create synthetic payment with placeholders if only paymentId present
+            constructedPayment = {
+              id: (data.data.lease as any).paymentId,
+              type: "manual" as const,
+              amount: parseFloat(
+                (data.data.lease as any).rentAmount?.toString() || "0",
+              ),
+              reference: null,
+              status: "completed" as const,
+              receiptUrl: null,
+              leaseId: data.data.lease.id,
+              createdById: oldData.data.createdById,
+              paymentDate:
+                (variables as any).paymentDate || new Date().toISOString(),
+              createdAt: new Date().toISOString(),
+              updatedAt: new Date().toISOString(),
+              deletedAt: null,
+              createdBy: oldData.data.createdBy,
+              lease: {
+                ...data.data.lease,
+                tenant: data.data.tenant,
+                property: {
+                  ...oldData.data,
+                },
+              },
+            };
+          }
+
+          const mergedPayments = constructedPayment
+            ? existingPayments.some((p) => p.id === constructedPayment.id)
               ? existingPayments
-              : [newPayment, ...existingPayments]
+              : [constructedPayment, ...existingPayments]
             : existingPayments;
 
           return {

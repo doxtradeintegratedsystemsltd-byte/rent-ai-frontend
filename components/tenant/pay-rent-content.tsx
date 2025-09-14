@@ -20,14 +20,18 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 const PayRentContent = ({
   leaseData,
   paymentStatus,
+  onClose,
 }: {
   leaseData: TenantPropertyInfo | undefined;
   paymentStatus?: "completed" | "pending" | "failed";
+  onClose?: () => void; // optional callback to close parent sheet/modal
 }) => {
   const [selectedCycles, setSelectedCycles] = useState(1);
   const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false); // success UI toggle
   const [isPaymentFailed, setIsPaymentFailed] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  // Lock the button after a successful initiation to prevent duplicate link creation
+  const [redirecting, setRedirecting] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
@@ -62,6 +66,7 @@ const PayRentContent = ({
   const { mutate: initiatePayment, isPending } = useInitiatePayment();
 
   const handlePayment = () => {
+    if (isPending || redirecting) return; // safety guard against rapid re-clicks
     if (!leaseData?.currentLeaseId) {
       setErrorMsg("Missing lease identifier.");
       return;
@@ -74,6 +79,8 @@ const PayRentContent = ({
       },
       {
         onSuccess: (resp) => {
+          // Lock button immediately before attempting redirect
+          setRedirecting(true);
           if (resp?.data) {
             // Redirect tenant to checkout page (Paystack URL)
             try {
@@ -88,10 +95,12 @@ const PayRentContent = ({
                 ),
               );
               window.open(resp.data, "_blank");
+              // If fallback open succeeds, we can keep it locked. If we wanted to allow retry on failure we could reset redirecting here.
             }
           } else {
             setErrorMsg("No checkout URL returned.");
             setIsPaymentFailed(true);
+            setRedirecting(false); // allow retry if no URL
           }
         },
         onError: (err) => {
@@ -109,6 +118,7 @@ const PayRentContent = ({
               "Failed to initiate payment. Please try again.",
             ),
           );
+          setRedirecting(false); // ensure unlocked for retry
         },
       },
     );
@@ -117,6 +127,7 @@ const PayRentContent = ({
   const handleGoBackHome = () => {
     setIsPaymentSuccessful(false);
     setIsPaymentFailed(false);
+    onClose?.();
   };
 
   // On success, also clear the `reference` query param from the URL
@@ -131,6 +142,8 @@ const PayRentContent = ({
       // Replace so we don't add an extra history entry
       router.replace(newUrl);
     }
+    // Close the parent sheet/modal after successful payment navigation
+    onClose?.();
   };
 
   const handleTryAgain = () => {
@@ -344,11 +357,15 @@ const PayRentContent = ({
       <Button
         className="w-full text-sm uppercase"
         onClick={handlePayment}
-        disabled={isPending || !leaseData?.id}
+        disabled={isPending || redirecting || !leaseData?.id}
       >
         {isPending ? (
           <span className="flex items-center gap-2">
             <LoadingSpinner size="sm" /> Processing...
+          </span>
+        ) : redirecting ? (
+          <span className="flex items-center gap-2">
+            <LoadingSpinner size="sm" /> Redirecting...
           </span>
         ) : (
           <span className="flex items-center">

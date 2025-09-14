@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Icon } from "@/components/ui/icon";
 import { Button } from "../ui/button";
@@ -20,6 +21,37 @@ export function TenantHeader() {
   const { breadcrumbs } = useBreadcrumbs();
 
   const pathname = usePathname();
+
+  // Live date/time (minute precision) similar to sidebar
+  const [now, setNow] = useState<Date>(() => new Date());
+  useEffect(() => {
+    const updateNow = () => setNow(new Date());
+    const msToNextMinute = 60000 - (Date.now() % 60000);
+    let interval: ReturnType<typeof setInterval> | null = null;
+    const timeout = setTimeout(() => {
+      updateNow();
+      interval = setInterval(updateNow, 60000);
+    }, msToNextMinute);
+    return () => {
+      clearTimeout(timeout);
+      if (interval) clearInterval(interval);
+    };
+  }, []);
+
+  const timeString = (() => {
+    const raw = now.toLocaleTimeString("en-US", {
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    });
+    return raw.replace("AM", "A.M.").replace("PM", "P.M.");
+  })();
+  const dateString = now.toLocaleDateString("en-US", {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 
   // Fallback breadcrumb generation for pages that don't set custom breadcrumbs
   const getFallbackBreadcrumbs = (path: string) => {
@@ -89,7 +121,7 @@ export function TenantHeader() {
 
         <div className="flex items-center space-x-4">
           <p className="text-muted-foreground border-accent-foreground hidden border-l-2 py-1 pl-2 text-xs font-medium md:block">
-            2:10P.M. • Tuesday, February 5, 2025
+            {timeString} • {dateString}
           </p>
 
           <Sheet>

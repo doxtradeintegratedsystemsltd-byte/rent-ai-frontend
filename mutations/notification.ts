@@ -26,7 +26,7 @@ export const useGetNotifications = (page: number = 0, size: number = 10) => {
     queryKey: ["notifications", page, size],
     queryFn: async (): Promise<NotificationsResponse> => {
       const response = await api.get(
-        `/notifications/user?sortOrder=DESC&page=${page}&size=${size}`,
+        `/notifications/user?&page=${page}&size=${size}&sort=createdAt&sortOrder=DESC`,
       );
       return response.data;
     },
