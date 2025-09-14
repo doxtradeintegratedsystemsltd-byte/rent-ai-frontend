@@ -13,16 +13,17 @@ import {
 import { PropertySingleResponse } from "@/types/property"; // Corrected import path
 import { TenantLeaseResponse } from "@/types/lease";
 
-// Fetch tenant lease information query
-export const useFetchTenantLease = () => {
+// Fetch tenant lease information query; include tenantId in key so data resets on account switch
+export const useFetchTenantLease = (tenantId?: string | null) => {
   return useQuery({
-    queryKey: ["tenant", "lease"],
+    queryKey: ["tenant", "lease", tenantId || "anonymous"],
     queryFn: async (): Promise<TenantLeaseResponse> => {
       const response = await api.get("/leases/tenant");
       return response.data;
     },
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000,
+    enabled: !!tenantId, // don't run until we know which tenant (prevents flashing stale data)
+    staleTime: 0, // force refetch on mount for each tenant session
+    gcTime: 5 * 60 * 1000,
   });
 };
 

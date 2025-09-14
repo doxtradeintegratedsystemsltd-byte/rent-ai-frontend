@@ -22,7 +22,7 @@ import { useRouter } from "next/navigation";
 import { useFetchTenantLease } from "@/mutations/tenant";
 import { formatCurrency } from "@/lib/formatters";
 import TenantNotifications from "@/components/tenant/tenant-notifications";
-import { Payment } from "@/types/payment";
+import { Payment, ReferencePayment } from "@/types/payment";
 import PaymentReceipt from "@/components/payments/payment-receipt";
 import usePrint, { PrintStyles } from "@/hooks/usePrint";
 import { useRef } from "react";
@@ -57,11 +57,12 @@ const TenantHomepage = () => {
   const router = useRouter();
 
   const user = useUser();
+  const tenantId = user?.tenant?.id || null;
   const {
     data: leaseData,
     isLoading: isLeaseLoading,
     error: leaseError,
-  } = useFetchTenantLease();
+  } = useFetchTenantLease(tenantId);
 
   const searchParams = useSearchParams();
   const reference = searchParams?.get("reference") || undefined;
@@ -69,6 +70,7 @@ const TenantHomepage = () => {
   const [refPaymentStatus, setRefPaymentStatus] = useState<
     "completed" | "pending" | "failed" | undefined
   >(undefined);
+  const [refPayment, setRefPayment] = useState<ReferencePayment | null>(null); // holds full payment object when reference lookup succeeds
   const [refPaymentError, setRefPaymentError] = useState<string | null>(null);
   const { mutate: fetchPaymentStatus, isPending: isCheckingStatus } =
     useGetPaymentStatusByReference();
@@ -83,10 +85,12 @@ const TenantHomepage = () => {
           setRefPaymentStatus(
             resp?.data?.status as "completed" | "pending" | "failed",
           );
+          setRefPayment((resp?.data as ReferencePayment) || null);
           setRefPaymentError(null);
         },
         onError: (err) => {
           setRefPaymentStatus(undefined);
+          setRefPayment(null);
           setRefPaymentError(
             getApiErrorMessage(
               err,
@@ -98,6 +102,7 @@ const TenantHomepage = () => {
     } else {
       setRefPaymentError(null);
       setRefPaymentStatus(undefined);
+      setRefPayment(null);
     }
   }, [reference, fetchPaymentStatus]);
 
@@ -121,10 +126,12 @@ const TenantHomepage = () => {
         setRefPaymentStatus(
           resp?.data?.status as "completed" | "pending" | "failed",
         );
+        setRefPayment((resp?.data as ReferencePayment) || null);
         setRefPaymentError(null);
       },
       onError: (err) => {
         setRefPaymentStatus(undefined);
+        setRefPayment(null);
         setRefPaymentError(
           getApiErrorMessage(
             err,
@@ -753,6 +760,7 @@ const TenantHomepage = () => {
                 <PayRentContent
                   leaseData={leaseData?.data}
                   paymentStatus={refPaymentStatus}
+                  referencePayment={refPayment}
                   onClose={() => setOpenPayRent(false)}
                 />
               </>

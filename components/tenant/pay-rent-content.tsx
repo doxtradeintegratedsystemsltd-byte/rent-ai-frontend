@@ -16,15 +16,18 @@ import { formatLongDate } from "@/lib/formatters";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/error";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { ReferencePayment } from "@/types/payment";
 
 const PayRentContent = ({
   leaseData,
   paymentStatus,
   onClose,
+  referencePayment,
 }: {
   leaseData: TenantPropertyInfo | undefined;
   paymentStatus?: "completed" | "pending" | "failed";
   onClose?: () => void; // optional callback to close parent sheet/modal
+  referencePayment?: ReferencePayment | null; // full payment from reference lookup
 }) => {
   const [selectedCycles, setSelectedCycles] = useState(1);
   const [isPaymentSuccessful, setIsPaymentSuccessful] = useState(false); // success UI toggle
@@ -40,7 +43,20 @@ const PayRentContent = ({
   // Extract rent amount and lease years from lease data
   const rentAmount = Number(leaseData?.rentAmount) || 1000000;
   const leaseYears = leaseData?.leaseYears || 1;
-  const totalAmount = rentAmount * selectedCycles;
+  const inferredCyclesFromReference = (() => {
+    if (!referencePayment?.lease) return null;
+    const leaseCycles = referencePayment.lease?.leaseCycles;
+    // If we have rentAmount string on property and amount on payment: cycles = payment.amount / baseRent
+    const baseRentRaw = referencePayment.lease?.property?.rentAmount;
+    const baseRent = baseRentRaw ? parseFloat(baseRentRaw.toString()) : null;
+    if (leaseCycles && typeof leaseCycles === "number") return leaseCycles;
+    if (baseRent && baseRent > 0) {
+      const calc = referencePayment.amount / baseRent;
+      if (Number.isFinite(calc) && calc >= 1) return Math.round(calc);
+    }
+    return null;
+  })();
+  const totalAmount = referencePayment?.amount ?? rentAmount * selectedCycles;
 
   // Generate payment cycles dynamically based on lease years
   const generatePaymentCycles = () => {
@@ -235,6 +251,11 @@ const PayRentContent = ({
 
   // Payment Success UI (also if external status indicates completed)
   if (isPaymentSuccessful || paymentStatus === "completed") {
+    const summaryLease = referencePayment?.lease || leaseData?.currentLease;
+    const cyclesDisplay = inferredCyclesFromReference || selectedCycles;
+    const endDateDisplay =
+      summaryLease?.endDate || leaseData?.currentLease?.endDate;
+    const propertySummary = referencePayment?.lease?.property || leaseData;
     return (
       <div className="mt-8 flex flex-col items-center gap-6 text-center">
         {/* Success Icon */}
@@ -266,9 +287,9 @@ const PayRentContent = ({
                   House
                 </p>
                 <p className="text-sm font-medium">
-                  {leaseData?.propertyName || "N/A"},{" "}
-                  {leaseData?.propertyAddress || "N/A"},{" "}
-                  {leaseData?.propertyState || "N/A"}
+                  {propertySummary?.propertyName || "N/A"},{" "}
+                  {propertySummary?.propertyAddress || "N/A"},{" "}
+                  {propertySummary?.propertyState || "N/A"}
                 </p>
               </div>
 
@@ -277,8 +298,8 @@ const PayRentContent = ({
                   Amount Paid
                 </p>
                 <p className="text-sm font-medium">
-                  ₦{totalAmount.toLocaleString()} ({selectedCycles} cycle
-                  {selectedCycles > 1 ? "s" : ""})
+                  ₦{totalAmount.toLocaleString()} ({cyclesDisplay} cycle
+                  {cyclesDisplay && cyclesDisplay > 1 ? "s" : ""})
                 </p>
               </div>
 
@@ -287,9 +308,7 @@ const PayRentContent = ({
                   Due Date
                 </p>
                 <p className="text-sm font-medium">
-                  {leaseData?.currentLease?.endDate
-                    ? formatLongDate(leaseData.currentLease.endDate)
-                    : "N/A"}
+                  {endDateDisplay ? formatLongDate(endDateDisplay) : "N/A"}
                 </p>
               </div>
             </div>

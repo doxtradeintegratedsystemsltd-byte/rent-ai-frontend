@@ -1,3 +1,5 @@
+import { Lease } from "./lease";
+
 export interface NewPaymentRequest {
   leaseId: string;
   leaseCycles: number;
@@ -129,4 +131,18 @@ export interface PaymentReferenceStatusResponse {
     reference: string;
     status: "completed" | "pending" | "failed";
   } & Record<string, any>; // allow extra backend fields without strict typing
+}
+
+export interface ReferencePayment {
+  id: string;
+  type: string;
+  amount: number;
+  reference: string | null;
+  status: string;
+  receiptUrl: string | null;
+  leaseId: string;
+  paymentDate?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  lease?: Lease;
 }
