@@ -7,6 +7,8 @@ import {
   MarkNotificationAsReadResponse,
 } from "@/types/notification";
 
+const ts = Date.now();
+
 export const useCreateNotification = () => {
   return useMutation({
     mutationFn: async (
@@ -21,12 +23,17 @@ export const useCreateNotification = () => {
   });
 };
 
-export const useGetNotifications = (page: number = 0, size: number = 10) => {
+export const useGetNotifications = (
+  page: number = 0,
+  size: number = 10,
+  seen?: boolean,
+) => {
   return useQuery({
-    queryKey: ["notifications", page, size],
+    queryKey: ["notifications", { page, size, seen }],
     queryFn: async (): Promise<NotificationsResponse> => {
+      const seenParam = seen !== undefined ? `&seen=${seen}` : "";
       const response = await api.get(
-        `/notifications/user?&page=${page}&size=${size}&sort=createdAt&sortOrder=DESC`,
+        `/notifications/user?page=${page}&size=${size}&sort=createdAt&sortOrder=DESC${seenParam}&t=${ts}`,
       );
       return response.data;
     },
@@ -59,7 +66,9 @@ export const useGetUnreadNotificationsCount = () => {
   return useQuery({
     queryKey: ["unread-notifications-count"],
     queryFn: async (): Promise<{ count: number }> => {
-      const response = await api.get("/notifications/user/unread-count");
+      const response = await api.get(
+        `/notifications/user/unread-count?t=${ts}`,
+      );
       return response.data.data;
     },
     refetchInterval: 30000, // Refetch every 30 seconds

@@ -19,7 +19,11 @@ const Notifications = () => {
     data: notificationsData,
     isLoading,
     error,
-  } = useGetNotifications(currentPage, pageSize);
+  } = useGetNotifications(
+    currentPage,
+    pageSize,
+    showUnreadOnly ? false : undefined,
+  );
 
   const markAsReadMutation = useMarkNotificationAsRead();
   const markAllAsReadMutation = useMarkAllNotificationsAsRead();
@@ -78,9 +82,7 @@ const Notifications = () => {
   }
 
   const notifications = notificationsData?.data?.data || [];
-  const filteredNotifications = showUnreadOnly
-    ? notifications.filter((notification) => !notification.seen)
-    : notifications;
+  const filteredNotifications = notifications; // backend handles filtering when seen flag is provided
 
   const unreadCount = notifications.filter(
     (notification) => !notification.seen,
@@ -89,7 +91,7 @@ const Notifications = () => {
   if (notifications.length === 0) {
     return (
       <div className="text-muted-foreground mt-6 text-center">
-        No notifications found.
+        No notifications yet.
       </div>
     );
   }
@@ -106,11 +108,6 @@ const Notifications = () => {
           >
             {showUnreadOnly ? "Show All" : "Unread Only"}
           </Button>
-          <span className="text-muted-foreground text-sm">
-            {showUnreadOnly
-              ? `${filteredNotifications.length} unread notifications`
-              : `${notifications.length} total notifications`}
-          </span>
         </div>
 
         {unreadCount > 0 && (

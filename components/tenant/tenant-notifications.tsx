@@ -4,6 +4,7 @@ import {
   useGetNotifications,
   useMarkNotificationAsRead,
   useMarkAllNotificationsAsRead,
+  useGetUnreadNotificationsCount,
 } from "@/mutations/notification";
 import NotificationCard from "@/components/admin/notifications/notification-card";
 import { formatNotificationDate, formatNotificationTime } from "@/lib/time";
@@ -17,15 +18,19 @@ const TenantNotifications = () => {
   const [showUnreadOnly, setShowUnreadOnly] = useState(false);
   const pageSize = 5;
 
-  const { data, isLoading, error } = useGetNotifications(currentPage, pageSize);
+  const { data, isLoading, error } = useGetNotifications(
+    currentPage,
+    pageSize,
+    showUnreadOnly ? false : undefined,
+  );
   const markReadMutation = useMarkNotificationAsRead();
   const markAllReadMutation = useMarkAllNotificationsAsRead();
+  const { data: unreadData } = useGetUnreadNotificationsCount();
 
   const notifications = data?.data?.data || [];
-  const filtered = showUnreadOnly
-    ? notifications.filter((n) => !n.seen)
-    : notifications;
-  const unreadCount = notifications.filter((n) => !n.seen).length;
+  const filtered = notifications; // backend handles filtering when seen flag is provided
+  const pageUnreadCount = notifications.filter((n) => !n.seen).length;
+  const totalUnreadCount = unreadData?.count ?? pageUnreadCount;
 
   const formatType = (type: string) => {
     switch (type) {
@@ -62,8 +67,17 @@ const TenantNotifications = () => {
 
   if (notifications.length === 0) {
     return (
-      <div className="text-muted-foreground mt-6 text-center text-sm">
-        No notifications yet.
+      <div className="flex flex-col items-center">
+        <Button
+          variant={showUnreadOnly ? "default" : "outline"}
+          size="sm"
+          onClick={() => setShowUnreadOnly((v) => !v)}
+        >
+          {showUnreadOnly ? "Show All" : "Unread Only"}
+        </Button>
+        <div className="text-muted-foreground mt-6 text-center text-sm">
+          No unread notifications.
+        </div>
       </div>
     );
   }
@@ -80,12 +94,10 @@ const TenantNotifications = () => {
             {showUnreadOnly ? "Show All" : "Unread Only"}
           </Button>
           <span className="text-muted-foreground text-sm">
-            {showUnreadOnly
-              ? `${filtered.length} unread`
-              : `${notifications.length} total`}
+            {showUnreadOnly ? `${totalUnreadCount} unread` : "0 unread"}
           </span>
         </div>
-        {unreadCount > 0 && (
+        {totalUnreadCount > 0 && (
           <Button
             variant="outline"
             size="sm"
