@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Dropdown } from "@/components/ui/dropdown";
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { Icon } from "../ui/icon";
 import Image from "next/image";
 import { usePropertyImageUpload } from "@/mutations/upload";

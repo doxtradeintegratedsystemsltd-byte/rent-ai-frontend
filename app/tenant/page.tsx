@@ -363,6 +363,13 @@ const TenantHomepage = () => {
             p.paymentDate ||
             new Date().toISOString(),
           deletedAt: null,
+          location: {
+            id: "",
+            name: "",
+            createdAt: "",
+            updatedAt: "",
+            deletedAt: null,
+          },
         },
         tenant: leaseData?.data?.currentLease?.tenant || fallbackTenant,
       },
