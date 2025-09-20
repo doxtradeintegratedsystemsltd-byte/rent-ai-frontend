@@ -1,4 +1,6 @@
 "use client";
+import { useFetchLocations } from "@/mutations/locations";
+import type { Location } from "@/types/locations";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -14,7 +16,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Dropdown } from "@/components/ui/dropdown";
-import { formatDropdownItems } from "@/lib/formatters";
 import { useState, useMemo } from "react";
 import { Icon } from "../../ui/icon";
 import Image from "next/image";
@@ -22,12 +23,11 @@ import { usePropertyImageUpload } from "@/mutations/upload";
 import { useCreatePropertyForAdmin } from "@/mutations/property";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/error";
-import nigeriaStates from "@/lib/states.json";
+// removed states-based selection in favor of locations
 
 const FormSchema = z.object({
   propertyName: z.string().min(1, { message: "House name is required" }),
-  propertyState: z.string().min(1, { message: "House state is required" }),
-  propertyArea: z.string().min(1, { message: "House area is required" }),
+  locationId: z.string().min(1, { message: "House location is required" }),
   propertyAddress: z.string().min(1, { message: "Address is required" }),
   propertyImage: z.instanceof(File, { message: "House image is required" }),
   leaseYears: z.number().min(1, { message: "Lease duration is required" }),
@@ -36,8 +36,7 @@ const FormSchema = z.object({
 
 interface PropertySubmissionData {
   propertyName: string;
-  propertyState: string;
-  propertyArea: string;
+  locationId: string;
   propertyAddress: string;
   propertyImage: string;
   leaseYears: number;
@@ -55,13 +54,14 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
 
   const imageUpload = usePropertyImageUpload();
   const createProperty = useCreatePropertyForAdmin();
+  const { data: locationsData, isLoading: isLocationsLoading } =
+    useFetchLocations({ page: 0, pageSize: 100, sortOrder: "DESC" });
 
   const form = useForm<z.infer<typeof FormSchema>>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
       propertyName: "",
-      propertyState: "",
-      propertyArea: "",
+      locationId: "",
       propertyAddress: "",
       propertyImage: undefined,
       leaseYears: 0,
@@ -76,8 +76,7 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
 
     const propertyData: PropertySubmissionData = {
       propertyName: data.propertyName,
-      propertyState: data.propertyState,
-      propertyArea: data.propertyArea,
+      locationId: data.locationId,
       propertyAddress: data.propertyAddress,
       propertyImage: imageUrl,
       leaseYears: data.leaseYears,
@@ -104,14 +103,13 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
     });
   };
 
-  const states = useMemo(() => Object.keys(nigeriaStates), []);
-  const selectedState = form.watch("propertyState");
-  const areas = useMemo(
-    () =>
-      selectedState && selectedState in nigeriaStates
-        ? (nigeriaStates as Record<string, string[]>)[selectedState]
-        : [],
-    [selectedState],
+  const locationOptions = useMemo(
+    (): { label: string; value: string }[] =>
+      (locationsData?.data?.data || []).map((loc: Location) => ({
+        label: loc.name,
+        value: loc.id,
+      })),
+    [locationsData],
   );
 
   const leaseYearsOptions = [
@@ -165,66 +163,39 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
             </FormItem>
           )}
         />
-        <div className="flex gap-4">
-          <FormField
-            control={form.control}
-            name="propertyState"
-            render={({ field }) => (
-              <FormItem className="w-full">
-                <FormLabel required className="text-sm">
-                  House state
-                </FormLabel>
-                <FormControl>
-                  <Dropdown
-                    trigger={{
-                      label: field.value || "Select state",
-                      arrowIcon: "material-symbols:keyboard-arrow-down",
-                      className: `w-full justify-between ${isFormDisabled ? "opacity-50 pointer-events-none" : ""}`,
-                    }}
-                    items={formatDropdownItems(states)}
-                    onItemSelect={(value) =>
-                      !isFormDisabled && field.onChange(value)
-                    }
-                    className="w-full px-4 py-2"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="propertyArea"
-            render={({ field }) => {
-              const disabled =
-                !selectedState || areas.length === 0 || isFormDisabled;
-              return (
-                <FormItem className="w-full">
-                  <FormLabel required className="text-sm">
-                    House area
-                  </FormLabel>
-                  <FormControl>
-                    <Dropdown
-                      trigger={{
-                        label:
-                          field.value ||
-                          (disabled ? "Select state first" : "Select area"),
-                        arrowIcon: "material-symbols:keyboard-arrow-down",
-                        className: `w-full justify-between ${disabled ? "opacity-50 pointer-events-none" : ""}`,
-                      }}
-                      items={formatDropdownItems(areas)}
-                      onItemSelect={(value) =>
-                        !disabled && field.onChange(value)
-                      }
-                      className="w-full px-4 py-2"
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              );
-            }}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="locationId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel required className="text-sm">
+                House location
+              </FormLabel>
+              <FormControl>
+                <Dropdown
+                  trigger={{
+                    label:
+                      locationOptions.find(
+                        (o: { label: string; value: string }) =>
+                          o.value === field.value,
+                      )?.label ||
+                      (isLocationsLoading
+                        ? "Loading locations..."
+                        : "Select location"),
+                    arrowIcon: "material-symbols:keyboard-arrow-down",
+                    className: `w-full justify-between ${isFormDisabled || isLocationsLoading ? "opacity-50 pointer-events-none" : ""}`,
+                  }}
+                  items={locationOptions}
+                  onItemSelect={(value) =>
+                    !isFormDisabled && field.onChange(value)
+                  }
+                  className="w-full px-4 py-2"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="propertyAddress"

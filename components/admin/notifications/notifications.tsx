@@ -62,7 +62,7 @@ const Notifications = () => {
   };
 
   const formatPropertyName = (property: Property): string => {
-    return `${property.propertyName}, ${property.propertyArea}, ${property.propertyState}`;
+    return `${property.propertyName}, ${property.location?.name || "-"},`;
   };
 
   if (isLoading) {

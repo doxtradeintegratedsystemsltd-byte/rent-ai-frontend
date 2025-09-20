@@ -9,6 +9,7 @@ import TenantsTab from "./tenants/tenants-tab";
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import DueRentsTab from "./due-rents/due-rents";
+import LocationsTab from "./locations/locations-tab";
 const SuperTabs = () => {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -45,6 +46,11 @@ const SuperTabs = () => {
                 Houses
               </Link>
             </TabsTrigger>
+            <TabsTrigger value="locations" asChild>
+              <Link href="?tab=locations" scroll={false} replace>
+                Locations
+              </Link>
+            </TabsTrigger>
             <TabsTrigger value="tenants" asChild>
               <Link href="?tab=tenants" scroll={false} replace>
                 Tenants
@@ -63,6 +69,9 @@ const SuperTabs = () => {
         </TabsContent>
         <TabsContent value="properties">
           <PropertiesTab />
+        </TabsContent>
+        <TabsContent value="locations">
+          <LocationsTab />
         </TabsContent>
         <TabsContent value="tenants">
           <TenantsTab />

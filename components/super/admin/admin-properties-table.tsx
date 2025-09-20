@@ -175,7 +175,7 @@ const AdminPropertiesTable = () => {
       serialNumber: (currentPage - 1) * itemsPerPage + index + 1,
       property: property.propertyName,
       propertyImage: property.propertyImage,
-      location: `${property.propertyArea}, ${property.propertyState}`,
+      location: property.location?.name || "-",
       tenant: property.currentLease?.tenant?.firstName
         ? `${property.currentLease.tenant.firstName} ${property.currentLease.tenant.lastName || ""}`.trim()
         : " - ",

@@ -4,8 +4,7 @@ import { Payment } from "./payment";
 
 export interface PropertyCreateRequest {
   propertyName: string;
-  propertyState: string;
-  propertyArea: string;
+  locationId: string;
   propertyAddress: string;
   propertyImage: string;
   leaseYears: number;
@@ -14,8 +13,7 @@ export interface PropertyCreateRequest {
 
 export interface PropertyCreateForAdminRequest {
   propertyName: string;
-  propertyState: string;
-  propertyArea: string;
+  locationId: string;
   propertyAddress: string;
   propertyImage: string;
   leaseYears: number;
@@ -66,6 +64,13 @@ export interface Property {
   createdBy: User;
   currentLease: Lease | null;
   payments: Payment[];
+  location: {
+    id: string;
+    name: string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+  };
 }
 
 export interface PropertiesListResponse {
@@ -78,8 +83,7 @@ export interface PropertiesListResponse {
 
 export interface PropertyUpdateRequest {
   propertyName: string;
-  propertyState: string;
-  propertyArea: string;
+  locationId: string;
   propertyAddress: string;
   propertyImage: string;
   leaseYears: number;

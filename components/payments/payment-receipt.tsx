@@ -30,11 +30,8 @@ const PaymentReceipt = ({ payment }: { payment: Payment }) => {
             {payment.lease?.property?.propertyAddress
               ? `, ${payment.lease.property.propertyAddress}`
               : ""}
-            {payment.lease?.property?.propertyArea
-              ? `, ${payment.lease.property.propertyArea}`
-              : ""}
-            {payment.lease?.property?.propertyState
-              ? `, ${payment.lease.property.propertyState}`
+            {payment.lease?.property?.location?.name
+              ? `, ${payment.lease.property.location.name}`
               : ""}
           </p>
         </div>

@@ -180,7 +180,7 @@ const TenantsTable = () => {
       tenant: `${tenant.firstName} ${tenant.lastName}`,
       property: tenant.currentLease?.property?.propertyName || "No House",
       location: tenant.currentLease?.property
-        ? `${tenant.currentLease.property.propertyArea}, ${tenant.currentLease.property.propertyState}`
+        ? tenant.currentLease.property.location?.name
         : "N/A",
       admin: tenant.createdBy?.firstName
         ? `${tenant.createdBy.firstName} ${tenant.createdBy.lastName || ""}`.trim()

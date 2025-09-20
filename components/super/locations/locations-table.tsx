@@ -1,7 +1,7 @@
 "use client";
 
-import { Dropdown } from "@/components/ui/dropdown";
-import { SearchInput } from "@/components/ui/search-input";
+import { useState, useMemo, useEffect, useCallback } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -11,105 +11,72 @@ import {
   TableNoData,
   TableRow,
 } from "@/components/ui/table";
-import { getPaymentStatus } from "@/lib/status-util";
-import Avatar from "../../ui/avatar";
-import Pagination from "../../ui/pagination";
-import { useState, useMemo, useEffect, useCallback } from "react";
-import { Button } from "../../ui/button";
+import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
-import { getFilterLabel } from "@/lib/table-utils";
-import { useFetchProperties } from "@/mutations/property";
-import type { Property } from "@/types/property";
+import Pagination from "@/components/ui/pagination";
+import { SearchInput } from "@/components/ui/search-input";
+import { Dropdown } from "@/components/ui/dropdown";
+import { getSortLabel } from "@/lib/table-utils";
 import {
   TableSkeleton,
   TableSkeletonPresets,
 } from "@/components/ui/table-skeleton";
 import { useDebounce } from "@/hooks/useDebounce";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useFetchLocations } from "@/mutations/locations";
+import type { Location } from "@/types/locations";
+import { formatDate } from "@/lib/formatters";
 
-const filterItems = [
-  { type: "label" as const, label: "Show" },
-  {
-    label: "All",
-    value: "all",
-  },
-  {
-    label: "Rent Paid",
-    value: "rent-paid",
-  },
-  {
-    label: "Rent Unpaid",
-    value: "rent-unpaid",
-  },
+const arrangeByOptions = [
+  { type: "label" as const, label: "Arrange By" },
+  { label: "Newest", value: "DESC" },
+  { label: "Oldest", value: "ASC" },
 ];
 
 const tableHead = [
   { label: "S/N" },
-  { label: "House" },
   { label: "Location" },
-  { label: "Admin" },
-  { label: "Tenant" },
-  { label: "Rent Status" },
+  { label: "Houses" },
+  { label: "Created" },
 ];
 
-const PropertiesTable = () => {
+const LocationsTable = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Initialize state from URL parameters
   const [currentPage, setCurrentPage] = useState(() => {
     const page = searchParams.get("page");
     return page ? parseInt(page, 10) : 1;
   });
-
-  const [searchTerm, setSearchTerm] = useState(() => {
-    return searchParams.get("search") || "";
-  });
-
-  const [selectedFilter, setSelectedFilter] = useState(() => {
-    return searchParams.get("status") || "all";
-  });
+  const [searchTerm, setSearchTerm] = useState(
+    () => searchParams.get("search") || "",
+  );
+  const [sortOrder, setSortOrder] = useState<"ASC" | "DESC">(
+    () => (searchParams.get("sortOrder") as "ASC" | "DESC") || "DESC",
+  );
 
   const itemsPerPage = 20;
-
   const debouncedSearchTerm = useDebounce(searchTerm, 500);
 
-  // Function to update URL with current filter state
   const updateURL = useCallback(
     (params: {
       page?: number;
       search?: string;
-      status?: string;
-      location?: string;
+      sortOrder?: "ASC" | "DESC";
     }) => {
       const current = new URLSearchParams(window.location.search);
 
-      // Update or remove parameters
-      if (params.page && params.page > 1) {
+      if (params.page && params.page > 1)
         current.set("page", params.page.toString());
-      } else {
-        current.delete("page");
-      }
+      else current.delete("page");
 
-      if (params.search && params.search.trim()) {
+      if (params.search && params.search.trim())
         current.set("search", params.search);
-      } else {
-        current.delete("search");
-      }
+      else current.delete("search");
 
-      if (params.status && params.status !== "all") {
-        current.set("status", params.status);
-      } else {
-        current.delete("status");
-      }
+      if (params.sortOrder && params.sortOrder !== "DESC")
+        current.set("sortOrder", params.sortOrder);
+      else current.delete("sortOrder");
 
-      if (params.location && params.location !== "all") {
-        current.set("location", params.location);
-      } else {
-        current.delete("location");
-      }
-
-      // Update URL without triggering a page reload
       const search = current.toString();
       const query = search ? `?${search}` : "";
       router.replace(`${window.location.pathname}${query}`, { scroll: false });
@@ -117,37 +84,25 @@ const PropertiesTable = () => {
     [router],
   );
 
-  // Update URL when filters change
   useEffect(() => {
-    updateURL({
-      page: currentPage,
-      search: searchTerm,
-      status: selectedFilter,
-    });
-  }, [currentPage, searchTerm, selectedFilter, updateURL]);
+    updateURL({ page: currentPage, search: searchTerm, sortOrder });
+  }, [currentPage, searchTerm, sortOrder, updateURL]);
 
-  const { data, isLoading, isError, error } = useFetchProperties({
+  const { data, isLoading, isError, error } = useFetchLocations({
     page: currentPage - 1,
     pageSize: itemsPerPage,
     search: debouncedSearchTerm || undefined,
-    status: selectedFilter !== "all" ? selectedFilter : undefined,
+    sortOrder,
   });
 
   const tableData = useMemo(() => {
-    const properties: Property[] = data?.data?.data || [];
-    return properties.map((property, index) => ({
-      id: property.id,
+    const locations: Location[] = data?.data?.data || [];
+    return locations.map((loc, index) => ({
+      id: loc.id,
       serialNumber: (currentPage - 1) * itemsPerPage + index + 1,
-      property: property.propertyName,
-      propertyImage: property.propertyImage,
-      location: property.location?.name || "-",
-      admin: property.createdBy?.firstName
-        ? `${property.createdBy.firstName} ${property.createdBy.lastName || ""}`.trim()
-        : "Unknown Admin",
-      tenant: property.currentLease?.tenant?.firstName
-        ? `${property.currentLease.tenant.firstName} ${property.currentLease.tenant.lastName || ""}`.trim()
-        : "-",
-      rentStatus: property.currentLease?.rentStatus || ("none" as const),
+      name: loc.name,
+      propertiesCount: loc.propertiesCount ?? 0,
+      createdAt: loc.createdAt,
     }));
   }, [data, currentPage, itemsPerPage]);
 
@@ -169,7 +124,7 @@ const PropertiesTable = () => {
           className="text-red-600"
         />
         <div className="text-center">
-          <h2 className="text-lg font-semibold">Error loading houses</h2>
+          <h2 className="text-lg font-semibold">Error loading locations</h2>
           <p className="text-muted-foreground">
             {error?.message || "Something went wrong. Please try again."}
           </p>
@@ -184,12 +139,10 @@ const PropertiesTable = () => {
     setCurrentPage(1);
   };
 
-  const handlePageChange = (page: number) => {
-    setCurrentPage(page);
-  };
+  const handlePageChange = (page: number) => setCurrentPage(page);
 
-  const handleFilterChange = (value: string) => {
-    setSelectedFilter(value);
+  const handleSortChange = (value: string) => {
+    setSortOrder((value as "ASC" | "DESC") || "DESC");
     setCurrentPage(1);
   };
 
@@ -197,18 +150,7 @@ const PropertiesTable = () => {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2.5">
-          <p className="text-muted-foreground text-sm uppercase">House</p>
-          <Dropdown
-            trigger={{
-              label: getFilterLabel(filterItems, selectedFilter),
-              icon: "material-symbols:filter-list-rounded",
-              arrowIcon: "material-symbols:keyboard-arrow-down-rounded",
-            }}
-            items={filterItems}
-            selectedValue={selectedFilter}
-            onItemSelect={handleFilterChange}
-            useRadioGroup={true}
-          />
+          <p className="text-muted-foreground text-sm uppercase">Locations</p>
         </div>
         <div className="flex gap-2">
           <SearchInput
@@ -216,6 +158,19 @@ const PropertiesTable = () => {
             className="bg-background"
             value={searchTerm}
             onChange={(e) => handleSearchChange(e.target.value)}
+          />
+          <Dropdown
+            trigger={{
+              label: getSortLabel(arrangeByOptions, sortOrder),
+              icon: "material-symbols:format-line-spacing-rounded",
+              arrowIcon: "material-symbols:keyboard-arrow-up-rounded",
+              className: "bg-background",
+            }}
+            items={arrangeByOptions}
+            selectedValue={sortOrder}
+            onItemSelect={handleSortChange}
+            useRadioGroup={true}
+            align="end"
           />
         </div>
       </div>
@@ -241,13 +196,14 @@ const PropertiesTable = () => {
           </Button>
         </div>
       )}
+
       {isLoading ? (
         <TableSkeleton
-          {...TableSkeletonPresets.properties}
+          {...TableSkeletonPresets.simple}
           rows={10}
           showFilters={false}
           showPagination={false}
-          tableHeight="h-full"
+          tableHeight=""
         />
       ) : (
         <Table>
@@ -264,36 +220,21 @@ const PropertiesTable = () => {
                 <TableRow
                   key={row.id}
                   className="bg-background hover:bg-muted/50 cursor-pointer transition-colors"
-                  onClick={() => router.push(`/super/property/${row.id}`)}
+                  onClick={() => router.push(`/super/location/${row.id}`)}
                 >
                   <TableCell className="text-muted-foreground">
                     {row.serialNumber}
                   </TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Avatar
-                        src={row.propertyImage || "/images/property-avatar.png"}
-                        alt="House Avatar"
-                        size="sm"
-                      />
-                      {row.property}
-                    </div>
-                  </TableCell>
-                  <TableCell>{row.location}</TableCell>
-                  <TableCell>{row.admin}</TableCell>
-                  <TableCell>{row.tenant}</TableCell>
-                  <TableCell>
-                    <p className={getPaymentStatus(row.rentStatus)}>
-                      {row.rentStatus}
-                    </p>
-                  </TableCell>
+                  <TableCell className="font-medium">{row.name}</TableCell>
+                  <TableCell>{row.propertiesCount}</TableCell>
+                  <TableCell>{formatDate(row.createdAt)}</TableCell>
                 </TableRow>
               ))
             ) : (
               <TableNoData className="flex flex-col" colSpan={tableHead.length}>
-                <p>No house added.</p>
+                <p>No locations added.</p>
                 <p>
-                  Click <span className="font-bold">“Add House”</span> to get
+                  Click <span className="font-bold">“Add Location”</span> to get
                   started.
                 </p>
               </TableNoData>
@@ -315,4 +256,4 @@ const PropertiesTable = () => {
   );
 };
 
-export default PropertiesTable;
+export default LocationsTable;

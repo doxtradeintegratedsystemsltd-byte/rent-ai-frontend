@@ -25,6 +25,13 @@ export interface Property {
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
+  location: {
+    id: string;
+    name: string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+  };
 }
 
 export interface Lease {

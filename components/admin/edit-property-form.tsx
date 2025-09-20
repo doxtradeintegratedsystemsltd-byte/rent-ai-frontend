@@ -14,9 +14,11 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Dropdown } from "@/components/ui/dropdown";
-import { formatDropdownItems } from "@/lib/formatters";
+import { useMemo, useState, useEffect } from "react";
+import { useFetchLocations } from "@/mutations/locations";
+import type { Location } from "@/types/locations";
 import { Icon } from "@/components/ui/icon";
-import { useState, useEffect } from "react";
+// (useState, useEffect) already imported above with useMemo
 import Image from "next/image";
 import { usePropertyImageUpload } from "@/mutations/upload";
 import { useUpdateProperty } from "@/mutations/property";
@@ -26,8 +28,7 @@ import { getApiErrorMessage } from "@/lib/error";
 
 const FormSchema = z.object({
   propertyName: z.string().min(1, { message: "House name is required" }),
-  propertyState: z.string().min(1, { message: "House state is required" }),
-  propertyArea: z.string().min(1, { message: "House area is required" }),
+  locationId: z.string().min(1, { message: "House location is required" }),
   propertyAddress: z.string().min(1, { message: "Address is required" }),
   propertyImage: z.union([
     z.instanceof(File),
@@ -39,8 +40,7 @@ const FormSchema = z.object({
 
 interface PropertySubmissionData {
   propertyName: string;
-  propertyState: string;
-  propertyArea: string;
+  locationId: string;
   propertyAddress: string;
   propertyImage: string;
   leaseYears: number;
@@ -66,8 +66,7 @@ const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
     resolver: zodResolver(FormSchema),
     defaultValues: {
       propertyName: property?.propertyName || "",
-      propertyState: property?.propertyState || "",
-      propertyArea: property?.propertyArea || "",
+      locationId: property?.location?.id || "",
       propertyAddress: property?.propertyAddress || "",
       propertyImage: property?.propertyImage || "",
       leaseYears: property?.leaseYears || 1,
@@ -80,8 +79,7 @@ const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
     if (property) {
       form.reset({
         propertyName: property.propertyName || "",
-        propertyState: property.propertyState || "",
-        propertyArea: property.propertyArea || "",
+        locationId: property.location?.id || "",
         propertyAddress: property.propertyAddress || "",
         propertyImage: property.propertyImage || "",
         leaseYears: property.leaseYears || 1,
@@ -104,8 +102,7 @@ const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
 
       const submissionData: PropertySubmissionData = {
         propertyName: data.propertyName,
-        propertyState: data.propertyState,
-        propertyArea: data.propertyArea,
+        locationId: data.locationId,
         propertyAddress: data.propertyAddress,
         propertyImage: propertyImageUrl,
         leaseYears: data.leaseYears,
@@ -127,8 +124,19 @@ const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
     }
   };
 
-  const states = ["Lagos", "Abuja", "Kano", "Rivers", "Ogun"];
-  const areas = ["Victoria Island", "Lekki", "Ikeja", "Surulere", "Ikoyi"];
+  // Fetch locations for dropdown
+  const { data: locationsData, isLoading: isLocationsLoading } =
+    useFetchLocations({ page: 0, pageSize: 100, sortOrder: "DESC" });
+  const locationOptions = useMemo(
+    () =>
+      ((locationsData?.data?.data as Location[] | undefined) || []).map(
+        (loc) => ({
+          label: loc.name,
+          value: loc.id,
+        }),
+      ),
+    [locationsData],
+  );
 
   const handleImageChange = (file: File | null) => {
     if (file) {
@@ -173,56 +181,37 @@ const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
             </FormItem>
           )}
         />
-        <div className="flex gap-4">
-          <FormField
-            control={form.control}
-            name="propertyState"
-            render={({ field }) => (
-              <FormItem className="w-full">
-                <FormLabel required className="text-sm">
-                  House state
-                </FormLabel>
-                <FormControl>
-                  <Dropdown
-                    trigger={{
-                      label: field.value || "Select state",
-                      arrowIcon: "material-symbols:keyboard-arrow-down",
-                      className: "w-full justify-between",
-                    }}
-                    items={formatDropdownItems(states)}
-                    onItemSelect={(value) => field.onChange(value)}
-                    className="w-full px-4 py-2"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-          <FormField
-            control={form.control}
-            name="propertyArea"
-            render={({ field }) => (
-              <FormItem className="w-full">
-                <FormLabel required className="text-sm">
-                  House area
-                </FormLabel>
-                <FormControl>
-                  <Dropdown
-                    trigger={{
-                      label: field.value || "Select area",
-                      arrowIcon: "material-symbols:keyboard-arrow-down",
-                      className: "w-full justify-between",
-                    }}
-                    items={formatDropdownItems(areas)}
-                    onItemSelect={(value) => field.onChange(value)}
-                    className="w-full px-4 py-2"
-                  />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-        </div>
+        <FormField
+          control={form.control}
+          name="locationId"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel required className="text-sm">
+                House location
+              </FormLabel>
+              <FormControl>
+                <Dropdown
+                  trigger={{
+                    label:
+                      locationOptions.find((o) => o.value === field.value)
+                        ?.label ||
+                      (isLocationsLoading
+                        ? "Loading locations..."
+                        : "Select location"),
+                    arrowIcon: "material-symbols:keyboard-arrow-down",
+                    className: `w-full justify-between ${isLocationsLoading ? "opacity-50 pointer-events-none" : ""}`,
+                  }}
+                  items={locationOptions}
+                  onItemSelect={(value) =>
+                    !isLocationsLoading && field.onChange(value)
+                  }
+                  className="w-full px-4 py-2"
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="propertyAddress"
