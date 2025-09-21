@@ -91,12 +91,11 @@ export const useAddTenantToProperty = () => {
         (oldData: ApiResponse<PropertySingleResponse> | undefined) => {
           if (!oldData || !oldData.data || !data.data) return oldData;
 
-          const existingPayments = oldData.data.payments || [];
-          // Backend tenant-create response structure may include payment info inline (data.payment) or only paymentId inside lease
+          // Backend tenant-create response structure may include payment info inline (data.payment)
+          // or only paymentId inside lease. We'll construct a Payment-like object for UI.
           const responsePayment: any = (data as any).data.payment;
 
-          // Construct a Payment-like object if we have minimal payment fields; else skip
-          let constructedPayment = undefined as any;
+          let constructedPayment: any | undefined = undefined;
           if (responsePayment) {
             // If backend already returns payment object with needed fields
             constructedPayment = {
@@ -122,9 +121,7 @@ export const useAddTenantToProperty = () => {
                 ...data.data.lease,
                 rentAmount: data.data.lease.rentAmount,
                 tenant: data.data.tenant,
-                property: {
-                  ...oldData.data,
-                },
+                property: { ...oldData.data },
               },
             };
           } else if ((data.data.lease as any)?.paymentId) {
@@ -149,18 +146,13 @@ export const useAddTenantToProperty = () => {
               lease: {
                 ...data.data.lease,
                 tenant: data.data.tenant,
-                property: {
-                  ...oldData.data,
-                },
+                property: { ...oldData.data },
               },
             };
           }
 
-          const mergedPayments = constructedPayment
-            ? existingPayments.some((p) => p.id === constructedPayment.id)
-              ? existingPayments
-              : [constructedPayment, ...existingPayments]
-            : existingPayments;
+          // Replace payments with only the new tenant's payment if present; otherwise empty until refetch
+          const newPayments = constructedPayment ? [constructedPayment] : [];
 
           return {
             ...oldData,
@@ -172,7 +164,7 @@ export const useAddTenantToProperty = () => {
                 tenant: data.data.tenant,
               } as any,
               currentLeaseId: data.data.lease.id,
-              payments: mergedPayments,
+              payments: newPayments,
             },
           };
         },

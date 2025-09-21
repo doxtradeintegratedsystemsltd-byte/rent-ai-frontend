@@ -33,6 +33,7 @@ export const useCreateProperty = () => {
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["admin"] });
+      queryClient.invalidateQueries({ queryKey: ["locations"] });
     },
   });
 };
@@ -57,6 +58,7 @@ export const useCreatePropertyForAdmin = () => {
       queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["admin"] });
       queryClient.invalidateQueries({ queryKey: ["admins"] });
+      queryClient.invalidateQueries({ queryKey: ["locations"] });
     },
   });
 };
@@ -205,6 +207,7 @@ export const useUpdateProperty = () => {
         queryKey: ["properties", "due-rents"],
         refetchType: "none",
       });
+      queryClient.invalidateQueries({ queryKey: ["locations"] });
     },
   });
 };
@@ -259,6 +262,7 @@ export const useDeleteProperty = () => {
       queryClient.invalidateQueries({ queryKey: ["super-dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["admin"] });
       queryClient.invalidateQueries({ queryKey: ["admins"] });
+      queryClient.invalidateQueries({ queryKey: ["locations"] });
     },
   });
 };

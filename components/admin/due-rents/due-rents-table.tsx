@@ -104,6 +104,7 @@ const DueRentsTable = () => {
       id: property.id,
       serialNumber: (currentPage - 1) * itemsPerPage + index + 1,
       property: property.propertyName,
+      propertyImage: property.propertyImage,
       location: property.location?.name || "-",
       tenant: property.currentLease?.tenant?.firstName
         ? `${property.currentLease.tenant.firstName} ${property.currentLease.tenant.lastName || ""}`.trim()
@@ -206,7 +207,7 @@ const DueRentsTable = () => {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar
-                        src="/images/property-avatar.png"
+                        src={row.propertyImage || "/images/property-avatar.png"}
                         alt="House Avatar"
                         size="sm"
                       />
