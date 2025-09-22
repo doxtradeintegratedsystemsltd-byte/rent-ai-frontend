@@ -7,14 +7,14 @@ import { GoBackButton } from "@/components/ui/go-back-button";
 import { useFetchLocation } from "@/mutations/locations";
 import { useBreadcrumb } from "@/hooks/useBreadcrumb";
 
-const LocationPage = () => {
+const AdminLocationPage = () => {
   const params = useParams();
   const locationId = params.id as string;
   const { data } = useFetchLocation(locationId);
   const locationName = data?.data?.name || "Location";
 
   useBreadcrumb([
-    { name: "Dashboard", href: "/super" },
+    { name: "Dashboard", href: "/admin" },
     { name: locationName, href: "#" },
   ]);
 
@@ -24,9 +24,10 @@ const LocationPage = () => {
       <LocationPropertiesTable
         locationId={locationId}
         title={`Houses in ${locationName}`}
+        propertyBasePath="/admin/property"
       />
     </div>
   );
 };
 
-export default LocationPage;
+export default AdminLocationPage;

@@ -85,6 +85,9 @@ export const useFetchProperties = (params?: PropertyFetchParams) => {
       if (params?.location && params.location !== "all") {
         searchParams.append("location", params.location);
       }
+      if (params?.locationId) {
+        searchParams.append("locationId", params.locationId);
+      }
       if (params?.status) {
         searchParams.append("status", params.status);
       }
@@ -129,6 +132,9 @@ export const useFetchDueRents = (
       }
       if (dueRentsParams?.location && dueRentsParams.location !== "all") {
         searchParams.append("location", dueRentsParams.location);
+      }
+      if (dueRentsParams?.locationId) {
+        searchParams.append("locationId", dueRentsParams.locationId);
       }
       if (dueRentsParams?.status) {
         searchParams.append("status", dueRentsParams.status);

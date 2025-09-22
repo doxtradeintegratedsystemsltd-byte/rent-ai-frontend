@@ -10,6 +10,7 @@ import type {
   LocationsFetchParams,
   LocationsListResponse,
 } from "@/types/locations";
+import type { LocationSingleResponse } from "@/types/locations";
 
 // Create location
 export const useCreateLocation = () => {
@@ -50,10 +51,27 @@ export const useFetchLocations = (params?: LocationsFetchParams) => {
       if (params?.sortOrder) {
         searchParams.append("sortOrder", params.sortOrder);
       }
+      if (params?.adminId) {
+        searchParams.append("adminId", params.adminId);
+      }
 
       const url = `/locations${searchParams.toString() ? `?${searchParams.toString()}` : ""}`;
       const response = await api.get(url);
       return response.data;
     },
+  });
+};
+
+// Fetch single location details
+export const useFetchLocation = (id?: string) => {
+  return useQuery({
+    queryKey: ["location", id],
+    queryFn: async (): Promise<ApiResponse<LocationSingleResponse>> => {
+      const response = await api.get(`/locations/${id}`);
+      return response.data;
+    },
+    enabled: !!id,
+    staleTime: 5 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
   });
 };

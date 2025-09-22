@@ -21,9 +21,13 @@ export interface LocationsListResponse {
 
 export interface LocationCreateResponse extends Location {}
 
+// Single location response shape
+export interface LocationSingleResponse extends Location {}
+
 export interface LocationsFetchParams {
   page?: number; // zero-based
   pageSize?: number;
   search?: string;
   sortOrder?: "ASC" | "DESC";
+  adminId?: string; // filter locations created by a specific admin
 }

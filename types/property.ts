@@ -43,6 +43,8 @@ export interface PropertyFetchParams {
   search?: string;
   filter?: string;
   location?: string;
+  // Filter by location id (backend expects `locationId` query param)
+  locationId?: string;
   status?: string;
   adminId?: string;
 }
