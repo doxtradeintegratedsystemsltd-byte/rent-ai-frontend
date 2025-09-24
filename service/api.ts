@@ -2,7 +2,7 @@ import axios from "axios";
 import { useAuthStore } from "@/store/authStore";
 
 const api = axios.create({
-  baseURL: "https://rent-ai-backend.onrender.com/api",
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
 });
 
 api.interceptors.request.use((config) => {
