@@ -101,7 +101,9 @@ const PaymentsTable = () => {
     return payments.map((payment, index) => ({
       ...payment,
       serialNumber: (currentPage - 1) * itemsPerPage + index + 1,
-      propertyName: payment.lease?.property?.propertyName?.toString() ?? "—",
+      propertyName:
+        payment.lease?.property?.propertyName?.toString() ??
+        "Property Deleted!",
       // expose image at top-level for easy safe access
       propertyImage: payment.lease?.property?.propertyImage,
       tenantName:
