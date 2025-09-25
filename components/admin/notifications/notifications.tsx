@@ -65,7 +65,7 @@ const Notifications = () => {
     property: Property | null | undefined,
   ): string => {
     if (!property) {
-      return "Property information unavailable";
+      return "Property Deleted!";
     }
     return `${property.propertyName || "Unknown Property"}, ${property.location?.name || "-"},`;
   };
