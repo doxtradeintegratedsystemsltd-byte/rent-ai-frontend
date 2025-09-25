@@ -306,9 +306,9 @@ const NotificationPage = () => {
             </div>
             <div className="flex flex-col gap-4">
               <p className="text-md font-semibold">
-                {property?.propertyArea}, {property?.propertyState}
+                {property?.location?.name || "-"}
               </p>
-              <p className="text-md">{property?.propertyAddress}</p>
+              <p className="text-md">{property?.propertyAddress || "-"}</p>
             </div>
           </Card>
           {/* Tenant Information */}

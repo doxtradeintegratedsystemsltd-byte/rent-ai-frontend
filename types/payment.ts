@@ -67,8 +67,6 @@ export interface Payment {
     property: {
       id: string;
       propertyName: string;
-      propertyState: string;
-      propertyArea: string;
       propertyAddress: string;
       propertyImage: string;
       createdById: string;

@@ -91,6 +91,13 @@ export interface TenantPropertyInfo {
   deletedAt: string | null;
   currentLease: TenantLeaseDetail;
   createdBy: User;
+  location: {
+    id: string;
+    name: string;
+    createdAt: string;
+    updatedAt: string;
+    deletedAt: string | null;
+  };
 }
 
 // Response for tenant lease information

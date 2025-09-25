@@ -342,8 +342,6 @@ const TenantHomepage = () => {
         property: {
           id: leaseData?.data?.id || "",
           propertyName: leaseData?.data?.propertyName || "—",
-          propertyState: leaseData?.data?.propertyState || "",
-          propertyArea: leaseData?.data?.propertyArea || "",
           propertyAddress: leaseData?.data?.propertyAddress || "",
           propertyImage: leaseData?.data?.propertyImage || "",
           createdById: leaseData?.data?.createdById || "",
@@ -559,8 +557,7 @@ const TenantHomepage = () => {
                     </div>
                     <div className="flex flex-col gap-4">
                       <p className="text-md font-semibold">
-                        {leaseData?.data?.propertyArea || "Loading..."},{" "}
-                        {leaseData?.data?.propertyState || ""}
+                        {leaseData?.data?.location?.name || "Loading..."},{" "}
                       </p>
                       <p className="md:text-md text-xs">
                         {leaseData?.data?.propertyAddress ||

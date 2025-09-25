@@ -61,8 +61,13 @@ const Notifications = () => {
     }
   };
 
-  const formatPropertyName = (property: Property): string => {
-    return `${property.propertyName}, ${property.location?.name || "-"},`;
+  const formatPropertyName = (
+    property: Property | null | undefined,
+  ): string => {
+    if (!property) {
+      return "Property information unavailable";
+    }
+    return `${property.propertyName || "Unknown Property"}, ${property.location?.name || "-"},`;
   };
 
   if (isLoading) {
@@ -140,7 +145,7 @@ const Notifications = () => {
               time={formatNotificationTime(notification.createdAt)}
               type={formatNotificationType(notification.notificationType)}
               property={formatPropertyName(notification.property)}
-              propertyId={notification.propertyId}
+              propertyId={notification.propertyId || ""}
               isRead={notification.seen}
               onMarkAsRead={() => handleMarkAsRead(notification.id)}
             />

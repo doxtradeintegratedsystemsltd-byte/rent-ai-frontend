@@ -55,16 +55,15 @@ const NotificationPage = () => {
     ? [
         {
           label: "Phone",
-          value: property.currentLease.tenant.phoneNumber || "Not provided",
+          value: property.currentLease.tenant.phoneNumber || "N/A",
         },
         {
           label: "Email",
-          value: property.currentLease.tenant.email || "Not provided",
+          value: property.currentLease.tenant.email || "N/A",
         },
         {
           label: "Level of Education",
-          value:
-            property.currentLease.tenant.levelOfEducation || "Not provided",
+          value: property.currentLease.tenant.levelOfEducation || "N/A",
         },
       ]
     : [];
@@ -76,33 +75,35 @@ const NotificationPage = () => {
           label: "Start Date",
           value: property.currentLease.startDate
             ? formatLongDate(property.currentLease.startDate)
-            : "Not set",
+            : "N/A",
         },
         {
           label: "End Date",
           value: property.currentLease.endDate
             ? formatLongDate(property.currentLease.endDate)
-            : "Not set",
+            : "N/A",
         },
         {
           label: "Rent Amount",
           value: formatCurrency(
-            formatAmount(property.currentLease.rentAmount.toString()),
+            formatAmount((property.currentLease.rentAmount || 0).toString()),
           ),
         },
         {
           label: "Status",
-          value: property.currentLease.rentStatus,
+          value: property.currentLease.rentStatus || "N/A",
         },
       ]
     : [
         {
           label: "Lease Years",
-          value: `${property?.leaseYears || 0} years`,
+          value: property?.leaseYears ? `${property.leaseYears} years` : "N/A",
         },
         {
           label: "Rent Amount",
-          value: formatCurrency(formatAmount(property?.rentAmount || "0")),
+          value: formatCurrency(
+            formatAmount((property?.rentAmount || 0).toString()),
+          ),
         },
         {
           label: "Status",
@@ -113,8 +114,8 @@ const NotificationPage = () => {
   useBreadcrumb([
     { name: "Houses", href: "/admin" },
     {
-      name: property?.propertyName || "Property",
-      href: `/admin/property/${propertyId}`,
+      name: property?.propertyName || "N/A",
+      href: propertyId ? `/admin/property/${propertyId}` : "#",
     },
     { name: "Send Notification", href: "#" },
   ]);
@@ -135,10 +136,15 @@ const NotificationPage = () => {
       return;
     }
 
+    if (!data.messageTitle?.trim() || !data.message?.trim()) {
+      toast.error("Message title and content are required.");
+      return;
+    }
+
     const payload = {
       leaseId: property.currentLeaseId,
-      notificationTitle: data.messageTitle,
-      notificationContent: data.message,
+      notificationTitle: data.messageTitle.trim(),
+      notificationContent: data.message.trim(),
     };
 
     try {
@@ -295,7 +301,9 @@ const NotificationPage = () => {
             <div className="border-secondary-foreground text-secondary-foreground relative rounded-full border p-2">
               <Icon icon="material-symbols:home-app-logo" size="lg" />
             </div>
-            <h2 className="text-lg font-bold">{property?.propertyName}</h2>
+            <h2 className="text-lg font-bold">
+              {property?.propertyName || "N/A"}
+            </h2>
           </div>
           <Card className="bg-muted flex items-start gap-2 py-6">
             <div className="border-border text-foreground after:bg-secondary-foreground relative mr-1 rounded-full border p-2 after:absolute after:top-full after:left-1/2 after:h-8 after:w-px after:-translate-x-1/2">
@@ -306,9 +314,9 @@ const NotificationPage = () => {
             </div>
             <div className="flex flex-col gap-4">
               <p className="text-md font-semibold">
-                {property?.propertyArea}, {property?.propertyState}
+                {property?.location?.name || "-"}
               </p>
-              <p className="text-md">{property?.propertyAddress}</p>
+              <p className="text-md">{property?.propertyAddress || "N/A"}</p>
             </div>
           </Card>
           {/* Tenant Information */}
@@ -327,7 +335,7 @@ const NotificationPage = () => {
                   </div>
                   <p className="text-lg font-semibold">
                     {property?.currentLease?.tenant
-                      ? `${property.currentLease.tenant.firstName} ${property.currentLease.tenant.lastName || ""}`.trim()
+                      ? `${property.currentLease.tenant.firstName || "N/A"} ${property.currentLease.tenant.lastName || ""}`.trim()
                       : "No tenant assigned"}
                   </p>
                 </div>

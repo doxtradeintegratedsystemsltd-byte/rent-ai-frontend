@@ -112,7 +112,7 @@ const PropertyPage = () => {
         },
         {
           label: "Rent Amount",
-          value: `₦${parseFloat(property.currentLease.rentAmount.toString()).toLocaleString()}`,
+          value: `₦${parseFloat((property.currentLease.rentAmount || 0).toString()).toLocaleString()}`,
         },
         {
           label: "Status",
@@ -126,7 +126,7 @@ const PropertyPage = () => {
         },
         {
           label: "Rent Amount",
-          value: `₦${parseFloat(property?.rentAmount || "0").toLocaleString()}`,
+          value: `₦${parseFloat((property?.rentAmount || 0).toString()).toLocaleString()}`,
         },
         {
           label: "Status",
@@ -185,6 +185,11 @@ const PropertyPage = () => {
     setTimeout(() => handlePrint(), 100);
   };
   const handleReceiptAction = (payment: Payment) => {
+    if (!payment) {
+      toast.error("Payment data not available");
+      return;
+    }
+
     if (payment.type === "manual") {
       if (payment.receiptUrl) {
         try {
@@ -265,7 +270,9 @@ const PropertyPage = () => {
                 <div className="border-secondary-foreground text-secondary-foreground relative rounded-full border p-2">
                   <Icon icon="material-symbols:home-app-logo" size="lg" />
                 </div>
-                <h2 className="text-lg font-bold">{property?.propertyName}</h2>
+                <h2 className="text-lg font-bold">
+                  {property?.propertyName || "N/A"}
+                </h2>
               </div>
 
               {/* Add Tenant Button and Sheet */}
@@ -315,7 +322,10 @@ const PropertyPage = () => {
                     </SheetHeader>
                     <div className="flex-1 overflow-y-auto pr-2">
                       <AddTenantForm
-                        rentAmount={parseFloat(property?.rentAmount) || 0}
+                        rentAmount={
+                          parseFloat((property?.rentAmount || 0).toString()) ||
+                          0
+                        }
                         propertyId={propertyId}
                         onSuccess={() => {
                           setShowAddTenantSheet(false);
@@ -335,9 +345,9 @@ const PropertyPage = () => {
               </div>
               <div className="flex flex-col gap-4">
                 <p className="text-md font-semibold">
-                  {property?.propertyArea}, {property?.propertyState}
+                  {property?.location?.name || "-"}
                 </p>
-                <p className="text-md">{property?.propertyAddress}</p>
+                <p className="text-md">{property?.propertyAddress || "N/A"}</p>
               </div>
             </Card>
             <div className="h-[554px] w-full overflow-hidden rounded-md">
@@ -356,12 +366,14 @@ const PropertyPage = () => {
                 </span>
                 By
                 <span className="text-foreground mx-1 text-sm font-bold capitalize">
-                  {property?.createdBy?.firstName}{" "}
-                  {property?.createdBy?.lastName}
+                  {property?.createdBy?.firstName || "N/A"}{" "}
+                  {property?.createdBy?.lastName || ""}
                 </span>
                 On
                 <span className="text-foreground ml-1 text-sm font-bold capitalize">
-                  {property?.createdAt && formatLongDate(property.createdAt)}
+                  {property?.createdAt
+                    ? formatLongDate(property.createdAt)
+                    : "N/A"}
                 </span>
               </p>
             </div>
@@ -493,10 +505,18 @@ const PropertyPage = () => {
                       </SheetTitle>
                     </SheetHeader>
                     <div className="flex-1 overflow-y-auto pr-2">
-                      <EditTenantForm
-                        tenant={property?.currentLease?.tenant}
-                        onSuccess={() => setShowEditTenantSheet(false)}
-                      />
+                      {property?.currentLease?.tenant ? (
+                        <EditTenantForm
+                          tenant={property.currentLease.tenant}
+                          onSuccess={() => setShowEditTenantSheet(false)}
+                        />
+                      ) : (
+                        <div className="flex items-center justify-center p-8">
+                          <p className="text-muted-foreground">
+                            No tenant data available
+                          </p>
+                        </div>
+                      )}
                     </div>
                   </SheetContent>
                 </Sheet>
@@ -526,7 +546,7 @@ const PropertyPage = () => {
                     </div>
                     <p className="text-lg font-semibold">
                       {property?.currentLease?.tenant
-                        ? `${property.currentLease.tenant.firstName} ${property.currentLease.tenant.lastName || ""}`.trim()
+                        ? `${property.currentLease.tenant.firstName || "N/A"} ${property.currentLease.tenant.lastName || ""}`.trim()
                         : "No tenant assigned"}
                     </p>
                   </div>
@@ -568,9 +588,13 @@ const PropertyPage = () => {
                 </Card>
                 <Button
                   className="self-end text-xs font-medium uppercase"
-                  onClick={() =>
-                    router.push(`/admin/property/notification/${propertyId}`)
-                  }
+                  onClick={() => {
+                    if (propertyId) {
+                      router.push(`/admin/property/notification/${propertyId}`);
+                    } else {
+                      toast.error("Property ID not available");
+                    }
+                  }}
                 >
                   <Icon
                     icon="material-symbols:send-outline-rounded"
@@ -630,7 +654,11 @@ const PropertyPage = () => {
                         </SheetHeader>
                         <div className="flex-1 overflow-y-auto pr-2">
                           <AddPaymentForm
-                            rentAmount={parseFloat(property?.rentAmount) || 0}
+                            rentAmount={
+                              parseFloat(
+                                (property?.rentAmount || 0).toString(),
+                              ) || 0
+                            }
                             leaseId={property?.currentLeaseId || ""}
                             onSuccess={() => setShowAddPaymentSheet(false)}
                           />
@@ -638,39 +666,46 @@ const PropertyPage = () => {
                       </SheetContent>
                     </Sheet>
                   </div>
-                  {property?.payments && property.payments.length > 0 ? (
+                  {property?.payments &&
+                  Array.isArray(property.payments) &&
+                  property.payments.length > 0 ? (
                     <div className="flex flex-col gap-4">
-                      {property.payments.map((payment) => (
-                        <div
-                          key={payment.id}
-                          className="flex w-full items-center justify-between"
-                        >
-                          <div className="border-accent-foreground flex flex-col gap-1 border-l-2 pl-4">
-                            <p className="text-muted-foreground text-xs font-medium">
-                              {formatLongDate(payment.paymentDate)}
-                            </p>
-                            <p className="text-sm font-bold">
-                              {formatCurrency(payment.amount)}
-                            </p>
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="text-xs font-medium uppercase"
-                            onClick={() => handleReceiptAction(payment)}
+                      {property.payments
+                        .filter((payment) => payment && payment.id)
+                        .map((payment) => (
+                          <div
+                            key={payment.id}
+                            className="flex w-full items-center justify-between"
                           >
-                            <Icon
-                              icon={
-                                payment.type === "manual" && payment.receiptUrl
-                                  ? "material-symbols:download-rounded"
-                                  : "material-symbols:print"
-                              }
-                              className="mr-2"
-                            />
-                            Receipt
-                          </Button>
-                        </div>
-                      ))}
+                            <div className="border-accent-foreground flex flex-col gap-1 border-l-2 pl-4">
+                              <p className="text-muted-foreground text-xs font-medium">
+                                {payment.paymentDate
+                                  ? formatLongDate(payment.paymentDate)
+                                  : "Date not available"}
+                              </p>
+                              <p className="text-sm font-bold">
+                                {formatCurrency(payment.amount || 0)}
+                              </p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="text-xs font-medium uppercase"
+                              onClick={() => handleReceiptAction(payment)}
+                            >
+                              <Icon
+                                icon={
+                                  payment.type === "manual" &&
+                                  payment.receiptUrl
+                                    ? "material-symbols:download-rounded"
+                                    : "material-symbols:print"
+                                }
+                                className="mr-2"
+                              />
+                              Receipt
+                            </Button>
+                          </div>
+                        ))}
                     </div>
                   ) : (
                     <div className="flex h-16 w-full items-center justify-center">
