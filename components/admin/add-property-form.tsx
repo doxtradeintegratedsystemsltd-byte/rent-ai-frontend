@@ -27,7 +27,8 @@ const FormSchema = z.object({
   propertyName: z.string().min(1, { message: "House name is required" }),
   locationId: z.string().min(1, { message: "House location is required" }),
   propertyAddress: z.string().min(1, { message: "Address is required" }),
-  propertyImage: z.instanceof(File, { message: "House image is required" }),
+  // Make image optional
+  propertyImage: z.instanceof(File).optional(),
   leaseYears: z.number().min(1, { message: "Lease duration is required" }),
   rentAmount: z.number().min(1, { message: "Rent amount is required" }),
 });
@@ -36,7 +37,7 @@ interface PropertySubmissionData {
   propertyName: string;
   locationId: string;
   propertyAddress: string;
-  propertyImage: string;
+  propertyImage?: string;
   leaseYears: number;
   rentAmount: number;
 }
@@ -61,18 +62,23 @@ const AddPropertyForm = () => {
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    const imageUrl = await imageUpload.uploadImageForProperty(
-      data.propertyImage,
-    );
+    // Upload only if an image is provided
+    let imageUrl: string | undefined;
+    if (data.propertyImage) {
+      imageUrl = await imageUpload.uploadImageForProperty(data.propertyImage);
+    }
 
     const propertyData: PropertySubmissionData = {
       propertyName: data.propertyName,
       locationId: data.locationId,
       propertyAddress: data.propertyAddress,
-      propertyImage: imageUrl,
       leaseYears: data.leaseYears,
       rentAmount: data.rentAmount,
     };
+
+    if (imageUrl) {
+      propertyData.propertyImage = imageUrl;
+    }
 
     createProperty.mutate(propertyData, {
       onSuccess: () => {

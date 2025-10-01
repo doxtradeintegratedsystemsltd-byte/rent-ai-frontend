@@ -23,13 +23,13 @@ import { usePropertyImageUpload } from "@/mutations/upload";
 import { useCreatePropertyForAdmin } from "@/mutations/property";
 import { toast } from "sonner";
 import { getApiErrorMessage } from "@/lib/error";
-// removed states-based selection in favor of locations
 
 const FormSchema = z.object({
   propertyName: z.string().min(1, { message: "House name is required" }),
   locationId: z.string().min(1, { message: "House location is required" }),
   propertyAddress: z.string().min(1, { message: "Address is required" }),
-  propertyImage: z.instanceof(File, { message: "House image is required" }),
+  // Make property image optional
+  propertyImage: z.instanceof(File).optional(),
   leaseYears: z.number().min(1, { message: "Lease duration is required" }),
   rentAmount: z.number().min(1, { message: "Rent amount is required" }),
 });
@@ -38,7 +38,8 @@ interface PropertySubmissionData {
   propertyName: string;
   locationId: string;
   propertyAddress: string;
-  propertyImage: string;
+  // Optional when not provided
+  propertyImage?: string;
   leaseYears: number;
   rentAmount: number;
   adminId: string;
@@ -70,19 +71,24 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
   });
 
   const onSubmit = async (data: z.infer<typeof FormSchema>) => {
-    const imageUrl = await imageUpload.uploadImageForProperty(
-      data.propertyImage,
-    );
+    // Only upload image if user selected one
+    let imageUrl: string | undefined;
+    if (data.propertyImage) {
+      imageUrl = await imageUpload.uploadImageForProperty(data.propertyImage);
+    }
 
     const propertyData: PropertySubmissionData = {
       propertyName: data.propertyName,
       locationId: data.locationId,
       propertyAddress: data.propertyAddress,
-      propertyImage: imageUrl,
       leaseYears: data.leaseYears,
       rentAmount: data.rentAmount,
       adminId: adminId,
     };
+
+    if (imageUrl) {
+      propertyData.propertyImage = imageUrl;
+    }
 
     createProperty.mutate(propertyData, {
       onSuccess: () => {
@@ -221,9 +227,7 @@ const AddPropertyForm = ({ adminId }: AddPropertyFormProps) => {
           name="propertyImage"
           render={({ field }) => (
             <FormItem>
-              <FormLabel required className="text-sm">
-                House image
-              </FormLabel>
+              <FormLabel className="text-sm">House image</FormLabel>
               <FormControl>
                 <div className="bg-muted rounded-md border text-center">
                   <input

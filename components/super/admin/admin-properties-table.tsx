@@ -354,7 +354,7 @@ const AdminPropertiesTable = () => {
                   <TableCell>
                     <div className="flex items-center gap-2">
                       <Avatar
-                        src={row.propertyImage || undefined}
+                        src={row.propertyImage || "/images/property-avatar.png"}
                         alt="House Avatar"
                         size="sm"
                       />

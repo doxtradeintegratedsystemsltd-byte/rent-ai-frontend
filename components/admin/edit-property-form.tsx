@@ -18,7 +18,6 @@ import { useMemo, useState, useEffect } from "react";
 import { useFetchLocations } from "@/mutations/locations";
 import type { Location } from "@/types/locations";
 import { Icon } from "@/components/ui/icon";
-// (useState, useEffect) already imported above with useMemo
 import Image from "next/image";
 import { usePropertyImageUpload } from "@/mutations/upload";
 import { useUpdateProperty } from "@/mutations/property";
@@ -30,10 +29,14 @@ const FormSchema = z.object({
   propertyName: z.string().min(1, { message: "House name is required" }),
   locationId: z.string().min(1, { message: "House location is required" }),
   propertyAddress: z.string().min(1, { message: "Address is required" }),
-  propertyImage: z.union([
-    z.instanceof(File),
-    z.string().url({ message: "Valid image URL is required" }),
-  ]),
+  // Make image optional; allow File, valid URL string, or empty string
+  propertyImage: z
+    .union([
+      z.instanceof(File),
+      z.string().url({ message: "Valid image URL is required" }),
+      z.literal(""),
+    ])
+    .optional(),
   leaseYears: z.number().min(1, { message: "Lease duration is required" }),
   rentAmount: z.number().min(1, { message: "Rent amount is required" }),
 });
@@ -282,9 +285,7 @@ const EditPropertyForm = ({ property, onSuccess }: EditPropertyFormProps) => {
           name="propertyImage"
           render={({ field }) => (
             <FormItem>
-              <FormLabel required className="text-sm">
-                House image
-              </FormLabel>
+              <FormLabel className="text-sm">House image</FormLabel>
               <FormControl>
                 <div className="bg-muted rounded-md border text-center">
                   <input

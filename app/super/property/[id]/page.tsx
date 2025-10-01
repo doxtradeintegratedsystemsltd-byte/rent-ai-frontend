@@ -347,7 +347,7 @@ const PropertyPage = () => {
             </Card>
             <div className="h-[554px] w-full overflow-hidden rounded-md">
               <Image
-                src={property?.propertyImage || ""}
+                src={property?.propertyImage || "full-house.webp"}
                 alt={`${property?.propertyName || "Property"} Image`}
                 width={5290}
                 height={5540}

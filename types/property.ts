@@ -6,7 +6,7 @@ export interface PropertyCreateRequest {
   propertyName: string;
   locationId: string;
   propertyAddress: string;
-  propertyImage: string;
+  propertyImage?: string;
   leaseYears: number;
   rentAmount: number;
 }
@@ -15,7 +15,7 @@ export interface PropertyCreateForAdminRequest {
   propertyName: string;
   locationId: string;
   propertyAddress: string;
-  propertyImage: string;
+  propertyImage?: string;
   leaseYears: number;
   rentAmount: number;
   adminId: string;

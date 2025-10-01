@@ -569,7 +569,7 @@ const TenantHomepage = () => {
                     <Image
                       src={
                         leaseData?.data?.propertyImage ||
-                        "/images/full-house.png"
+                        "/images/full-house.webp"
                       }
                       alt="House Image"
                       width={5290}
